@@ -1,0 +1,301 @@
+Ideas
+
+Structure of physical network
+Each participant is a node in the network
+they supply performance data from a trigger pad through a trigger concentrator,
+which supplies input to a single input port on the matrix. Therefore each must be on a unique channel in order
+to route by port/channel to other devices. Note value is not crucial, with the requirement that inputs on same
+channel across different concentrators must have a different note number. So, let's start with all inputs on
+a single concentrator w/ same note number. The note number only is relevant when reaching the output device,
+as it can control which timbre is heard. [Are there limits to the # of triggers/time on a single channel of output device?]
+Output devices will to start have their own port from the matrix. Later, we can simply have a midi distribution amp from
+a single output port. Keeping that in mind, each output should get output on a unique channel even now as they are specified
+by matrix port...
+
+so--a block of nodes devined by a single trigger -> MIDI concentrator
+
+node	chan	note	matrixin		matrixout	chan
+A		Ch1		n1			ip1				op1		Ch1
+B		Ch2		n1			ip1				op2		Ch2
+C		Ch3		n1			ip1				op3		Ch3
+D
+E
+F
+(G)
+
+routing by port/channel in to port(=channel)out
+
+E.g.
+
+A -> B		ip1/Ch1 -> op2/Ch2
+A -> C		ip1/Ch1 -> op3/Ch3
+B -> A		ip1/Ch2 -> op1/Ch1
+B -> C		ip1/Ch2 -> op3/Ch3
+C -> A		ip1/Ch3 -> op1/Ch1
+
+self feedback
+x -> x		ip1/Chx -> opx/Chx
+
+x -> y		ip1/Chx -> opy/Chy
+
+will simplify addressing to think of nodes as #s: node# = inchan# = outport/outchan#
+note number addresses the input concentrator (this, so bigbrother can distinguich each node's performance by combo of chan & note)
+
+Now, each output device can respond to at most 6? different notes, so at first, each player could have a unique sound, but later,
+with a larger network, multiple players would have to share the same sound, and possibly a single player might sound different
+to different listeners. One solution is to make all sound the same! However that might be difficult? Key question--do we need
+to be able to stream different performers, or merely be exposed to a field of identical sounds, with the network controling each
+listener's 'view' of the whole.
+Note: CAN vary velocity on a per-performer basis, so note/velocity could be unique to each person. But velocity adds an additional
+issue of perceptual weighting of input. NOTE--in general , we can have a weighted network.!
+
+Exp ideas: have two disconnected subnets entrain at different rates, then link the two subnets (through thin or thick connections)
+and observe dynamics of this collision.
+
+Topologies--either create as matrices/link files in matlab and load in to rhythmNetwork, or generate within network. Question of how
+'dumb' to make RN program--merely a mediator between topology and the physical structure (as well as recording all activity in net)
+or actually part of creating experiments. Certainly need to have control of induction sequences--these can be broadcast from
+bigBrother, to some or all nodes.
+In interest of progress--start as simple mediator, and generate nets elsewhere. Can add self-generation later.
+#need to specify a net file structure, then. (x,y) pairs seem adequate, possibly with a weight value (x,y)w
+node 0 can be bigBrother, could have alias for 'broadcast', e.g. (0,-1) meaning 0 -> all, but that's a frill
+Now, timing: can assume first that all are connected at once, later can add pauses
+Also need a preamble regarding induction? Does RN generate metronome & record activity, or is it simpler to have a general purpose
+MIDI sequencer do this role?
+
+Another need is sysex librarian for programming all the output drummachines en masse. Again, this could be built into the master program,
+but to start would make sense to use an existing librarian program.
+So: 
+Matlab:			generate network specification files / analyze performance output
+				keep track of participant data, human to node mapping.
+				
+RhythmNetwork:	translate net specification into physical connections in the MIOC system (could even be headless!)
+				realitime display of network/performance data?
+				
+Sequencer:		generate induction and record performance output
+				require: record MIDI channel info (e.g. into diff tracks)
+				
+sysexLib:		store, distribute drummachine programs
+				[idea: drum machines could have induction sequUIences in them, triggered/clocked by sequencer]
+
+One idea would be to have matlab be the point of user contact, w/ GUI and analysis, exp setup
+it would then control and coordinate all other programs, ideally on commandline via system calls
+
+
+
+
+topologies: nearest neighbor, ring, random, smallworld, start at once or build additively, link failures, different goals: synchrony,
+maximal asynchrony (arbitration)
+
+##additional design issues (12/28/04)
+How to store the node addressing parameters? As above, to start, it's determined by node number, but later might want to add some
+configurability. The info is stored in NSTapper objects.
+1) array of NSTappers, using array controller to make a table view. Type into this to set things up. Need some way to save.
+2) hard-wired (ok for now)
+3) text file used to configure--some simple format that is read in and initializes the RNTappers.
+
+I feel like RNTapper should be called RNNode--take care of the physical details, but don't worry about the name and address, or other
+features of the tapper in this program. That can be recorded elsewhere. Make this one solely to set up the physical aspects of the
+network.
+
+So what needs to be done: 
+start it up
+initialize tapper nodes
+use connection list to program MIOC
+(possibly) plot graph of network
+(possibly) show real time responses, node histograms, node stats, etc...
+(possibly) start induction and record all activity
+Change network on the fly (either at pre-programmed time, or using UI)
+(possibly) change tapper node values and save [not needed]
+
+The tension here is between doing it the stdc way and the cocoa way. Cocoa way is what I'd like to learn, but it's also not
+natural right now (e.g. how to load a file, scan strings, etc), so I am hampered somewhat. Let's get something working, can always
+change it later.
+
+For now, removed the tapper node parameter editing--that's not likely to change, or need to change in an experiment. Make a
+simple text file format for this. Remove names from tapper node object
+
+###update (1/21/04)
+Have come a long way! I've done it the 'cocoa' way, and the things I didn't know how to do then, I now understand and it's no problem.
+Nice thing to be comfortable with now.
+
+of the "what needs to be done" list above,
+only thing remaining: start induction and record all activity, change network on the fly need still to be done.
+Hardwired tapper node addresses are fine.
+
+One change--have decided to use a one->many midi thru box on outputs, so each group of 6 tappers goes in and out of a single MIOC port
+	This, rather than having each output have its own port. Reason being that this way it'll be easy to expand the network, and input
+	and output are parallel.
+	
+So: now output and input ports are same
+Just had an idea--can bigBrother's output be broken into multiple channels, so we can have e.g. several different metronomes
+going to different subgroups of the network. This would be great for the split network, each part entrained to a different tempo
+or phase, and then joining the networks. 
+This could be specified as {0.1, 1}1.0 -- viz. BB channel 1 to tapper node 1, where BBchannel is from 1 to 16
+
+Next is the structure of an experiment--this kind of thing would need ability to switch networks on the fly at different points of
+the experiment--suddenly I'll have to write a language like in presentation to control it all
+To start, could control manually?
+What are the components?:  
+1) induction sequence, defined by channel, IOI, length of sequence, start time
+2) Network structure
+3) (possibly) network delta (add/remove)--this might be more efficient than reprogramming the whole network each time? I'll have to see
+	how long that actually takes
+Each one of these things would have a start time
+An experiment would simply be a dictionary (BTW can init NSDictionary from oldstyle plist files, and newer XML!)
+
+General info-
+nodes = #nodes
+date = 
+description =
+notes =
+
+Then an array of additional dictionaries, in sequence, for the different component events
+Each would have a type
+-----------------
+type = stimulus
+time = start time (in seconds from experiment start)
+stimuli = Array of strings: channel (note), IOI, duration (e.g. 1(64):IOI=800.0, events=10, phase=0.0)--new class: RNStimulus
+- initFromString
+- start
+
+-----------------
+type = network, networkAdd, networkSubtract (different behaviors: replace vs delta)
+time = start time
+connections = array of strings defining connections
+
+--ok, this is a lot, so take in stages
+for now: generate induction sequence
+record all midi
+
+-----------------
+1/24/05
+induction sequence class is done--reads a simple definition string @ can generate a MIDIPacketList ready
+	to send to MIDI device
+Now working on experiment class to tie it all together
+
+1/26/05
+Experiment class nearly done, only recording of events needs to be done
+Also started on multi-part experiment infrastructure
+Wish list: it would be nice to interactively design networks...plus some algorithmically designed ones
+Right now, counting on matlab to do that job
+
+2/19/04
+Been a while--diverted to sleep project and makeig talk. 
+Experiment class now records all midi input, timestamping relative to experiment start. 
+Have added start/stop/save methods, too. We create a dictionary and save it in xml plist format.
+Whipped up a matlab routine to parse this format and create a structure! So, what's left?
+(another aside--had to communicate w/ Thomas Elger, the miditemp engineer, to find out the correct checksum
+algorithm--had it except needed to take 2s complement. Now communicating w/ MIOC. Another thought--would it
+be better to actually make networks into programs within the MIOC--then I have some kind of verification of what
+was actually programmed. Think about it).
+So, now all that's left are experiment parts? No, the big one is multiple induction stimuli. We have node 0 as big brother
+the one who listens to everything else, and the one who does the first induction sequence. But if we want additional
+induction sequences...do the logic within node 0, or simply add nodes after the tapper nodes?
+
+2/23/04
+Was home yesterday, but worked substantially on this yesterday and today.
+Including today, have implemented multiple experiment parts AND multiple stimulus induction sequences. This was a lot
+of work to do right. Decided the right way was to do the logic within node 0 (big brother) rather than the hack of adding
+additional nodes on the end. This was done most elegantly by subclassing RNTapperNode to make RNBBNode, with additional
+instance variables to hold an array of flash-intensites and timers, as well as the number of subnodes. The flash
+methods now take a subChannel as input (note, my terminology is a bit variable here--using stimulusChannel mostly, but 
+subChannel occasionally). Also added methods to convert back and forth between MIDIChannels and stimulusChannels (this
+conversion is fixed: stimulus 1 is channel 16, 2 is 15 and so on. For now the MIDI Note is the same for all induction
+stimuli, but added a hook to modify this in the future. This required other changes--connections were elaborated to
+have subChannel information, each node also needs to know not only if it's listening to BB, but which channel. All that's
+left in this regard is to colorcode the different induction sequences and color nodes accordingly. What's best way
+to have an application-wide array of colors? I'll just put it in the view--naah, nodes need to know.
+
+MultiPart experiments--this was another biggie--now an experiment is defined by an array of 'experiment parts' which
+now consist of either a stimulus or a network. This has a class RNExperimentPart. Still to do: scheduling the 
+activation of each part. For stimuli, send their events to the MIDI system (scheduled ahead of time). For the network,
+need instead to rig a timer to trigger the programming of the MIOC with the network. My only question here is where
+to do this--it requires knowing not only the network, but also the MIOC. The experiment, network and parts do not know
+about the MIOC, so seems best to do this in the controller. Was thinking that we could instead schedule it all
+in the experiment, but use an invocation (provided by the controller) as the thing to trigger to program the MIOC. The
+easy way would be to tell the experiment about the MIOC, but I'm against that. The info needed is the experiment start time
+both NSDate and MIDITimestamp--the former is used for making timers, the latter for scheduling MIDI. In my
+'startExperiment' method in the controller, I sync these up very closely. Still, it's cumbersome passing two things
+around, so...sounds like a new class would be nice here, with two internal time representations (or, a category on NSDate?).
+(But don't think categories can add instance variables, so new class is called for)
+Finally we need to know the MIOC (and MIDI). Not nice to make experiment parts think about this, really.
+
+Other developments: looked at preferences system--would like to store the midi interface chosen as a preference, but
+that's low on the list. [3/14/05 done--took 15 minutes]
+
+To do: schedule network programming (have done stimulus scheduling) [DONE]
+
+3/9/05
+Development has continued bit by bit in whatever time I can find--often a half hour before I go to bed, or while waiting
+for long matlab jobs to finish. It's very enjoyable.
+Since I last wrote, have implemented all scheduling of experiment parts--stimuli and networks are programmed at
+the appropriate time in the experiment. Ultimately I did this using notifications--cleared up all the circular
+referencing that I was going to have to add. The RNController is the main listener to the notifications and takes
+care of updating the experiment and views.
+
+Another big thing--I've developed a histogram view of asynchronies for each
+tapper--modulo whatever stimulus they are listening to. This is nearly done--last thing was adding text for the IOI to
+each one. Remaining: auto scaling of counts, what to do when stimulus IOI changes (will this ever occur? Wait until
+I have a clear experiment planned before doing this), what to do with nodes that don't receive explicit stimulus--
+right now they're synced to the first stimulus, but in case of subnetworks, they should be keyed to the stimulus of
+whomever they receive the most inputs from. 
+
+Re: drawing. Everything's antialiased, yielding strange appearances, sometimes. Also, linewidth is scaled to bounds rectangle
+so when I had a long x and short y, vertical lines were nearly invisible, and text was compressed completely. So I
+returned to bounds being in pixels, like the view. Just realized I should round the origin, so it's on a pixel boundary--
+this might improve the ghosting of some lines. [DONE]
+
+Another addition: added a list of the experiment parts: start time and description. Would be nice to hilight those
+that are currently active. [DONE]
+Would also like an experiment timer on screen--update with experiment time. [DONE]
+
+3/10/05
+Progress: have experiment timer now and have added alert sheets to warn if an action will result in lost data. This is
+almost working. Some double free when stopping that I'll have to hunt down, plus clearing the network view doesn't
+clear the histogram views--does dealloc do this, or do I need something more? 
+[DONE--they were in fact gone, but
+the network view wasn't clearing the entire frame before drawing, so they persisted on screen--that is even after
+a subview is removed, what it last drew still remains--this could be changed, perhaps, in the dealloc method, but
+drawing there seems a bit off.] 
+
+What's left...maybe nothing, except to work on matlab to generate networks and also to read in XML data
+
+3/14/05
+Fixed up the bugs above, but there are problems if load a new network on top of an old one.
+This is getting easier and easier to make new things happen: can now individually test experiment parts.
+Also--add text next to each stimulus node. [DONE]
+
+Also added defaults for the midi sources! Put this in the
+lowest level: MIDIIO, which makes most sense. Thinking back to choi's solution--if the default is not found
+use not connected, with that default name. Then, can plug in default device and have it connect automatically.
+Rather than resetting the default--which should ONLY be done for a specific user choice (which may argue for it
+going into the controller?) Much done in a short time. later: implemented this behavior. If default is not found, does not
+connect to another device (thus changing default). Instead does not connect. Later on, if default device is reinserted,
+(and we're still unconnected) it'll first test if it can change to this (if not, stays unconnected). This way, only
+user choices do result in a change in defaults. (Note, to view application defaults:
+ "defaults read iversen.john.RhythmNetwork")
+ 
+ Ok, now: fix up reloading of network, work on matlab code to read data and generate network experiments.
+ 
+ 3/16/05
+ finished a set of matlab routines to read AND write XML plists
+ Testing this now: matlab.netdef -> matlabtest.experiment
+ It works!
+ 
+ To do: add some info to say when experiment stopped (e.g. if was ended early) [DONE]
+ Also, notes aren't picked up when saving, and if empty don't show up in strucure after parse [DONE]
+ Also, fixed re-loading of network--histogram views now disappear and there seem to be no memory issues.
+ 
+ 3/17/05
+ Noted as [DONE] all those accomplished.
+ 
+ What remains: matlab to generate different classes of networks
+ A stop stimulus button by the test part button to stop all ongoing stimuli (now have to wait until they finish
+ by themselves].
+ 
+ Additions: probably not for now: allow creating/editing networks and stimuli from within the program. Simplest would be
+ to type in string representations. More elegant would do it graphically. this is a large project, and not really
+ necessary, though I'm sure it'd be fun. For now, drop it. Do it in matlab instead.
+ 
+ 

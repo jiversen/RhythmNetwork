@@ -1,0 +1,16 @@
+1/26/05 ideas for experiments, discussed w/ Anil
+
+Baseline data: paced and continuation tapping of individuals in isolation (with/without self-feedback)
+
+Questions: make all the sounds the same (timbre and or loudness) vs individuating tappers
+Self feedback distinct? Computer pacing distinct?
+
+Network ideas: control #inputs each node gets
+local only
+ring
+
+manipulations: examine dynamics when isolating a node, removing connections, changing connections,
+adding induction to new nodes
+
+Leader follower dynamics--how expressed? Louder taps / leading timing e.g.
+
