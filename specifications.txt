@@ -287,15 +287,37 @@ user choices do result in a change in defaults. (Note, to view application defau
  Also, notes aren't picked up when saving, and if empty don't show up in strucure after parse [DONE]
  Also, fixed re-loading of network--histogram views now disappear and there seem to be no memory issues.
  
- 3/17/05
+3/17/05
  Noted as [DONE] all those accomplished.
  
  What remains: matlab to generate different classes of networks
  A stop stimulus button by the test part button to stop all ongoing stimuli (now have to wait until they finish
- by themselves].
+ by themselves). [DONE]
  
  Additions: probably not for now: allow creating/editing networks and stimuli from within the program. Simplest would be
  to type in string representations. More elegant would do it graphically. this is a large project, and not really
  necessary, though I'm sure it'd be fun. For now, drop it. Do it in matlab instead.
+ 
+ 3/24/05
+ Working in matlab most recently: wrote mfile to generate an experiment structure, convert to xml. Tested this--reads
+ correctly in RN.
+ Mainly have been analyzing gallop/stream data, so this has been on the back burner. Thinking about an experiment I've been
+ wanting to do: paradiddle max speed controlling which hand's sound can  hear (both/single). From expererience,
+ if I focus on the pattern being made by one hand, I can go faster--the other subordinates to that hand. Thought of
+ a way that RN program could actually run such an experiment: 3 nodes: two input for hands, third output. What you'd
+ like are changes in the volume of the two inputs--which means weighted links. My RNConnection class suppports 
+ a weight, but this has no partner within the MIOC level. The MIOC is capable of this, so question is whether to
+ create another class MIOCVelocityProcessor, which hews to the design of the MIOC, or, instead, keep the notion of
+ weighted connection to the fore and fold it into MIOCConnection, which would emit two MIOC processors: one for the connection
+ and one for the velocity map. Right now MIOCModel is all in terms of setting and breaking connections, so I'm loathe
+ to add lots of stuff for maps. Since this is a big change, I decided to start up SCM and invested a few hours in
+ learning Subversion and getting that set up. In fact, the editing of this file is my first modification of this project
+ and will be my first commit. What I wanted is simply a way to get a snapshot of the project before embarking on these
+ changes, so I could always roll it back to the current state. Still unclear: do I do this with version number or
+ by creating a new branch or tag? E.g. do I say: revision # 3 is the last one without weighted connections (and remember)
+ or do I create some more symbolic tag? What if I make other changes yet only want to revert a subset of files to their
+ earlier state (assuming no interactions...) This is what I want to do... 
+ 
+ a few more questions: in matlab how control options to diff when I choose that button in SCM panel of a file's info?
  
  
