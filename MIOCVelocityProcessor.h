@@ -17,20 +17,30 @@
 	Byte _IOOpcode;
 	Byte _position;
 	Byte _threshold;
-	Byte _gradientBelowThreshold;
-	Byte _gradientAboveThreshold;
-	Byte _offset;
+	Sint8 _gradientBelowThreshold;
+	Sint8 _gradientAboveThreshold;
+	Sint8 _offset;
 }
 
 - (MIOCVelocityProcessor *) initWithPort:(Byte)port Channel:(Byte)channel OnInput:(BOOL)isInput;
-- (void) setVelocityMapThreshold:(Byte)threshold GradientAbove:(Byte)gradientAbove GradientBelow:(Byte)gradientBelow Offset:(Byte)offset;
-- (void) setPosition;
+- (void) setVelocityMapThreshold:(Byte)threshold GradientAbove:(double)gradientAbove GradientBelow:(double)gradientBelow Offset:(Byte)offset;
+- (void) setWeight:(double)weight;
+- (void) setPosition:(Byte)position;
 
 - (NSData *) MIDIBytes; //convert to MIDI bytestream
 
 @end
 
 /// Specifications
+///General
+//Proc.-type, I/O-number, [Channel] [P0..Pn = parameters]
+//
+//Proc.-type is the type of MIDI data processor
+//An even number as processor type specifies 
+//processing parameters for a MIDI-input, an odd number specifies
+//a MIDI-output processor. Routing-parameters are always given as
+//input-processing (the connected output is given as parameter).
+///Specific
 //24/25 Velocity proc.            length = 8       
 //Computes a new value for the second MIDI data byte of
 //note events. The received value is used as an input-parameter 
