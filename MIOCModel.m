@@ -13,7 +13,6 @@ static Byte notEncodedMode[1] = {0x00}; // so these two suffice
 static Byte addRemoveProcessorOpcode[1] = {0x04};
 static Byte addProcessorFlag[1] = {0x80};
 static Byte removeProcessorFlag[1] = {0x00};
-static Byte routingProcessorType[1] = {0x00};
 
 
 @implementation MIOCModel
@@ -201,7 +200,6 @@ static Byte routingProcessorType[1] = {0x00};
 																							//encoded portion
 	NSMutableData *toEncode = [NSMutableData dataWithCapacity:0];
 	[toEncode appendBytes:flagPtr length:1];												//*add/remove flag
-	[toEncode appendBytes:&routingProcessorType length:sizeof(routingProcessorType)];		//processor type
 	NSData *connectionData = [aConnection MIDIBytes];										//processor data
 	[toEncode appendData:connectionData];		
 	NSData *encodedPortion = [self encode87: toEncode];										//encode it

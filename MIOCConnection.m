@@ -66,12 +66,13 @@
 
 - (NSData *) MIDIBytes //convert to MIDI bytestream (NB converts to 0-based indexing)
 {
-	Byte buf[4];
-	buf[0] = _inPort - 1;
-	buf[1] = (_inChannel==kMIOCInChannelAll)?kMIOCInChannelAll:(_inChannel-1);
-	buf[2] = _outPort - 1;
-	buf[3] = (_outChannel==kMIOCOutChannelSameAsInput)?kMIOCOutChannelSameAsInput:(_outChannel-1);
-	return [NSData dataWithBytes:buf length:4];
+	Byte buf[5];
+	buf[0] = kMIOCRoutingProcessorOpcode;
+	buf[1] = _inPort - 1;
+	buf[2] = (_inChannel==kMIOCInChannelAll)?kMIOCInChannelAll:(_inChannel-1);
+	buf[3] = _outPort - 1;
+	buf[4] = (_outChannel==kMIOCOutChannelSameAsInput)?kMIOCOutChannelSameAsInput:(_outChannel-1);
+	return [NSData dataWithBytes:buf length:5];
 }
 
 @end

@@ -12,6 +12,7 @@
 
 #define	kMIOCInChannelAll			0x80
 #define kMIOCOutChannelSameAsInput  0x80
+#define kMIOCRoutingProcessorOpcode 0x00
 
 @interface MIOCConnection : NSObject {
 	Byte _inPort;
