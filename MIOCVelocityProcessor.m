@@ -7,6 +7,7 @@
 //
 
 #import "MIOCVelocityProcessor.h"
+#import "MIOCConnection.h"
 
 
 @implementation MIOCVelocityProcessor
@@ -30,7 +31,7 @@
 // note, here gradients are true gradients: -16...+15.875
 - (void) setVelocityMapThreshold:(Byte)threshold GradientAbove:(double)gradientAbove GradientBelow:(double)gradientBelow Offset:(Byte)offset
 {
-	NSAssert( (threshold >= 0 && threshold <= 127), @"threshold out of range");
+	NSAssert( (threshold <= 127), @"threshold out of range");
 	_threshold = threshold;
 	
 	NSAssert( (gradientAbove >= -16.0 && gradientAbove <=15.875), @"above gradient out of range");
@@ -46,20 +47,20 @@
 //set a simple velocity weighting
 - (void) setWeight:(double)weight
 {
-	NSAssert( (weight >= 0.0 && weight <=1.0), @"Weight out of range")
+	NSAssert( (weight >= 0.0 && weight <=1.0), @"Weight out of range");
 	[self setVelocityMapThreshold:0 GradientAbove:weight GradientBelow:1.0 Offset:0];
 }
 - (void) setPosition:(Byte)position
 {
-	NSAssert( (position >= 0 && position <= 7), @"position out of range")
+	NSAssert( (position <= 7), @"position out of range");
 	_position = position;
 }
 
  //convert to MIDI bytestream
 - (NSData *) MIDIBytes
 {
-	Byte buf[8], chan;
-	NSAsert( (_IOOpcode == kMIOCInputVelocityProcessorOpcode || _IOOpcode == kMIOCOutputVelocityProcessorOpcode), @"Opcode incorrect");
+	Byte buf[8];
+	NSAssert( (_IOOpcode == kMIOCInputVelocityProcessorOpcode || _IOOpcode == kMIOCOutputVelocityProcessorOpcode), @"Opcode incorrect");
 	buf[0] = _IOOpcode;
 	buf[1] = _port - 1;
 	buf[2] = (_channel==kMIOCInChannelAll)?0x10:(0x90 + _channel - 1);

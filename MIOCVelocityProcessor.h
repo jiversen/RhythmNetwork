@@ -17,9 +17,9 @@
 	Byte _IOOpcode;
 	Byte _position;
 	Byte _threshold;
-	Sint8 _gradientBelowThreshold;
-	Sint8 _gradientAboveThreshold;
-	Sint8 _offset;
+	SInt8 _gradientBelowThreshold;
+	SInt8 _gradientAboveThreshold;
+	SInt8 _offset;
 }
 
 - (MIOCVelocityProcessor *) initWithPort:(Byte)port Channel:(Byte)channel OnInput:(BOOL)isInput;
