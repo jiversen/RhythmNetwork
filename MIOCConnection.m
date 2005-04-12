@@ -7,6 +7,7 @@
 //
 
 #import "MIOCConnection.h"
+#import "MIOCVelocityProcessor.h"
 
 //note--arguments to methods use 1 as basis (e.g. ports 1-8), as does internal representation
 // Conversion to 0 based happens in MIDIBytes method
@@ -28,14 +29,30 @@
 	_inChannel = (Byte) anInChannel;
 	_outPort = (Byte) anOutPort;
 	_outChannel = (Byte) anOutChannel;
+	[self setWeight:1.0];
 	return self;
 }
 
-
-- (MIOCConnection *) init
+- (void) dealloc
 {
-	return [self initWithInPort:0 InChannel:0 OutPort:0 OutChannel:0];
+	[_velocityProcessor release];
+	_velocityProcessor = nil;
+	[super dealloc];
 }
+
+- (void) setWeight:(double)weight
+{
+	if (_weight != weight) {
+		_weight = weight;
+		[_velocityProcessor release];
+		_velocityProcessor = nil;
+		if (weight != 1.0) {
+			_velocityProcessor = [[MIOCVelocityProcessor alloc] initWithPort:_outPort Channel:_outChannel OnInput:NO];
+			[_velocityProcessor setWeight:weight];
+		}
+	}
+}
+
 
 - (NSString *) description
 {

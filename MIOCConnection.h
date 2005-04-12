@@ -10,6 +10,8 @@
 
 #import <Cocoa/Cocoa.h>
 
+@class MIOCVelocityProcessor;
+
 #define	kMIOCInChannelAll			0x80
 #define kMIOCOutChannelSameAsInput  0x80
 #define kMIOCRoutingProcessorOpcode 0x00
@@ -19,11 +21,14 @@
 	Byte _inChannel;
 	Byte _outPort;
 	Byte _outChannel;
+	double _weight;
+	MIOCVelocityProcessor *_velocityProcessor;
 }
 
 + (MIOCConnection *) connectionWithInPort:(int) anInPort InChannel:(int) anInChannel OutPort:(int) anOutPort OutChannel:(int) anOutChannel;
 - (MIOCConnection *) initWithInPort:(int) anInPort InChannel:(int) anInChannel OutPort:(int) anOutPort OutChannel:(int) anOutChannel;
-- (MIOCConnection *) init;
+
+- (void) setWeight:(double)weight;
 
 - (NSString *) description;
 
