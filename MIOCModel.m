@@ -63,6 +63,7 @@ static Byte removeProcessorFlag[1] = {0x00};
 //  iterate through an array of MIOCConnections, connecting each one
 - (void) connectMany:(NSArray *) aConnectionList;
 {
+	NSAssert( (aConnectionList != nil), @"nil connection List");
 	MIOCConnection *conn;
 	NSEnumerator *enumerator = [aConnectionList objectEnumerator];
 	while (conn = [enumerator nextObject]) {
@@ -93,6 +94,7 @@ static Byte removeProcessorFlag[1] = {0x00};
 
 - (void) disconnectMany:(NSArray *) aConnectionList
 {
+	NSAssert( (aConnectionList != nil), @"nil connection List");
 	MIOCConnection *conn;
 	NSEnumerator *enumerator = [aConnectionList objectEnumerator];
 	while (conn = [enumerator nextObject]) {
@@ -131,20 +133,38 @@ static Byte removeProcessorFlag[1] = {0x00};
 
 //setter--replace old list contents (not object); also manage real connections
 //  ***potential optimization--calculate incremental change and only update connections that changed
+//- (void) setConnectionList: (NSArray *) newConnectionList
+//{
+//	if (_connectionList != newConnectionList) {	
+//		[self disconnectAll];
+//		[self connectMany:newConnectionList];
+//	}
+//}
+
+//do an incremental change: determine connections that need to be lost and those needing to be added
 - (void) setConnectionList: (NSArray *) newConnectionList
 {
-	if (_connectionList != newConnectionList) {	
-		[self disconnectAll];
-		[self connectMany:newConnectionList];
-	}
-}
+	NSMutableArray *connectionsToRemove = [NSMutableArray arrayWithCapacity:10];
+	NSMutableArray *connectionsToAdd = [NSMutableArray arrayWithCapacity:10];
 
-- (void) setConnectionListTimerHandler: (NSTimer *) timer
-{
-	NSArray *connList = (NSArray *) [timer userInfo];
-	NSLog(@"In setConnectionList timer handler, starting to reprogram MIOC");
-	[self setConnectionList:connList ];
-	NSLog(@"Finished reprogramming MIOC");
+	//find current connections NOT in new list (to remove)
+	MIOCConnection *conn;
+	NSEnumerator   *currentEnumerator = [[self connectionList] objectEnumerator];
+	while (conn = [currentEnumerator nextObject]) {
+		if ([newConnectionList containsObject:conn] == NO)
+			[connectionsToRemove addObject:conn];
+	}
+	
+	//find new connections not already in current list (to add)
+	NSEnumerator   *newEnumerator = [newConnectionList objectEnumerator];
+	while (conn = [newEnumerator nextObject]) {
+		if ([[self connectionList] containsObject:conn] == NO)
+			[connectionsToAdd addObject:conn];
+	}
+	
+	[self disconnectMany:connectionsToRemove];
+	[self connectMany:connectionsToAdd];
+	NSLog(@"Update connections: Remove %d; Add %d\n", [connectionsToRemove count], [connectionsToAdd count]);
 }
 
 // *********************************************
