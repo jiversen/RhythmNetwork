@@ -8,6 +8,7 @@
 @class RNNetworkView;
 @class MIOCSetupController;
 @class RNExperiment;
+@class RNNetwork;
 
 @interface RNController : NSWindowController
 {
@@ -32,7 +33,7 @@
 
 - (MIOCSetupController *) MIOCController;
 
-- (void) programMIOCWithNetwork:(id)sender;
+- (void) programMIOCWithNetwork:(RNNetwork *)newNet;
 
 - (void) newStimulusNotificationHandler: (NSNotification *) notification;
 - (void) newNetworkNotificationHandler: (NSNotification *) notification;

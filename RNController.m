@@ -165,12 +165,12 @@
 }
 
 //
-- (IBAction) programMIOCWithNetwork:(id)sender
+- (void) programMIOCWithNetwork:(RNNetwork *)newNet
 {
-	if ([_experiment currentNetwork] != nil) {
+	if (newNet != nil) {
 		MIOCModel *device = [_MIOCController deviceObject];
 		NSAssert( (device != nil), @"MIOC hasn't been initialized!");
-		[device setConnectionList:[[_experiment currentNetwork] MIOCConnectionList] ];	
+		[device setConnectionList:[newNet MIOCConnectionList] ];	
 	}
 }
 
