@@ -56,7 +56,6 @@ typedef struct _MIOCMessage {
 
 - (NSArray *) connectionList;
 - (void) setConnectionList: (NSArray *) aConnectionList;
-//- (void) setConnectionListTimerHandler: (NSTimer *) timer;
 
 - (MIDIIO *) MIDILink;
 - (void)receiveSysexData:(NSData *)data;
