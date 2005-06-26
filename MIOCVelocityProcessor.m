@@ -28,7 +28,7 @@
 	return self;
 }
 //massed setter, will need per-variable if we do bindings UI
-// note, here gradients are true gradients: -16...+15.875
+// note, here gradients are true gradients: -16...+15.875, not integers as in midi stream
 - (void) setVelocityMapThreshold:(Byte)threshold GradientAbove:(double)gradientAbove GradientBelow:(double)gradientBelow Offset:(Byte)offset
 {
 	NSAssert( (threshold <= 127), @"threshold out of range");
