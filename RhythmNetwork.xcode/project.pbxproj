@@ -180,6 +180,7 @@
 		};
 		0B3695DF07A8BA3800FC1B4B = {
 			children = (
+				0B4A1473086FB0D300D02035,
 				0B3A673907C90F38004591B6,
 				0B3695DB07A8BA2100FC1B4B,
 				0B36959707A85D0300FC1B4B,
@@ -314,6 +315,8 @@
 		};
 		0B3B3A1106EAFCF9007B30B3 = {
 			children = (
+				0BB7D18D0800FFF700246F8F,
+				0BB7D18E0800FFF700246F8F,
 				0B89D33D06FC10950024E7BC,
 				0B89D33E06FC10950024E7BC,
 				0B2F157906E0547600693117,
@@ -351,6 +354,21 @@
 		};
 		0B477B8306E7F5C600926C80 = {
 			fileRef = 0B477B8106E7F5C600926C80;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		0B4A1473086FB0D300D02035 = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			lastKnownFileType = text.xml;
+			name = matlabtest.netdef;
+			path = /Users/jri/matlabtest.netdef;
+			refType = 0;
+			sourceTree = "<absolute>";
+		};
+		0B4A1474086FB0D300D02035 = {
+			fileRef = 0B4A1473086FB0D300D02035;
 			isa = PBXBuildFile;
 			settings = {
 			};
@@ -505,6 +523,34 @@
 		};
 		0B89D34006FC10950024E7BC = {
 			fileRef = 0B89D33E06FC10950024E7BC;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		0BB7D18D0800FFF700246F8F = {
+			fileEncoding = 4;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.c.h;
+			path = MIOCVelocityProcessor.h;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		0BB7D18E0800FFF700246F8F = {
+			fileEncoding = 4;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.c.objc;
+			path = MIOCVelocityProcessor.m;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		0BB7D18F0800FFF700246F8F = {
+			fileRef = 0BB7D18D0800FFF700246F8F;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		0BB7D1900800FFF700246F8F = {
+			fileRef = 0BB7D18E0800FFF700246F8F;
 			isa = PBXBuildFile;
 			settings = {
 			};
@@ -886,6 +932,7 @@
 				0B36952D07A816F800FC1B4B,
 				0B3A669E07C85944004591B6,
 				0B37B95407CF0AA400FADE24,
+				0BB7D18F0800FFF700246F8F,
 			);
 			isa = PBXHeadersBuildPhase;
 			runOnlyForDeploymentPostprocessing = 0;
@@ -904,6 +951,7 @@
 				0B77FFF70774B1630028C124,
 				0B36959807A85D0300FC1B4B,
 				0B3695DC07A8BA2100FC1B4B,
+				0B4A1474086FB0D300D02035,
 			);
 			isa = PBXResourcesBuildPhase;
 			runOnlyForDeploymentPostprocessing = 0;
@@ -939,6 +987,7 @@
 				0B36952E07A816F800FC1B4B,
 				0B3A669F07C85944004591B6,
 				0B37B95507CF0AA400FADE24,
+				0BB7D1900800FFF700246F8F,
 			);
 			isa = PBXSourcesBuildPhase;
 			runOnlyForDeploymentPostprocessing = 0;

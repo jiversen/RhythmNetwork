@@ -142,8 +142,12 @@
 	
 	//descriptive text regarding stimulus
 	RNStimulus *stim = [self stimulusForChannel:stimulusChannel];
+	NSString *stimStr;
 	if (stim != nil) {
-		NSString *stimStr = [NSString stringWithFormat:@"%.0f\nx %d", [stim IOI_ms], [stim nEvents] ];
+		if ([stim jitter_ms] == 0.0)
+			stimStr = [NSString stringWithFormat:@"%.0f\nx %d", [stim IOI_ms], [stim nEvents] ];
+		else
+			stimStr = [NSString stringWithFormat:@"%.0f±%.0f\nx %d", [stim IOI_ms], [stim jitter_ms], [stim nEvents] ];
 		NSDictionary *attributes = [NSDictionary dictionaryWithObjectsAndKeys:[NSColor redColor], NSForegroundColorAttributeName, \
 			[NSFont fontWithName:@"Helvetica" size:7], NSFontAttributeName, nil,nil];
 		[stimStr drawAtPoint:NSMakePoint( (centerPt.x + 1.5 * kNodeScale) * radius, (centerPt.y - 0.45 * kNodeScale) * radius ) withAttributes:attributes];

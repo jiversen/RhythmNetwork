@@ -180,11 +180,14 @@
 {
 	MIDIIO *io = [[_MIOCController deviceObject] MIDILink];
 	
-	RNStimulus *stim = (RNStimulus *) [[notification object] experimentPart];
+	RNExperimentPart *part = [notification object];
+	RNStimulus *stim = (RNStimulus *) [part experimentPart];
 	NSLog(@"received notification stimulus: %@", [stim description]);
 	//schedule midi
 	NSData *pl = [stim MIDIPacketListForExperimentStartTime:[_experiment experimentStartTimeNanoseconds] ];
 	[io sendMIDIPacketList:pl];
+	//store scheduled times in experiment part
+	[part setSubEventTimes:[stim eventTimes]];
 	//update experiment
 	[_experiment setCurrentStimulus:stim ForChannel:[stim stimulusChannel]];
 	//update view (picks up new stimuli in network)

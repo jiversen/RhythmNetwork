@@ -19,6 +19,7 @@
 	NSTimeInterval	_startTime_s;
 	NSTimeInterval  _actualStartTime_s;
 	NSTimeInterval  _startTimeUncertainty_s;
+	NSString		*_subEventTimes;
 	NSTimer			*_startTimer;
 }
 
@@ -36,6 +37,9 @@
 - (void) setActualStartTime: (NSTimeInterval) time;
 - (NSTimeInterval) startTimeUncertainty;
 - (void) setStartTimeUncertainty: (NSTimeInterval) time;
+- (NSString *) subEventTimes;
+- (void) setSubEventTimes: (NSString *) timesStr;
+
 
 - (NSTimer *) startTimer;
 - (void) setStartTimer: (NSTimer *) theTimer;

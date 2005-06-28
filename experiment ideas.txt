@@ -14,3 +14,21 @@ adding induction to new nodes
 
 Leader follower dynamics--how expressed? Louder taps / leading timing e.g.
 
+6/25/05
+Reading Strogatz's Sync
+Cricket experiment proposed (ever completed?) is very similar to mine. There, they planned to smoothly increase
+connection strength, looking for some kind of phase transition from random to synchrony. For mine, ask people to tap at
+own tempo, ramp up how much they hear others. I predict, however, that even hearing others a little will enable synch,
+but perhaps that's the point--it's not a smooth function of connection strength. (K name). Track down biologist who
+was doing these experiments. 
+
+Other ideas inspired: Stimulated line: one node is driven (receiving external input), the rest are connected linearly.
+Instruction: tap in synch with what you hear. Each person hears only one input. At first the driving input is
+random in time, so taps are in reaction--as driving input becomes regular and thus predictable, chart the emergence of
+synchrony among the tappers. Variations--randomly change who's being driven from beat to beat. Close the circle.
+With/without self feedback. 
+
+Other one, of course, is to have two isolated clusters w/ different temp and then examine behavior as a 'shortcut' is
+added linking the two.
+
+Finally, gain some intuition by simulating such experiments, and compare results.

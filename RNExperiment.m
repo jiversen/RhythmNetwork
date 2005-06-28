@@ -335,7 +335,8 @@
 			[[part experimentPart] description], @"description", \
 			[NSNumber numberWithDouble:[part startTime]], @"startTime", \
 			[NSNumber numberWithDouble:[part actualStartTime]], @"actualStartTime", \
-			[NSNumber numberWithDouble:[part startTimeUncertainty]], @"startTimeUncertainty", nil];
+			[NSNumber numberWithDouble:[part startTimeUncertainty]], @"startTimeUncertainty", \
+			[part subEventTimes], @"subEventTimes", nil]; // ???:jri:20050627 How sleazy is this? If subEventTimes undefined, it's nil therefore ending dict
 		[partTimingArray addObject:dict];
 	}
 	[temp setObject:partTimingArray forKey:@"partTiming"];

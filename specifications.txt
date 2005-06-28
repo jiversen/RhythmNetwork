@@ -297,7 +297,7 @@ user choices do result in a change in defaults. (Note, to view application defau
  Additions: probably not for now: allow creating/editing networks and stimuli from within the program. Simplest would be
  to type in string representations. More elegant would do it graphically. this is a large project, and not really
  necessary, though I'm sure it'd be fun. For now, drop it. Do it in matlab instead.
- 
+
  3/24/05
  Working in matlab most recently: wrote mfile to generate an experiment structure, convert to xml. Tested this--reads
  correctly in RN.
@@ -316,8 +316,66 @@ user choices do result in a change in defaults. (Note, to view application defau
  changes, so I could always roll it back to the current state. Still unclear: do I do this with version number or
  by creating a new branch or tag? E.g. do I say: revision # 3 is the last one without weighted connections (and remember)
  or do I create some more symbolic tag? What if I make other changes yet only want to revert a subset of files to their
- earlier state (assuming no interactions...) This is what I want to do... 
+ earlier state (assuming no interactions...) This is what I want to do... well, could do either--a branch is more discrete,
+ and self documenting, a 'snaapshot'. As far as mixed revisions, I suppose I can svn update individual files to arbitrary
+ revision numbers. Must choose revision log messages informatively.
  
- a few more questions: in matlab how control options to diff when I choose that button in SCM panel of a file's info?
+ a few more questions: in xcode how control options to diff when I choose that button in SCM panel of a file's info?
+ by installing gnu diffutils. 
  
+ Finally, took a stab at setting up viewCVS web interface to my repository--looks great! This took quite some fiddling
+ to get working. I've also started using revision control on various config files that I'm editing-that'll allow
+ easy merging, e.g. into a new system install.
  
+ 4/1/05
+ On way to Ann Arbor and then CNS. Been working on CNS stream poster and a little subversion. Will make a branch now
+ 
+ 4/7/05 at bennington
+ Did it. Now realized a major flaw in weighted connections--there's no way to do it, really. can only weight input (to all
+ destinations) or output (from all)--that is, velocity processor is a node, not a connection, property. Could use port 7 as some kind
+ of patch panel to work around this, which could get me up to 16 weighted connections, or only use it in simple situations. 
+ As this is a refinement, at this point, perhaps better to abandon it all together. A much more elaborate change would
+ be to use the computer as the matrix, allowing such weighting and DELAYS. Of course, this would mean a completely
+ new program, but it wouldn't be too hard. What would latency be in this case?
+ 
+ 4/12/05 at JFK
+ On my way home from CNS conference. 
+ 
+ 6/24/05 in air
+ On way to Ann Arbor. Just browsing around. Will get this experiment started this summer. Not sure if there's much
+ to do at the moment. I added MIOC velocity processor. No need to keep working on a general weighting scheme for now.
+ Could consider adding vel processing to each person's input (if output from triggers isn't adequate in some way), or
+ to actively censor/boost individuals. This would require an additional experiment part, probably--it's a per-tapper
+ property that would be set, as opposed to a network property.
+ 
+ Looking over it again. Pretty complete. Thinking about actual experiment--how compensate for people's different
+ tappping strengths? 1) just clamp them all to a fixed velocity (if on output from trigger then we lose all velocity
+ performance data, so we ought to do it on input processor for each node: options: pass as is, compress, clamp to
+ a specific velocity value.\
+ 
+ Thought up some new experiment designs (experiment ideas.txt) that could make use of a global 'connection strength' that
+ would modulate velocity (at input or output?) at input, controls what you hear of me, at output, controls what i hear
+ of others. Could be either, but perhaps on output, representing how well a node is coupled to the rest of the network.
+ Another is capability for randomly timed inputs--to probe reaction/anticipation transition. Gradients of these kinds of
+ properties, rather than step changes, would be ideal. General class: parameter gradient. Start value, end value, start
+ time, duration, computed end time, curve (linear, accel/decel) a timer for changing the value, a target object that 
+ the parameter value is plugged into each time it changes...
+ will require more MIOC programming--how well will it handle this? More generally, how do realtime control of parameters?
+ Man, this is starting to sound a lot like a general sequencer? Tempting to make it all in software, but unsure of capacity
+ limits for that. Would probably need some kind of firewire/multiple port midi interface. Can't search on this now, 
+ unfortunately. 
+ For random stimulus: mean ISI & std deviation from mean, or continuous from min to max?
+ 
+ 6/26/05
+ On way home from Ann Arbor. Dad's Birthday.
+ Added a jitter parameter to stimulus (and RNBBNode). For each event, uniformly distributed jitter is added.
+ 
+ 6/27/05
+ checking accuracy of recordedEvents in matlab--isochronous is right on, with errors in 10s of ns. This is the
+	time recorded by a simple loopback. The jittered one didn't quite make sense--some IOIs were outside the
+	jitter range...For full accountability, store in 'partTiming' record the requested times of stimulus events.
+DONE: fixed jitter (was jittering the asynchrony, in fact, so that IOIs could be between IOI+/- 2*jitter,
+	which includes zero. Now jitters the IOI, appropriately. Stimulus saves a list of requested event times
+	relative to experiment start, which are saved as part of the partTiming record in output file. Field name
+	is subEventTimes. Finally, had to change RNController to, after programming the part, store the stimulus's
+	eventTimes into the part's subEventTimes. Changed RNExperiment to save the new part data. Will comitt

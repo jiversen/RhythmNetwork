@@ -56,20 +56,23 @@
 - (RNExperimentPart *) initWithObject: (id) anObject RelativeStartTime: (NSTimeInterval) startTime_s Description: (NSString *) description
 {
 	self = [super init];
-	_experimentPart = anObject;
+	_experimentPart = [anObject retain]; // !!!:jri:20050627 did not retain prior, yet did autorelease; now balanced
 	_startTime_s = startTime_s;
-	_description = description;
-	
+	_description = [description copy];   // !!!:jri:20050627 more appropriate to copy; added release in dealloc	
 	return self;
 }
 
 - (void) dealloc
 {
-	[_experimentPart autorelease];
+	[_experimentPart release];
 	_experimentPart = nil;
 	[_startTimer invalidate];
-	[_startTimer autorelease];
+	[_startTimer release];
 	_startTimer	= nil;
+	[_description release];
+	_description = nil;
+	[_subEventTimes release];
+	_subEventTimes = nil;
 }
 
 // *********************************************
@@ -117,6 +120,15 @@
 - (void) setStartTimeUncertainty: (NSTimeInterval) time
 {
 	_startTimeUncertainty_s = time;
+}
+
+- (NSString *) subEventTimes { return _subEventTimes; }
+
+- (void) setSubEventTimes: (NSString *) timesStr
+{
+	[_subEventTimes autorelease]; //auto protects against something silly like [obj setSubEventTimes: [obj subEventTimes]];
+	_subEventTimes = nil;
+	_subEventTimes = [timesStr copy];
 }
 
 - (NSTimer *) startTimer
