@@ -183,8 +183,11 @@
 			} else {
 				[[nodeList objectAtIndex:iNode] flashWithColor:[NSColor greenColor] inView:self];
 				//send event to appropriate histogramView
-				RNNodeHistogramView *hview = [_nodeHistogramViews objectAtIndex:(iNode-1)]; //**note indexing
-				[hview addEventAtTime:message->eventTime_ns];
+				if (_nodeHistogramViews != nil) {
+					RNNodeHistogramView *hview = [_nodeHistogramViews objectAtIndex:(iNode-1)]; //**note indexing
+					[hview addEventAtTime:message->eventTime_ns];
+				}
+
 			}
 		} else { 	//if it's unexpected, display the offending channel, note info		
 					//NSAssert( (iNode != 0xFFFF), @"Received MIDI channel,note that doesn't correspond to a node!");

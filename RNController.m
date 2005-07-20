@@ -96,7 +96,7 @@
 		
 		//clear out the old one
 		if (_experiment != nil) {
-			[[[_MIOCController deviceObject] MIDILink] removeMIDIListener:_networkView];
+			[[[_MIOCController deviceObject] MIDILink] removeMIDIListener:_networkView]; //***fix, may already be removed
 			[_networkView setNetwork:nil];
 			
 			[_experimentPartsController setSelectedObjects:[NSArray array]]; //??pass empty array to clear?
@@ -123,7 +123,7 @@
 		
 		//Configure view: current network and register view to receive midi
 		[_networkView setNetwork: [_experiment currentNetwork]];	
-		[[[_MIOCController deviceObject] MIDILink] registerMIDIListener:_networkView];
+		//[[[_MIOCController deviceObject] MIDILink] registerMIDIListener:_networkView];
 		
 		//fill in text fields (we are their delegate)
 		[[self window] setTitleWithRepresentedFilename:filePath];
@@ -286,6 +286,7 @@
 	[_experiment prepareToStartAtTimestamp: AudioConvertNanosToHostTime(now_ns) 
 								 StartDate: startDate ];
 	
+	[[[_MIOCController deviceObject] MIDILink] registerMIDIListener:_networkView];
 	[_experiment startRecordingFromDevice:[_MIOCController deviceObject] ];
 	
 	//synchronize view
@@ -345,6 +346,9 @@
 	[_startButton setKeyEquivalent:@""];
 	[_loadButton setEnabled:YES];
 	[_testPartButton setEnabled:YES];
+	
+	//stop updating display w/ midi input
+	[[[_MIOCController deviceObject] MIDILink] removeMIDIListener:_networkView];
 }
 
 //stop button handler

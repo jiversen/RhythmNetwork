@@ -410,4 +410,50 @@ consolidate the final method that creates MIDI message for a processor.
 7/19/05 Wrap it up so I can begin testing with the MIOC. Decided to stop w/ development of velocity processing for now.
 I have enough done to begin to test the hardware and figure out such practicalities.
 
+7/20/05 Working w/ full setup today. Fixed connection lists so that computer BB hears everything. the MIOC is
+working absolutely great. One thing is that if it's powercycled, all connections are fogotten (good). But might need
+a 'reset' button to remove all connections in my model to sync the two.
+
+Drum machine setup: 
+Now picking out some sounds:
+206 Lo Clave
+215 Md Block
+216 Lo Block
+198 HiCgSlp
+Drum machine setup: 
+MIDI: drums 1-6 are notes 65-70; drum 12 is note 64 (pacing stimulus)
+Channel: node#; Drum in ON V1 (linear velocity map); Drum out OFF (for now, testing it's on)
+Clock in/out both OFF; MIDI thru OFF; Program change OFF (though could use this in future); 
+Note map NORMAL (*in future, could use this to expand # of individual drum sounds using multi)
+
+Drum set: set 0; pads 1-6 same sound (now Lo Clave), volume 99, panning center, tuning 0, asn multi, output main,
+pad 12 same, but different sound (HiCgSlp).
+
+This'll be basic set:  all other tappers have identical sounds. Could also make each tapper sound different using
+panning, tuning and/or different sounds. Stay from panning, as that implies directional hearing (and consequent
+grouping of others in different parts of space). But can use tuning and different sounds. For future, might have
+each drumset consist of one or two sounds, spanning full tuning range.
+
+Using Sysex Librarian, saved this as "SR-16 BasicSet.syx"--then set channel number differently for each node
+
+Trigger->MIDI converter setup
+
+First tests
+Realized event histograms were collecting all the time, not only when experiment running. Plus, they did not reset
+after stopping/saving/restarting an experiment. Consequently, they overflowed. Increased the buffer size, but now
+need to fix the actual recording. Otherwise, things look good. Did fix the drawing code when a new tap was added:
+it was using a different coordinate system, leading to random bars appearing briefly before entire view was redrawn.
+??Why is entire view redrawn every tap? How often is it redrawn--use Quartzdebug
+
+Would like: some user interface to design networks, of course. In the mean time, would be nice to be able to adjust
+how loud the pacing stimuli are. Easiest way: adjust in the drum machine.
+
+ToDo: 
+Don't have histograms record continuously
+prevent quitting w/o saving first
+add a 'reset' connections button to drawer--remove all connections
+at end of experiment, unhilight expt parts
+when quitting, disconnect everything (else will be out of sync when restarting)
+
+
 

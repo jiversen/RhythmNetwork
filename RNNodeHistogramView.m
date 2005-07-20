@@ -60,6 +60,7 @@
 		// ** also--posibility to reinterpret (or not) past events in terms of new stimulus periodicity
 		for (i=0; i<nBins; i++)
 			_counts[i] = 0;
+		_numEvents = 0; //necessary when re-setting stimulus
 	}
 }
 
@@ -93,8 +94,11 @@
 		}
 		
 		//just update the single bin
-		NSRect barRect = NSMakeRect( (iBin * _binWidth_ms) - (_targetIOI_ms/2.0), 0, _binWidth_ms, _counts[iBin]);
-		NSBezierPath *aPath = [NSBezierPath bezierPathWithRect:barRect];
+		NSRect bounds = [self bounds];
+		//NSRect barRect = NSMakeRect( (iBin * _binWidth_ms) - (_targetIOI_ms/2.0), 0, _binWidth_ms, _counts[iBin]);		
+		float yCount = (_counts[iBin] / _yMax) * bounds.size.height * 0.8;
+		NSRect barRect = NSMakeRect( iBin - (bounds.size.width/2.0) , 0.0, 1.0, yCount);
+		NSBezierPath *aPath = [NSBezierPath bezierPathWithRect:barRect];		
 		
 		[self lockFocus];
 		[[NSColor blueColor] setFill];
