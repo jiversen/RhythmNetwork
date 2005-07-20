@@ -10,7 +10,7 @@
 
 #define kInitialYMax 5
 #define kMaxNumBins 1000
-#define kMaxNumEvents 1000
+#define kMaxNumEvents 10000
 
 @class RNStimulus;
 
