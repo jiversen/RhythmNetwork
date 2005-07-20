@@ -315,6 +315,7 @@
 		};
 		0B3B3A1106EAFCF9007B30B3 = {
 			children = (
+				0BCD60B7087B3EED00B1BEE1,
 				0BB7D18D0800FFF700246F8F,
 				0BB7D18E0800FFF700246F8F,
 				0B89D33D06FC10950024E7BC,
@@ -551,6 +552,20 @@
 		};
 		0BB7D1900800FFF700246F8F = {
 			fileRef = 0BB7D18E0800FFF700246F8F;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		0BCD60B7087B3EED00B1BEE1 = {
+			fileEncoding = 4;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.c.h;
+			path = MIOCProcessorProtocol.h;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		0BCD60B9087B3EED00B1BEE1 = {
+			fileRef = 0BCD60B7087B3EED00B1BEE1;
 			isa = PBXBuildFile;
 			settings = {
 			};
@@ -933,6 +948,7 @@
 				0B3A669E07C85944004591B6,
 				0B37B95407CF0AA400FADE24,
 				0BB7D18F0800FFF700246F8F,
+				0BCD60B9087B3EED00B1BEE1,
 			);
 			isa = PBXHeadersBuildPhase;
 			runOnlyForDeploymentPostprocessing = 0;

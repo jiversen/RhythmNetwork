@@ -18,6 +18,8 @@
 
 typedef UInt16 RNNodeNum_t;
 
+@class MIOCVelocityProcessor;
+
 @interface RNTapperNode : NSObject {
 	RNNodeNum_t	_nodeNumber; //as if...we'll ever have > 255 tappers, but it's logically possible
 	Byte	_sourcePort; //where to find tapper's performance
@@ -26,10 +28,11 @@ typedef UInt16 RNNodeNum_t;
 	Byte	_destPort; //where to send sound for this tapper to hear
 	Byte	_destChan;
 	Byte	_destNote; //can this also be mapped by MIOC?
-	NSPoint _plotLocation; //for drawing, in normalized coordinates
+	MIOCVelocityProcessor	*_sourceVelocityProcessor; //processing applied to performance
 	BOOL	_hearsSelf;
 	BOOL	_hearsBigBrother;
 	Byte	_bigBrotherSubChannel;
+	NSPoint _plotLocation; //for drawing, in normalized coordinates
 	NSColor *_flashColor;
 	double	_flashIntensity;  //1 then fades to 0
 	NSTimer	*_flashTimer;
@@ -62,6 +65,9 @@ typedef UInt16 RNNodeNum_t;
 
 - (Byte) destNote;
 - (void) setDestNote: (Byte) newDestNote;
+
+- (MIOCVelocityProcessor *) sourceVelocityProcessor;
+- (void) setSourceVelocityProcessor: (MIOCVelocityProcessor *) newSourceVelocityProcessor;
 
 - (NSPoint) plotLocation;
 - (void) setPlotLocation: (NSPoint) newPlotLocation;

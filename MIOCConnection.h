@@ -9,6 +9,7 @@
 //representation of a MIOC connection between an input port/channel to output port/channel
 
 #import <Cocoa/Cocoa.h>
+#import "MIOCProcessorProtocol.h"
 
 @class MIOCVelocityProcessor;
 
@@ -16,7 +17,7 @@
 #define kMIOCOutChannelSameAsInput  0x80
 #define kMIOCRoutingProcessorOpcode 0x00
 
-@interface MIOCConnection : NSObject {
+@interface MIOCConnection : NSObject <MIOCProcessor> {
 	Byte _inPort;
 	Byte _inChannel;
 	Byte _outPort;
@@ -35,6 +36,6 @@
 - (BOOL) isEqual: (id) anObject; //used for uniqueness testing in NSArray
 - (unsigned) hash;
 
-- (NSData *) MIDIBytes; //convert to MIDI bytestream
+//- (NSData *) MIDIBytes; //convert to MIDI bytestream
 
 @end

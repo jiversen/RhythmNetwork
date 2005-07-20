@@ -34,10 +34,10 @@
 	NSAssert( (threshold <= 127), @"threshold out of range");
 	_threshold = threshold;
 	
-	NSAssert( (gradientAbove >= -16.0 && gradientAbove <=15.875), @"above gradient out of range");
+	NSAssert( (gradientAbove >= -16.0 && gradientAbove <= 15.875), @"above gradient out of range");
 	_gradientAboveThreshold = (SInt8) round(gradientAbove * 8);
 	
-	NSAssert( (gradientBelow >= -16.0 && gradientBelow <=15.875), @"below gradient out of range");
+	NSAssert( (gradientBelow >= -16.0 && gradientBelow <= 15.875), @"below gradient out of range");
 	_gradientBelowThreshold = (SInt8) round(gradientBelow * 8);
 		
 	//offset can't be out of range--all SInt8 vals are permitted
@@ -50,10 +50,42 @@
 	NSAssert( (weight >= 0.0 && weight <=1.0), @"Weight out of range");
 	[self setVelocityMapThreshold:0 GradientAbove:weight GradientBelow:1.0 Offset:0];
 }
+
+- (void) setConstant:(SInt8)offset
+{
+	[self setVelocityMapThreshold:0 GradientAbove:0.0 GradientBelow:0.0 Offset:offset];
+}
+
 - (void) setPosition:(Byte)position
 {
 	NSAssert( (position <= 7), @"position out of range");
 	_position = position;
+}
+
+- (NSString *) description
+{
+	return [NSString stringWithFormat:@"%c port %d, channel %d: %.2f (%u) %.2f +%u", \
+		(_IOOpcode == kMIOCInputVelocityProcessorOpcode)?'I':'O', _port, _channel, \
+		(float) _gradientBelowThreshold / 8.0, \
+		_threshold, (float) _gradientAboveThreshold / 8.0, _offset];
+}
+
+- (BOOL) isEqual: (MIOCVelocityProcessor *) anObject
+{
+	BOOL equal;
+	MIOCVelocityProcessor *other = (id)anObject;	
+	
+	if (![other isMemberOfClass: [MIOCVelocityProcessor class] ])
+		return FALSE;
+	equal = ((_port	== other->_port) 
+			 && (_channel	== other->_channel) 
+			 && (_IOOpcode	== other->_IOOpcode)
+			 && (_position	== other->_position)
+			 && (_threshold	== other->_threshold)
+			 && (_gradientBelowThreshold	== other->_gradientBelowThreshold)
+			 && (_gradientAboveThreshold	== other->_gradientAboveThreshold)
+			 && (_offset    == other->_offset));
+	return equal;
 }
 
  //convert to MIDI bytestream

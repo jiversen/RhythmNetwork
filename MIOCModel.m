@@ -1,6 +1,8 @@
 #import "MIOCModel.h"
 
+#import "MIOCProcessorProtocol.h"
 #import "MIOCConnection.h"
+#import "MIOCVelocityProcessor.h"
 #import "MIDIIO.h"
 #import "NSStringHexStringCategory.h"
 
@@ -8,7 +10,7 @@
 static Byte sysexStart[1] = {0xF0};
 static Byte sysexEnd[1] = {0xF7};
 static Byte MIDITEMPID[3] = {0x00, 0x20, 0x0d};
-static Byte encodedMode[1] = {0x40};	//we'll never use handshaking or multi-packet messages
+static Byte encodedMode[1] = {0x40};	//we'll never send handshaking or multi-packet messages
 static Byte notEncodedMode[1] = {0x00}; // so these two suffice
 static Byte addRemoveProcessorOpcode[1] = {0x04};
 static Byte addProcessorFlag[1] = {0x80};
@@ -27,10 +29,10 @@ static Byte removeProcessorFlag[1] = {0x00};
 	_deviceID		= 0x00; //*** hard coded for now, later add discovery if we have multiple devices
 	_deviceType		= kDevicePMM88E;
 	_connectionList = [[NSMutableArray arrayWithCapacity:0] retain];
+	_velocityProcessorList = [[NSMutableArray arrayWithCapacity:0] retain];
 	
 	_MIDILink		= [[MIDIIO alloc] init];
 	[_MIDILink registerSysexListener:self];
-	
 	
 	return self;
 }
@@ -38,7 +40,8 @@ static Byte removeProcessorFlag[1] = {0x00};
 - (void) dealloc
 {
 	[_connectionList release];
-	[_MIDILink release];
+	[_velocityProcessorList release];
+	[_MIDILink release]; //removes listeners too
 	[super dealloc];
 }
 
@@ -131,16 +134,6 @@ static Byte removeProcessorFlag[1] = {0x00};
 	return [NSArray arrayWithArray:_connectionList];
 }
 
-//setter--replace old list contents (not object); also manage real connections
-//  ***potential optimization--calculate incremental change and only update connections that changed
-//- (void) setConnectionList: (NSArray *) newConnectionList
-//{
-//	if (_connectionList != newConnectionList) {	
-//		[self disconnectAll];
-//		[self connectMany:newConnectionList];
-//	}
-//}
-
 //do an incremental change: determine connections that need to be lost and those needing to be added
 - (void) setConnectionList: (NSArray *) newConnectionList
 {
@@ -168,6 +161,26 @@ static Byte removeProcessorFlag[1] = {0x00};
 }
 
 // *********************************************
+//    Velocity Processors
+// *********************************************
+#pragma mark VELOCITY PROCESSORS
+
+- (void) addVelocityProcessor:(MIOCVelocityProcessor *) aVelProc
+{
+	if (![_velocityProcessorList containsObject:aVelProc]) {
+		if ([self sendAddVelocityProcessorSysex:aVelProc] == kSendSysexSuccess) 
+			[_velocityProcessorList addObject:aVelProc];
+	} else
+		NSLog(@"Attempt was made to add velocity processor (%@) multiple times.", aVelProc);	
+}
+
+- (void) removeVelocityProcessor:(MIOCVelocityProcessor *) aVelProc
+{
+	
+}
+
+
+// *********************************************
 //    MIDI
 // *********************************************
 #pragma mark MIDI
@@ -180,12 +193,13 @@ static Byte removeProcessorFlag[1] = {0x00};
 }
 
 // *********************************************
-//     
+//     UNUSED
 - (void)receiveSysexData:(NSData *)data
 {
 	//NSString *hexStr = [[NSString alloc] initHexStringWithData:data];
 	//NSLog(@"MIOCModel Received Sysex (%d bytes): %@\n",[data length], hexStr);
-	//add logic here to parse message and fill in instance values
+	//add logic here to parse info messages and fill in instance values
+	//also potentially to verify connections made
 }
 
 // *********************************************
@@ -207,6 +221,22 @@ static Byte removeProcessorFlag[1] = {0x00};
 
 // *********************************************
 //  common method for connecting/disconnecting
+- (BOOL) sendConnectDisconnectSysex: (MIOCConnection *) aConnection withFlag:(Byte *)flagPtr
+{
+	
+	NSData *message = [self sysexMessageForProcessor: aConnection withFlag: flagPtr];
+	//unsigned i = [message retainCount];
+	//printf("before sendSysex, message: %x (%d B) retain %d\n",(unsigned) message, [message length], i);
+	
+	[_MIDILink sendSysex:message];
+	
+	//i = [message retainCount];
+	//printf("after sendSysex, message: %x %d\n",(unsigned) message, i);
+	//for now, assume all sysex sends complete correctly--how could we know otherwise?
+	return kSendSysexSuccess;
+}
+
+// *********************************************
 //  compose, encode and send sysex to make a connecion in MIOC
 - (NSData *) sysexMessageForConnection: (MIOCConnection *) aConnection withFlag:(Byte *)flagPtr
 {
@@ -228,26 +258,58 @@ static Byte removeProcessorFlag[1] = {0x00};
 	[message appendBytes:sysexEnd length:sizeof(sysexEnd)];
 	
 	return message;
-	
 }
-- (BOOL) sendConnectDisconnectSysex: (MIOCConnection *) aConnection withFlag:(Byte *)flagPtr
+
+
+- (BOOL) sendAddVelocityProcessorSysex:(MIOCVelocityProcessor *) aVelProc
 {
-	
-	NSData *message = [self sysexMessageForConnection: aConnection withFlag: flagPtr];
-	//unsigned i = [message retainCount];
-	//printf("before sendSysex, message: %x (%d B) retain %d\n",(unsigned) message, [message length], i);
-	
+	return [self sendAddRemoveVelocityProcessorSysex: aVelProc withFlag:addProcessorFlag];
+}
+
+- (BOOL) sendRemoveVelocityProcessorSysex:(MIOCVelocityProcessor *) aVelProc
+{
+	return [self sendAddRemoveVelocityProcessorSysex: aVelProc withFlag:removeProcessorFlag];
+}
+
+- (BOOL) sendAddRemoveVelocityProcessorSysex:(MIOCVelocityProcessor *) aVelProc withFlag:(Byte *)flagPtr
+{
+	NSData *message = [self sysexMessageForProcessor: aVelProc withFlag: flagPtr];	
 	[_MIDILink sendSysex:message];
-	
-	//i = [message retainCount];
-	//printf("after sendSysex, message: %x %d\n",(unsigned) message, i);
-	//for now, assume all sysex sends complete correctly--how could we know otherwise?
 	return kSendSysexSuccess;
 }
 
 // *********************************************
+//  general method to compose sysex message
+- (NSData *) sysexMessageForProcessor: (id <MIOCProcessor>) aProc withFlag:(Byte *)flagPtr
+{
+	NSMutableData *message = [NSMutableData dataWithCapacity:0];
+	
+	//preamble
+	[message appendBytes:sysexStart length:sizeof(sysexStart)];	//sysex start
+	[message appendBytes:MIDITEMPID length:sizeof(MIDITEMPID)]; //manufacturer-ID
+	[message appendBytes:&_deviceID length:1];					//device ID (address)
+	[message appendBytes:&_deviceType length:1];				//device Type
+	[message appendBytes:encodedMode length:sizeof(encodedMode)];	//Mode (data are encoded)
+	[message appendBytes:addRemoveProcessorOpcode length:sizeof(addRemoveProcessorOpcode)];	//opcode
+	
+	//encoded portion of message
+	NSMutableData *toEncode = [NSMutableData dataWithCapacity:0];
+	[toEncode appendBytes:flagPtr length:1];												//*add/remove flag
+	NSData *processorData = [aProc MIDIBytes];										        //processor data
+	[toEncode appendData:processorData];		
+	NSData *encodedPortion = [self encode87: toEncode];										//encode it
+	[message appendData:encodedPortion];
+	
+	//checksum and termination
+	message = [self addChecksum:message];
+	[message appendBytes:sysexEnd length:sizeof(sysexEnd)];
+	
+	return message;
+}
+
+// *********************************************
 //  calculate the checksum
-// From email from Thomas Elger, engineer of Mititemp: checksum is "Sum of all bytes 
+// From email from Thomas Elger, engineer of Miditemp: checksum is "Sum of all bytes 
 // [e.g.] (00,20,...,01,01) = 0xD9, 2th-complement (negated value) is 0x27. 
 //	0xD9 + 0x27 = 0x100 (lower 7 bits have to be 0)"
 // [query in regards to: f0 00 20 0d 00 20 40 04 06 40 00 00 00 00 01 01 ?? F7

@@ -9,6 +9,7 @@
 #import "RNConnection.h"
 #import "RNStimulus.h"
 #import "RNExperimentPart.h"
+#import "MIOCVelocityProcessor.h"
 
 enum connectFormIdx {
 	kFormPortIdx = 0,
@@ -64,6 +65,17 @@ enum connectFormIdx {
 	//NSLog(@"\n\tStart time: %@", [absStartTime description]);
 	//RNExperimentPart *temp = [[RNExperimentPart alloc] initWithObject:nil RelativeStartTime:1.0];
 	//[temp scheduleForExperimentStartTime:absStartTime];
+	
+//	MIOCVelocityProcessor *velproc1 = [[MIOCVelocityProcessor alloc] initWithPort:1 Channel:2 OnInput:NO];
+//	MIOCVelocityProcessor *velproc2 = [[MIOCVelocityProcessor alloc] initWithPort:1 Channel:2 OnInput:NO];
+//	MIOCVelocityProcessor *velproc3 = [[MIOCVelocityProcessor alloc] initWithPort:1 Channel:2 OnInput:YES];
+//	[velproc3 setWeight:0.5];
+//	[velproc1 setConstant:100];
+//	BOOL b;
+//	b = [velproc1 isEqual:velproc2];
+//	b = [velproc1 isEqual:velproc3];
+//	NSLog(@"velocity proc: %@", [velproc1 description]);
+	
 }
     
 - (void) dealloc
@@ -159,7 +171,7 @@ enum connectFormIdx {
 	
 	// this is just to show the result in the window
 	Byte flag[1] = {0x80};
-	NSData *message = [_deviceObject sysexMessageForConnection:con withFlag:flag];
+	NSData *message = [_deviceObject sysexMessageForProcessor:con withFlag:flag];
 	//***test of decoding process
 	NSData *decoded = [_deviceObject decodeMessage:message];
 	[_response setString: [[[NSString alloc] initHexStringWithData:decoded] autorelease] ];
@@ -176,7 +188,7 @@ enum connectFormIdx {
 	
 	// this is just to show the result in the window
 	Byte flag[1] = {0x00};
-	NSData *message = [_deviceObject sysexMessageForConnection:con withFlag:flag];
+	NSData *message = [_deviceObject sysexMessageForProcessor:con withFlag:flag];
 	[_response setString: [[[NSString alloc] initHexStringWithData:message] autorelease] ];
 }
     

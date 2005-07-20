@@ -378,4 +378,36 @@ DONE: fixed jitter (was jittering the asynchrony, in fact, so that IOIs could be
 	which includes zero. Now jitters the IOI, appropriately. Stimulus saves a list of requested event times
 	relative to experiment start, which are saved as part of the partTiming record in output file. Field name
 	is subEventTimes. Finally, had to change RNController to, after programming the part, store the stimulus's
-	eventTimes into the part's subEventTimes. Changed RNExperiment to save the new part data. Will comitt
+	eventTimes into the part's subEventTimes. Changed RNExperiment to save the new part data. Will commit. rev 30
+	
+Next: velocity processors for input and output of nodes--this'll allow things like manipulation of coupling strength
+	(but not generally weighted edges). Question is whether we need nodes to have individual parameters, or whether
+	it's enough to have a single global processor applied to all nodes. Uses: input processor can help normalize
+	performance velocities...but no, then we lose any performance details, so input processors won't be useful at all.
+	That leaves output processors, which means a processor right before hitting the sound generator. Affects all
+	inputs to a given node. (remember, nodes are addressed by channel for a single port)...That's economical,
+	but if we had each performer's output to one port, then we really could have individually weighted links. That's
+	not necessary now, only thinking about a global coupling strength (though, gosh it would be nice to have some
+	weighted links...)
+	
+	For now: adding velocity processors on output side. Add a collection (array in this case) of velocity processors
+	in addition to existing one of connections. These two now represent the state of the MIOC. Add a velocity processor
+	to each node, too. Need a way to change these velocity processor values during the experiment--some kind of new
+	experiment part, I think, defining a set value, or perhaps a gradient over some period of time. For the actua
+	processors, have a simple normalizing one--fixed velocity, and one that modifies the slope (a weight), perhaps
+	with a lower shelf. The first will hide any differences in individual tapper's tapping strength.
+	
+7/8/05 Now...what was I doing? Ah, yes. Refactoring to combine common code for processors. Defined a formal protocol
+MIOCProcessor (in MIOCProcessorProtocol.h) and added some protocol requirements to my more general code. The main
+point is that to qualify as a processor, an object needs to have a MIDIBytes method to express itself in a way
+that the MIOC can understand.
+
+I _could_ centralize all of the processor add/remove in MIOCModel, but that would be mere busywork--the semantics
+of different processors are such that it makes more sense to have dedicated add/remove methods for the two--we  have a
+list of connections in the netrowk, but no centralized list of velocity processors--each node has one. I did
+consolidate the final method that creates MIDI message for a processor.
+
+7/19/05 Wrap it up so I can begin testing with the MIOC. Decided to stop w/ development of velocity processing for now.
+I have enough done to begin to test the hardware and figure out such practicalities.
+
+

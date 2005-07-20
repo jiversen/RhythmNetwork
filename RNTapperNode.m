@@ -54,6 +54,12 @@ static NSArray *colorArray;
 		//Remainder of initialization happens in RNNetwork -initFromDictionary:
 		// plotting locations, stimulus channels and the like,
 		// as only the network object knows connections and how many nodes there are
+		
+		//details of addressing (input, output are same): tappers 1 to kNumInputsPerConcentrator are
+		//	  port: 1
+		// channel: tapper#
+		//    note: constant per concentrator (why?)
+		// does destNote make any sense?
 	}
 	
 	return self;
@@ -67,7 +73,10 @@ static NSArray *colorArray;
 		[_flashTimer release];
 		_flashTimer = nil;
 	}
-	[colorArray release];
+	[_sourceVelocityProcessor release];
+	_sourceVelocityProcessor = nil;
+	
+	//[colorArray release];  // !!!:jri:20050628 This is a class-wide value, not per instance. AND didn't set to nil, so was going to have multiple releases
 	[super dealloc];
 }
 
@@ -133,6 +142,14 @@ static NSArray *colorArray;
 - (void) setDestNote: (Byte) newDestNote
 {
 	_destNote = newDestNote;
+}
+
+- (MIOCVelocityProcessor *) sourceVelocityProcessor { return _sourceVelocityProcessor; }
+
+- (void) setSourceVelocityProcessor: (MIOCVelocityProcessor *) newSourceVelocityProcessor
+{
+	[_sourceVelocityProcessor autorelease];
+	_sourceVelocityProcessor = [newSourceVelocityProcessor retain];
 }
 
 - (NSPoint) plotLocation { return _plotLocation; }
@@ -201,10 +218,9 @@ static NSArray *colorArray;
 	
 	[aPath fill];
 	
-	//edge color: red if doesn't hear induction, green if does
-	//*** to do: color code according to which channel of BB is heard--defined by # induction sequences...
+	//red: hears no stimulus
+	//color code according to which channel of BB is heard--defined by # induction sequences...
 	if ([self hearsBigBrother]) {
-		//[self bigBrotherSubChannel];
 		[[[RNTapperNode colorArray] objectAtIndex:([self bigBrotherSubChannel]-1)]  setStroke];
 	} else {
 		[[NSColor redColor] setStroke];

@@ -5,6 +5,8 @@
 
 #import <Cocoa/Cocoa.h>
 
+#import "MIOCProcessorProtocol.h"
+
 #define kMIDITEMPID				0x00200d
 #define kSendSysexSuccess		TRUE
 #define kSendSysexFailure		FALSE
@@ -30,7 +32,7 @@ typedef struct _MIOCMessage {
 #define kModeMsgTypeMask (0x03)
 #define kOpcodeDirectionMask (1<<6)
 
-@class MIDIIO, MIOCConnection;
+@class MIDIIO, MIOCConnection, MIOCVelocityProcessor;
 
 @interface MIOCModel : NSObject
 {
@@ -39,6 +41,7 @@ typedef struct _MIOCMessage {
 	NSString		*_deviceName;		//User-specified name of device
 	
 	NSMutableArray	*_connectionList;	//set of MIOCConnection objects (our model of MIOC state)
+	NSMutableArray	*_velocityProcessorList; //set of MIOCVelocityProcessor objects (part of model of MIOC state)
 	
 	MIDIIO			*_MIDILink;			//our bridge to MIDI
 }
@@ -54,6 +57,9 @@ typedef struct _MIOCMessage {
 - (void) disconnectInPort: (int) anInPort InChannel: (int) anInChannel OutPort: (int) anOutPort OutChannel: (int) anOutChannel;
 - (void) disconnectAll;
 
+- (void) addVelocityProcessor:(MIOCVelocityProcessor *) aVelProc;
+- (void) removeVelocityProcessor:(MIOCVelocityProcessor *) aVelProc;
+
 - (NSArray *) connectionList;
 - (void) setConnectionList: (NSArray *) aConnectionList;
 
@@ -63,8 +69,13 @@ typedef struct _MIOCMessage {
 //private
 - (BOOL) sendConnectSysex:(MIOCConnection *) aConnection;
 - (BOOL) sendDisconnectSysex:(MIOCConnection *) aConnection;
-- (NSData *) sysexMessageForConnection: (MIOCConnection *) aConnection withFlag:(Byte *)flagPtr;
 - (BOOL) sendConnectDisconnectSysex: (MIOCConnection *) aConnection withFlag:(Byte *)flagPtr;
+
+- (BOOL) sendAddVelocityProcessorSysex:(MIOCVelocityProcessor *) aVelProc;
+- (BOOL) sendRemoveVelocityProcessorSysex:(MIOCVelocityProcessor *) aVelProc;
+- (BOOL) sendAddRemoveVelocityProcessorSysex:(MIOCVelocityProcessor *) aVelProc withFlag:(Byte *)flagPtr;
+
+- (NSData *) sysexMessageForProcessor: (id <MIOCProcessor>) aProc withFlag:(Byte *)flagPtr;
 
 - (NSMutableData *) addChecksum:(NSMutableData *)message;
 - (BOOL) verifyChecksum:(NSData *) message;
