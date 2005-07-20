@@ -54,7 +54,7 @@
 	tempNode = [[RNBBNode alloc] initWithNumStimulusChannels:_numStimulusChannels]; 
 	[tempNode setPlotLocationX: -1.15 Y: 1.15]; //upper left corner
 	[_nodeList addObject: [tempNode autorelease]];
-	//we need to associate stimuli with each channel---where to do this?
+	//we need to associate stimuli with each channel--done while constructing connection list
 	
 	//tapper nodes--arrange in a circle
 	double x, y, dAngle, angle, pi;
