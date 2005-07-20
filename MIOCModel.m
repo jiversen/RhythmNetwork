@@ -56,8 +56,10 @@ static Byte removeProcessorFlag[1] = {0x00};
 - (void) connectOne:(MIOCConnection *) aConnection
 {
 	if (![_connectionList containsObject:aConnection]) {
-		if ([self sendConnectSysex:aConnection] == kSendSysexSuccess) 
+		if ([self sendConnectSysex:aConnection] == kSendSysexSuccess) {
 			[_connectionList addObject:aConnection];
+			NSLog(@"Connected:    %@",aConnection);
+		}
 	} else
 		NSLog(@"Attempt was made to add connection (%@) multiple times.", aConnection);
 }
@@ -89,8 +91,10 @@ static Byte removeProcessorFlag[1] = {0x00};
 - (void) disconnectOne:(MIOCConnection *) aConnection
 {
 	if ([_connectionList containsObject:aConnection]) {
-		if ([self sendDisconnectSysex:aConnection] == kSendSysexSuccess) 
+		if ([self sendDisconnectSysex:aConnection] == kSendSysexSuccess) {
 			[_connectionList removeObject:aConnection];
+			NSLog(@"Disconnected: %@",aConnection);
+		}
 	} else
 		NSLog(@"Attempt was made to remove non-existent connection (%@).", aConnection);
 }
