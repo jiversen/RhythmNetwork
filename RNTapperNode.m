@@ -9,6 +9,7 @@
 #import "RNTapperNode.h"
 #import "MIOCConnection.h"
 #import "RNNetworkView.h"
+#import "MIOCVelocityProcessor.h"
 
 static NSArray *colorArray;
 
