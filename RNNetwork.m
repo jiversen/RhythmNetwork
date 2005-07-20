@@ -97,7 +97,7 @@
 	// *********************************************
 	//  prebuild array of MIOCConnections to use for programming the MIOC
 	// 
-	// 1) big brother must be listening to all inputs (defined here)
+	// 1) big brother must be listening to all inputs (defined here), including BB
 	// 2) the rest are defined in the input file, viz
 	//		a) bb -> some or all tappers (for pacing stimuli)
 	//		b) tapper to self
@@ -106,7 +106,18 @@
 	_MIOCConnectionList = [[NSMutableArray arrayWithCapacity:(nConnections+nNodes)] retain];
 	MIOCConnection *newMIOCConn;
 	Byte sourcePort, sourceChan, destPort, destChan;
-	// 1) all nodes to BB
+	unsigned int iStim;
+	
+	// 1a) all BB output back to self
+	for (iStim = 1; iStim<= _numStimulusChannels; iStim++) {
+		sourcePort = [ [_nodeList objectAtIndex:0] sourcePort];
+		sourceChan = [ [_nodeList objectAtIndex:0] MIDIChannelForStimulusNumber:iStim];
+		destPort = [ [_nodeList objectAtIndex:0] destPort]; //big brother
+		destChan = sourceChan; //keep it on same chan as output
+		newMIOCConn = [MIOCConnection connectionWithInPort:sourcePort InChannel:sourceChan OutPort:destPort OutChannel:destChan];
+		[_MIOCConnectionList addObject: newMIOCConn];
+	}
+	// 1b) all tapper nodes to BB
 	for (iNode = 1; iNode <= nNodes; iNode++) {
 		sourcePort = [ [_nodeList objectAtIndex:iNode] sourcePort];
 		sourceChan = [ [_nodeList objectAtIndex:iNode] sourceChan];
@@ -144,19 +155,17 @@
 			_nodeLookup[chan][note] = (RNNodeNum_t) 0xFFFF;
 		}
 	}
-	for (iNode = 0; iNode <= nNodes; iNode++) {
+	//add BB entries (possibly multiple stimulus channels
+	for (iStim = 1; iStim<= _numStimulusChannels; iStim++) {
+		chan = [[_nodeList objectAtIndex:0] MIDIChannelForStimulusNumber:iStim];
+		note = [[_nodeList objectAtIndex:0] MIDINoteForStimulusNumber:iStim];
+		_nodeLookup[chan][note] = 0;
+	}
+	//add tapper nodes
+	for (iNode = 1; iNode <= nNodes; iNode++) {
 		chan = [ [_nodeList objectAtIndex:iNode] sourceChan];
 		note = [ [_nodeList objectAtIndex:iNode] sourceNote];
 		_nodeLookup[chan][note] = iNode;	//NB chan index is 1-based
-		// for bigBrother, add additional lookup entries for multiple stimulus channels
-		if (iNode == 0 && _numStimulusChannels > 1) {
-			unsigned int i;
-			for (i = 1; i<= _numStimulusChannels; i++) {
-				chan = [[_nodeList objectAtIndex:iNode] MIDIChannelForStimulusNumber:i];
-				note = [[_nodeList objectAtIndex:iNode] MIDINoteForStimulusNumber:i];
-				_nodeLookup[chan][note] = iNode;
-			}
-		}
 	}
 	return self;
 }
