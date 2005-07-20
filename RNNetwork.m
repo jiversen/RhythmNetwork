@@ -113,7 +113,7 @@
 		sourcePort = [ [_nodeList objectAtIndex:0] sourcePort];
 		sourceChan = [ [_nodeList objectAtIndex:0] MIDIChannelForStimulusNumber:iStim];
 		destPort = [ [_nodeList objectAtIndex:0] destPort]; //big brother
-		destChan = sourceChan; //keep it on same chan as output
+		destChan = [ [_nodeList objectAtIndex:0] destChan]; //keep it on same chan as output
 		newMIOCConn = [MIOCConnection connectionWithInPort:sourcePort InChannel:sourceChan OutPort:destPort OutChannel:destChan];
 		[_MIOCConnectionList addObject: newMIOCConn];
 	}
