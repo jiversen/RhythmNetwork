@@ -209,6 +209,16 @@ static void myMIDINotifyProc(const MIDINotification *message, void * refCon);
 		return [NSString stringWithString:@"(not connected)"];
 }
 
+//simple queries of connection state
+- (BOOL) sourceIsConnected 
+{
+	return (_MIDISource != NULL);
+}
+- (BOOL) destinationIsConnected
+{
+	return (_MIDIDest != NULL);
+}
+
 //user defaults
 // if no default, return empty string, otherwise return last stored default
 - (NSString *) defaultSourceName

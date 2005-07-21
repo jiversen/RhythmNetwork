@@ -34,6 +34,8 @@ typedef struct _NoteOnMessage {
 - (BOOL) useDestinationNamed:(NSString *)destinationName;
 - (NSString *) sourceName;
 - (NSString *) destinationName;
+- (BOOL) sourceIsConnected;
+- (BOOL) destinationIsConnected;
 //user defaults--any time source/dest is set, save to defaults. When starting, use default if it exists
 - (NSString *) defaultSourceName;
 - (NSString *) defaultDestinationName;
