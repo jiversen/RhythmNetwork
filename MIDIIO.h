@@ -4,7 +4,10 @@
 
 #import <Cocoa/Cocoa.h>
 #import <CoreMIDI/MIDIServices.h>
-	
+
+#define kSendMIDISuccess		TRUE
+#define kSendMIDIFailure		FALSE
+
 typedef struct _NoteOnMessage {
 	UInt64 	eventTime_ns;
 	Byte	channel;
@@ -51,11 +54,11 @@ typedef struct _NoteOnMessage {
 - (void)registerMIDIListener:(id)object;
 - (void)removeMIDIListener:(id)object;
 
-- (void)sendMIDI:(NSData *) data;
-- (void)sendMIDIPacketList: (NSData *) wrappedPacketList;
-- (void)sendSysex:(NSData *) data;
+- (BOOL)sendMIDI:(NSData *) data;
+- (BOOL)sendMIDIPacketList: (NSData *) wrappedPacketList;
+- (BOOL)sendSysex:(NSData *) data;
 
-- (void)flushOutput;
+- (BOOL)flushOutput;
 
 @end
 

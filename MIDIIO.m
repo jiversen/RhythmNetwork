@@ -460,11 +460,15 @@ static void	myReadProc(const MIDIPacketList *pktlist, void *refCon, void *connRe
 
 // *********************************************
 // all input data are placed in a single packet, timestamped 'now' for immediate delivery
-- (void)sendMIDI:(NSData *) data 
+- (BOOL)sendMIDI:(NSData *) data 
 {
 	MIDIPacketList	*pktlist;
 	MIDIPacket		*curPacket;
 	size_t			dataLength, pktlistLength;
+	OSStatus err;
+	
+	if ([self destinationIsConnected]==NO)
+		return kSendMIDIFailure;
 	
 	dataLength		= [data length];
 	pktlistLength	= dataLength + 256; //allocate adequate space--assumes overhead in
@@ -474,16 +478,31 @@ static void	myReadProc(const MIDIPacketList *pktlist, void *refCon, void *connRe
 	curPacket		= MIDIPacketListInit(pktlist);
 	curPacket		= MIDIPacketListAdd(pktlist,pktlistLength,curPacket,0,dataLength,[data bytes]);
 	
-	MIDISend(_outPort, _MIDIDest, pktlist);
+	err = MIDISend(_outPort, _MIDIDest, pktlist);
+	
+	if (err==0)
+		return kSendMIDISuccess;
+	else
+		return kSendMIDIFailure;
 }
 
 // *********************************************
 //    send a packet list (wrapped as NSData)
 // 
-- (void)sendMIDIPacketList: (NSData *) wrappedPacketList
+- (BOOL)sendMIDIPacketList: (NSData *) wrappedPacketList
 {
+	OSStatus err;
+	
+	if ([self destinationIsConnected]==NO)
+		return kSendMIDIFailure;
+	
 	MIDIPacketList *pktlist = (MIDIPacketList *) [wrappedPacketList bytes];
-	MIDISend(_outPort, _MIDIDest, pktlist);
+	err = MIDISend(_outPort, _MIDIDest, pktlist);
+	
+	if (err==0)
+		return kSendMIDISuccess;
+	else
+		return kSendMIDIFailure;
 }
 
 
@@ -500,9 +519,13 @@ static void	mySysexCompletionProc(MIDISysexSendRequest *request)
 }
 
 
-- (void)sendSysex:(NSData *) data
+- (BOOL)sendSysex:(NSData *) data
 {
-	NSAssert( (_MIDIDest != NULL), @"no midi destination");
+	OSStatus err;
+
+	if ([self destinationIsConnected]==NO)
+		return kSendMIDIFailure;
+
 	[data retain];
 	
 	MIDISysexSendRequest *req = malloc(sizeof(MIDISysexSendRequest));
@@ -514,14 +537,27 @@ static void	mySysexCompletionProc(MIDISysexSendRequest *request)
 	req->completionProc  = mySysexCompletionProc;
 	req->completionRefCon = (void *)data;
 	
-	MIDISendSysex(req);
+	err = MIDISendSysex(req);
+	
+	if (err==0)
+		return kSendMIDISuccess;
+	else
+		return kSendMIDIFailure;
+	
 	//this would be the place to start a timer if we're concerned about tracking progress
 	// for present needs, messages are so short this is overkill
 }
 
-- (void) flushOutput
+- (BOOL) flushOutput
 {
-	NSAssert( (_MIDIDest != NULL), @"no midi destination");
-	MIDIFlushOutput(_MIDIDest);
+	OSStatus err;
+	if ([self destinationIsConnected]==YES) {
+		err = MIDIFlushOutput(_MIDIDest);
+		if (err==0)
+			return kSendMIDISuccess;
+		else
+			return kSendMIDIFailure;
+	} else
+		return kSendMIDIFailure;
 }
 @end
