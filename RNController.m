@@ -349,6 +349,9 @@
 	
 	//stop updating display w/ midi input
 	[[[_MIOCController deviceObject] MIDILink] removeMIDIListener:_networkView];
+	
+	//deselect parts
+	[_experimentPartsController setSelectedObjects:nil];
 }
 
 //stop button handler
