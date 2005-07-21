@@ -3,6 +3,7 @@
 #import "MIOCProcessorProtocol.h"
 #import "MIOCConnection.h"
 #import "MIOCVelocityProcessor.h"
+#import "MIOCFilterProcessor.h"
 #import "MIDIIO.h"
 #import "NSStringHexStringCategory.h"
 
@@ -33,6 +34,8 @@ static Byte removeProcessorFlag[1] = {0x00};
 	
 	_MIDILink		= [[MIDIIO alloc] init];
 	[_MIDILink registerSysexListener:self];
+	
+	[self addFilterProcessors];
 	
 	return self;
 }
@@ -183,6 +186,29 @@ static Byte removeProcessorFlag[1] = {0x00};
 	
 }
 
+//filter out active sense and note-offs from all inputs (1-7) that are connected to
+//  trigger to midi converters
+- (void) addFilterProcessors
+{
+	Byte iPort;
+	MIOCFilterProcessor *aProc;
+	
+	for (iPort=1; iPort<=7; iPort++) {
+		//remove note off
+		aProc = [[MIOCFilterProcessor alloc] initWithType:@"noteoff" 
+													 Port:iPort 
+												  Channel:kMIOCFilterChannelAll 
+												  OnInput:YES];
+		[self sendAddProcessorSysex:aProc];
+		//remove active sense
+		aProc = [[MIOCFilterProcessor alloc] initWithType:@"activesense" 
+													 Port:iPort 
+												  Channel:kMIOCFilterChannelAll 
+												  OnInput:YES];
+		[self sendAddProcessorSysex:aProc];
+	}
+}
+
 
 // *********************************************
 //    MIDI
@@ -240,31 +266,6 @@ static Byte removeProcessorFlag[1] = {0x00};
 	return kSendSysexSuccess;
 }
 
-// *********************************************
-//  compose, encode and send sysex to make a connecion in MIOC
-- (NSData *) sysexMessageForConnection: (MIOCConnection *) aConnection withFlag:(Byte *)flagPtr
-{
-	NSMutableData *message = [NSMutableData dataWithCapacity:0];
-	[message appendBytes:sysexStart length:sizeof(sysexStart)];	//sysex start
-	[message appendBytes:MIDITEMPID length:sizeof(MIDITEMPID)]; //manufacturer-ID
-	[message appendBytes:&_deviceID length:1];					//device ID (address)
-	[message appendBytes:&_deviceType length:1];				//device Type
-	[message appendBytes:encodedMode length:sizeof(encodedMode)];	//Mode (data are encoded)
-	[message appendBytes:addRemoveProcessorOpcode length:sizeof(addRemoveProcessorOpcode)];	//opcode
-																							//encoded portion
-	NSMutableData *toEncode = [NSMutableData dataWithCapacity:0];
-	[toEncode appendBytes:flagPtr length:1];												//*add/remove flag
-	NSData *connectionData = [aConnection MIDIBytes];										//processor data
-	[toEncode appendData:connectionData];		
-	NSData *encodedPortion = [self encode87: toEncode];										//encode it
-	[message appendData:encodedPortion];
-	message = [self addChecksum:message];
-	[message appendBytes:sysexEnd length:sizeof(sysexEnd)];
-	
-	return message;
-}
-
-
 - (BOOL) sendAddVelocityProcessorSysex:(MIOCVelocityProcessor *) aVelProc
 {
 	return [self sendAddRemoveVelocityProcessorSysex: aVelProc withFlag:addProcessorFlag];
@@ -278,6 +279,25 @@ static Byte removeProcessorFlag[1] = {0x00};
 - (BOOL) sendAddRemoveVelocityProcessorSysex:(MIOCVelocityProcessor *) aVelProc withFlag:(Byte *)flagPtr
 {
 	NSData *message = [self sysexMessageForProcessor: aVelProc withFlag: flagPtr];	
+	[_MIDILink sendSysex:message];
+	return kSendSysexSuccess;
+}
+
+// *********************************************
+//  general method to send sysex messages
+- (BOOL) sendAddProcessorSysex:(id <MIOCProcessor>) aProc
+{
+	return [self sendAddRemoveProcessorSysex: aProc withFlag:addProcessorFlag];
+}
+
+- (BOOL) sendRemoveProcessorSysex:(id <MIOCProcessor>) aProc
+{
+	return [self sendAddRemoveProcessorSysex: aProc withFlag:removeProcessorFlag];
+}
+
+- (BOOL) sendAddRemoveProcessorSysex:(id <MIOCProcessor>) aProc withFlag:(Byte *)flagPtr
+{
+	NSData *message = [self sysexMessageForProcessor: aProc withFlag: flagPtr];	
 	[_MIDILink sendSysex:message];
 	return kSendSysexSuccess;
 }

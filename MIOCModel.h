@@ -60,6 +60,8 @@ typedef struct _MIOCMessage {
 - (void) addVelocityProcessor:(MIOCVelocityProcessor *) aVelProc;
 - (void) removeVelocityProcessor:(MIOCVelocityProcessor *) aVelProc;
 
+- (void) addFilterProcessors;
+
 - (NSArray *) connectionList;
 - (void) setConnectionList: (NSArray *) aConnectionList;
 
@@ -74,6 +76,10 @@ typedef struct _MIOCMessage {
 - (BOOL) sendAddVelocityProcessorSysex:(MIOCVelocityProcessor *) aVelProc;
 - (BOOL) sendRemoveVelocityProcessorSysex:(MIOCVelocityProcessor *) aVelProc;
 - (BOOL) sendAddRemoveVelocityProcessorSysex:(MIOCVelocityProcessor *) aVelProc withFlag:(Byte *)flagPtr;
+
+- (BOOL) sendAddProcessorSysex:(id <MIOCProcessor>) aProc;
+- (BOOL) sendRemoveProcessorSysex:(id <MIOCProcessor>) aProc;
+- (BOOL) sendAddRemoveProcessorSysex:(id <MIOCProcessor>) aProc withFlag:(Byte *)flagPtr;
 
 - (NSData *) sysexMessageForProcessor: (id <MIOCProcessor>) aProc withFlag:(Byte *)flagPtr;
 
