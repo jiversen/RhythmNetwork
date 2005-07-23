@@ -21,7 +21,7 @@ typedef struct _MIOCMessage {
 	Byte	deviceType;
 	Byte	mode;
 	Byte	opcode;
-	Byte	data[];
+	Byte	data[1]; //open ended...
 } MIOCMessage;
 
 //bytes before start of data
@@ -42,12 +42,19 @@ typedef struct _MIOCMessage {
 	
 	NSMutableArray	*_connectionList;	//set of MIOCConnection objects (our model of MIOC state)
 	NSMutableArray	*_velocityProcessorList; //set of MIOCVelocityProcessor objects (part of model of MIOC state)
+	BOOL			_filtersInitialized; //yes if filters have been initialized
+	BOOL			_isOnline;		     //yes if MIOC is online
+	BOOL			_awaitingReply;		 //yes if we've sent a sysex and expecting a reply
 	
 	MIDIIO			*_MIDILink;			//our bridge to MIDI
 }
 
 - (MIOCModel *) init;
 - (void) dealloc;
+
+- (BOOL) queryDeviceName;
+- (NSString *) deviceName;
+- (BOOL) setDeviceName:(NSString *) name;
 
 - (void) connectOne:(MIOCConnection *) aConnection;
 - (void) connectMany:(NSArray *) aConnectionList;

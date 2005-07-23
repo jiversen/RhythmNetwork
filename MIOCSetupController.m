@@ -35,9 +35,15 @@ enum connectFormIdx {
 	[[_deviceObject MIDILink] registerSysexListener:self];
 	
 	//initialize UI
-	[_messageToSend setStringValue:@"f0 00 20 0d 00 01 02 f7"];
+	[_messageToSend setStringValue:@"f0 00 20 0d 00 20 00 45 f7"];
 	[_response setFont:[NSFont userFontOfSize:10.0]];
 	
+	//register to receive notifications of MIOC device status changes
+	[[NSNotificationCenter defaultCenter] addObserver:self 
+											 selector:@selector(handleMIOCChange:) 
+												 name:@"MIOCModelChangeNotification" 
+											   object:nil];
+		
 	//hack place--testing
 	
 	//RNTapperNode *test = [[RNTapperNode alloc] initWithNodeNumber:6];
@@ -112,6 +118,12 @@ enum connectFormIdx {
 {	
 	[self populatePopups];
 }
+
+- (void) handleMIOCChange:(NSNotification *) notification
+{	
+	[_MIOCName setStringValue:[_deviceObject deviceName]];
+}
+
 
 - (IBAction)selectDestination:(id)sender
 {

@@ -33,7 +33,11 @@ static Byte removeProcessorFlag[1] = {0x00};
 	_velocityProcessorList = [[NSMutableArray arrayWithCapacity:0] retain];
 	
 	_MIDILink		= [[MIDIIO alloc] init];
+	
+	//test: is MIOC online?
 	[_MIDILink registerSysexListener:self];
+	
+	[self queryDeviceName];
 	
 	[self addFilterProcessors];
 	
@@ -46,6 +50,26 @@ static Byte removeProcessorFlag[1] = {0x00};
 	[_velocityProcessorList release];
 	[_MIDILink release]; //removes listeners too
 	[super dealloc];
+}
+
+- (BOOL) queryDeviceName
+{
+	//send dump request message
+	NSString *sendStr = @"f0 00 20 0d 00 20 00 45 f7";
+	NSData *data = [sendStr convertHexStringToData];
+	NSLog(@"Querying device name\n\tData (%d B): %@", [data length], data);
+	_awaitingReply = YES;
+	return [_MIDILink sendSysex:data];
+}
+
+- (NSString *) deviceName
+{
+	return _deviceName;
+}
+
+- (BOOL) setDeviceName:(NSString *) name
+{
+	return NO;
 }
 
 // *********************************************
@@ -62,7 +86,8 @@ static Byte removeProcessorFlag[1] = {0x00};
 		if ([self sendConnectSysex:aConnection] == kSendSysexSuccess) {
 			[_connectionList addObject:aConnection];
 			NSLog(@"Connected:    %@",aConnection);
-		}
+		} else
+			NSLog(@"\n\tFailed to add Connection Processor (@%).",aConnection);
 	} else
 		NSLog(@"Attempt was made to add connection (%@) multiple times.", aConnection);
 }
@@ -97,7 +122,8 @@ static Byte removeProcessorFlag[1] = {0x00};
 		if ([self sendDisconnectSysex:aConnection] == kSendSysexSuccess) {
 			[_connectionList removeObject:aConnection];
 			NSLog(@"Disconnected: %@",aConnection);
-		}
+		} else
+			NSLog(@"\n\tFailed to remove Connection Processor (@%).",aConnection);
 	} else
 		NSLog(@"Attempt was made to remove non-existent connection (%@).", aConnection);
 }
@@ -177,6 +203,8 @@ static Byte removeProcessorFlag[1] = {0x00};
 	if (![_velocityProcessorList containsObject:aVelProc]) {
 		if ([self sendAddVelocityProcessorSysex:aVelProc] == kSendSysexSuccess) 
 			[_velocityProcessorList addObject:aVelProc];
+		else
+			NSLog(@"\n\tFailed to add Velocity Processor (@%).",aVelProc);
 	} else
 		NSLog(@"Attempt was made to add velocity processor (%@) multiple times.", aVelProc);	
 }
@@ -188,25 +216,41 @@ static Byte removeProcessorFlag[1] = {0x00};
 
 //filter out active sense and note-offs from all inputs (1-7) that are connected to
 //  trigger to midi converters
+//  error handling: on first sysex failure, bail out. Weakness: could leave things in indeterminate state
 - (void) addFilterProcessors
 {
 	Byte iPort;
 	MIOCFilterProcessor *aProc;
+	BOOL result;
 	
+	_filtersInitialized = YES;
+
 	for (iPort=1; iPort<=7; iPort++) {
 		//remove note off
 		aProc = [[MIOCFilterProcessor alloc] initWithType:@"noteoff" 
 													 Port:iPort 
 												  Channel:kMIOCFilterChannelAll 
 												  OnInput:YES];
-		[self sendAddProcessorSysex:aProc];
+		result = [self sendAddProcessorSysex:aProc];
+		if (result == kSendSysexFailure) {
+			_filtersInitialized = NO;
+			break;
+		}
 		//remove active sense
 		aProc = [[MIOCFilterProcessor alloc] initWithType:@"activesense" 
 													 Port:iPort 
 												  Channel:kMIOCFilterChannelAll 
 												  OnInput:YES];
-		[self sendAddProcessorSysex:aProc];
+		result = [self sendAddProcessorSysex:aProc];
+		if (result == kSendSysexFailure) {
+			_filtersInitialized = NO;
+			break;
+		}
 	}
+	
+	if (_filtersInitialized == NO)
+		NSLog(@"\n\tFailed to initialize MIOC filters.");
+	
 }
 
 
@@ -223,13 +267,27 @@ static Byte removeProcessorFlag[1] = {0x00};
 }
 
 // *********************************************
-//     UNUSED
+//     Process incoming sysex data (if we're expecting it)
 - (void)receiveSysexData:(NSData *)data
 {
-	//NSString *hexStr = [[NSString alloc] initHexStringWithData:data];
-	//NSLog(@"MIOCModel Received Sysex (%d bytes): %@\n",[data length], hexStr);
-	//add logic here to parse info messages and fill in instance values
-	//also potentially to verify connections made
+	MIOCMessage *reply;
+	
+	if (_awaitingReply == YES) {
+		NSString *hexStr = [[NSString alloc] initHexStringWithData:data];
+		NSLog(@"MIOCModel Received Expected Sysex (%d bytes): %@\n",[data length], hexStr);
+		reply = (MIOCMessage *)[data bytes];
+		//add logic here to parse info messages and fill in instance values
+		//also potentially to verify connections made
+		if (reply->opcode==0x05) {
+			[_deviceName autorelease];
+			_deviceName = [[NSString stringWithCString:(&reply->data[1]) length:8] retain];
+			//post notification for UI to resync
+			[[NSNotificationCenter defaultCenter] postNotificationName:@"MIOCModelChangeNotification"
+																object:self];
+		}
+		_awaitingReply = NO;
+	}
+
 }
 
 // *********************************************
@@ -258,12 +316,12 @@ static Byte removeProcessorFlag[1] = {0x00};
 	//unsigned i = [message retainCount];
 	//printf("before sendSysex, message: %x (%d B) retain %d\n",(unsigned) message, [message length], i);
 	
-	[_MIDILink sendSysex:message];
+	return [_MIDILink sendSysex:message];
 	
 	//i = [message retainCount];
 	//printf("after sendSysex, message: %x %d\n",(unsigned) message, i);
 	//for now, assume all sysex sends complete correctly--how could we know otherwise?
-	return kSendSysexSuccess;
+	// NEW: we add some checks that send completed correctly--destionation exists, etc.
 }
 
 - (BOOL) sendAddVelocityProcessorSysex:(MIOCVelocityProcessor *) aVelProc
@@ -279,8 +337,7 @@ static Byte removeProcessorFlag[1] = {0x00};
 - (BOOL) sendAddRemoveVelocityProcessorSysex:(MIOCVelocityProcessor *) aVelProc withFlag:(Byte *)flagPtr
 {
 	NSData *message = [self sysexMessageForProcessor: aVelProc withFlag: flagPtr];	
-	[_MIDILink sendSysex:message];
-	return kSendSysexSuccess;
+	return [_MIDILink sendSysex:message];
 }
 
 // *********************************************
@@ -298,8 +355,7 @@ static Byte removeProcessorFlag[1] = {0x00};
 - (BOOL) sendAddRemoveProcessorSysex:(id <MIOCProcessor>) aProc withFlag:(Byte *)flagPtr
 {
 	NSData *message = [self sysexMessageForProcessor: aProc withFlag: flagPtr];	
-	[_MIDILink sendSysex:message];
-	return kSendSysexSuccess;
+	return [_MIDILink sendSysex:message];
 }
 
 // *********************************************
@@ -495,6 +551,7 @@ static Byte removeProcessorFlag[1] = {0x00};
 			[temp appendData:decodedData];
 			sourceData = [NSData dataWithData:temp];
 		} else {
+			NSLog(@"Bad checksum!");
 			sourceData = nil;
 		}
 	}
