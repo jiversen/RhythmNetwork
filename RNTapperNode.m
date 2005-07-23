@@ -39,12 +39,16 @@ static NSArray *colorArray;
 	} else { //actual tapper
 		//calculate concentrator assignment based on nodeNumber
 		concentratorNo = floor( ((double)nodeNumber-1) / kNumInputsPerConcentrator ) + 1;
+		//two alternatives: notes w/in concentrator increase sequentially (as does channel)
+		// or constant note w/in concentrator
+		RNNodeNum_t relativeNodeNumber = nodeNumber - (concentratorNo - 1)*kNumInputsPerConcentrator;
+		note = kBaseNote + relativeNodeNumber;
+		//old way:
 		//note = (concentratorNo - 1) * kNumInputsPerConcentrator + 
 		//	(nodeNumber-1) % kNumInputsPerConcentrator + kBaseNote + 1;
-		note = kBaseNote + concentratorNo;
+		//note = kBaseNote + concentratorNo;
 		NSAssert3( (concentratorNo <= kNumConcentrators), @"nodeNumber exceeds the number of inputs available (%d > %d; %d concentrator(s))", 
 				   nodeNumber, (kNumConcentrators * kNumInputsPerConcentrator), kNumConcentrators);	
-		RNNodeNum_t relativeNodeNumber = nodeNumber - (concentratorNo - 1)*kNumInputsPerConcentrator;
 		[self setSourcePort: (Byte) concentratorNo 
 				 SourceChan: (Byte) relativeNodeNumber 
 				 SourceNote: (Byte) note];
@@ -259,7 +263,7 @@ static NSArray *colorArray;
 	[theView unlockFocus];
 	[theView setNeedsDisplay:TRUE];
 	
-	_flashIntensity -= 0.2;
+	_flashIntensity -= 0.25;
 	if (_flashIntensity <= 0) {
 		_flashIntensity = 0;
 		[_flashTimer invalidate];
