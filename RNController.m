@@ -38,6 +38,8 @@
 	
 	[_experimentTimer setFont:[NSFont fontWithName:@"Helvetica" size:16]];
 	[_experimentTimer setStringValue:@"  -:--"];
+	
+	
 }
 
 - (void) dealloc
@@ -123,7 +125,7 @@
 		
 		//Configure view: current network and register view to receive midi
 		[_networkView setNetwork: [_experiment currentNetwork]];	
-		//[[[_MIOCController deviceObject] MIDILink] registerMIDIListener:_networkView];
+		[[[_MIOCController deviceObject] MIDILink] registerMIDIListener:_networkView];
 		
 		//fill in text fields (we are their delegate)
 		[[self window] setTitleWithRepresentedFilename:filePath];
@@ -286,7 +288,7 @@
 	[_experiment prepareToStartAtTimestamp: AudioConvertNanosToHostTime(now_ns) 
 								 StartDate: startDate ];
 	
-	[[[_MIOCController deviceObject] MIDILink] registerMIDIListener:_networkView];
+	//[[[_MIOCController deviceObject] MIDILink] registerMIDIListener:_networkView];
 	[_experiment startRecordingFromDevice:[_MIOCController deviceObject] ];
 	
 	//synchronize view
@@ -348,7 +350,7 @@
 	[_testPartButton setEnabled:YES];
 	
 	//stop updating display w/ midi input
-	[[[_MIOCController deviceObject] MIDILink] removeMIDIListener:_networkView];
+	//[[[_MIOCController deviceObject] MIDILink] removeMIDIListener:_networkView];
 	
 	//deselect parts
 	[_experimentPartsController setSelectedObjects:nil];
