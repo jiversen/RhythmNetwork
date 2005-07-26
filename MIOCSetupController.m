@@ -101,6 +101,14 @@ enum connectFormIdx {
 //    MANAGE UI
 // *********************************************
 
+//reset MIOC model and internal state (ensure synchronized)
+- (IBAction) resetMIOCAction:(id)sender
+{
+	NSLog(@"Reset MIOC...");
+	[_deviceObject reset];
+}
+
+
 // *********************************************
 //  Source & Destination selection popups
 
@@ -206,16 +214,19 @@ enum connectFormIdx {
     
 - (void)receiveSysexData:(NSData *)data
 {
-	NSString *hexStr = [[NSString alloc] initHexStringWithData:data];
+	NSString *hexStr = [[[NSString alloc] initHexStringWithData:data] autorelease];
 	//NSLog(@"MIOCSetupController Received Sysex (%d bytes): %@\n",[data length], hexStr);
 	//append to outgoing data that is in view
 	NSMutableString *outStr = [NSMutableString stringWithString:[_response string]];
 	[outStr appendString:@" -> "];
 	[outStr appendString:hexStr];
 	
-	[_response setString:outStr];
+	//also, decode it
+	NSData *decoded = [_deviceObject decodeMessage:data];
+	hexStr =[[[NSString alloc] initHexStringWithData:decoded] autorelease];
+	[outStr appendFormat:@"\n[ %@ ]", hexStr];
 	
-	//decode it:
+	[_response setString:outStr];
 }
 
 @end

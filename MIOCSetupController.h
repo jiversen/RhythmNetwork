@@ -11,8 +11,6 @@
 	IBOutlet NSDrawer		*_myDrawer;
 	IBOutlet MIOCModel		*_deviceObject;
 	IBOutlet NSTextField	*_MIOCName;
-	IBOutlet NSTextField	*_MIOCType;
-	IBOutlet NSTextField	*_MIOCAddress;
 	IBOutlet NSPopUpButton	*_sourcePopup;
     IBOutlet NSPopUpButton	*_destinationPopup;
 	IBOutlet NSTextField	*_messageToSend;
@@ -25,6 +23,8 @@
 - (void) dealloc;
 
 - (MIOCModel *) deviceObject;
+
+- (IBAction) resetMIOCAction:(id)sender;
 
 - (void) populatePopups; 
 - (IBAction) SendAction:(id)sender;

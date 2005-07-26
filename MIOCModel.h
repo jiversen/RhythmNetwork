@@ -44,14 +44,26 @@ typedef struct _MIOCMessage {
 	NSMutableArray	*_velocityProcessorList; //set of MIOCVelocityProcessor objects (part of model of MIOC state)
 	BOOL			_filtersInitialized; //yes if filters have been initialized
 	BOOL			_isOnline;		     //yes if MIOC is online
+	BOOL			_correctPort;		 //connected to port 8?
 	BOOL			_awaitingReply;		 //yes if we've sent a sysex and expecting a reply
+										 //assuming mioc responds fifo to requests!
+	NSTimer			*_replyTimer;		 //timer to check for MIOC reply timeout
 	
 	MIDIIO			*_MIDILink;			//our bridge to MIDI
 }
 
 - (MIOCModel *) init;
 - (void) dealloc;
+- (void) reset;
+- (void) initialize;
+- (void) checkOnline;
 
+- (BOOL) sendVerifiedMIOCQuery:(NSData *)data;
+- (BOOL) sendMIOCQuery:(NSData *)data;
+- (void) handleMIOCReply:(NSNotification *)notification;
+- (void) handleMIOCReplyTimeout:(NSTimer *)timer;
+
+- (BOOL) queryPortAddress;
 - (BOOL) queryDeviceName;
 - (NSString *) deviceName;
 - (BOOL) setDeviceName:(NSString *) name;

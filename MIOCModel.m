@@ -34,12 +34,15 @@ static Byte removeProcessorFlag[1] = {0x00};
 	
 	_MIDILink		= [[MIDIIO alloc] init];
 	
-	//test: is MIOC online?
 	[_MIDILink registerSysexListener:self];
 	
-	[self queryDeviceName];
+	//check it mioc is online--if so, initialize it
+	[[NSNotificationCenter defaultCenter] addObserver:self 
+											 selector:@selector(handleMIOCReply:) 
+												 name:@"MIOCReplyNotification" 
+											   object:nil];
 	
-	[self addFilterProcessors];
+	[self checkOnline]; //once online, we'll initizlize in reply handler
 	
 	return self;
 }
@@ -52,19 +55,171 @@ static Byte removeProcessorFlag[1] = {0x00};
 	[super dealloc];
 }
 
+- (void) initialize
+{
+	NSLog(@"Initializing MIOC");
+	[self queryDeviceName];
+	[self addFilterProcessors];
+}
+
+//reset MIOC: clear all existing connections, processors
+// to force sync, unfortunately must ask user to power cycle MIOC--there's no reset sysex command we can send
+// and we can't really know if we've removed everything, as there's no way to query
+//  then re-initialize: name, filter processors
+- (void) reset
+{	
+	NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+	[alert addButtonWithTitle:@"OK"];
+	[alert addButtonWithTitle:@"Don't reset"];
+	[alert setMessageText:@"Reset MIDI Matrix..."];
+	[alert setInformativeText:@"Please turn the Midi Matrix (PMM 88-E) off, then on. Click OK when done."];
+	[alert setAlertStyle:NSWarningAlertStyle];
+	
+	int returnCode = [alert runModal];
+
+	if (returnCode == NSAlertFirstButtonReturn) { //OK: assume they've powercycled
+		//reset our model state
+		[_connectionList removeAllObjects];
+		[_velocityProcessorList removeAllObjects];
+		//initialize the MIOC
+		[self initialize];
+	} else //Cancel: do nothing
+		NSLog(@"Reset cancelled");
+}
+
+- (void) checkOnline
+{
+	[self queryPortAddress];
+}
+
+- (BOOL) queryPortAddress
+{
+	//send dump request message
+	NSString *sendStr = @"F0 00 20 0D 7F 7F 00 78 F7";
+	NSData *data = [sendStr convertHexStringToData];
+	NSLog(@"Querying port address\n\tData (%d B): %@", [data length], data);
+	return [self sendVerifiedMIOCQuery:data];
+}
+
+//send a verified query: indicate that we're waiting for a response and set up a timer to wait for it
+//  if timer fires before we receive the response, we're not connected and try to make that right
+- (BOOL) sendVerifiedMIOCQuery:(NSData *)data
+{
+	NSAssert( (_awaitingReply==NO), @"Trying to send sysex before receiving earlier reply");
+	//try to send
+	BOOL success = [_MIDILink sendSysex:data];
+	
+	if (success == YES) {
+		//sent it successfully, now wait for reply
+		_awaitingReply = YES;
+		// two things can happen: 1) get reply and handleMIOCReply is called
+		// or 2) don't get reply and handleMIOCReplyTimeout is called when timer counts down
+		NSAssert( (_replyTimer==nil), @"doubling up on timers!");
+		_replyTimer = [[NSTimer scheduledTimerWithTimeInterval:1.0 //expect a reply fast
+														target:self
+													  selector:@selector(handleMIOCReplyTimeout:)
+													  userInfo:nil
+													   repeats:NO] retain];
+	} else {
+		//didn't send successfully, problem with MIDI connections
+		// throw up an alert sheet. One problem w/ this is that I'm not sure we can get at drawer while sheet
+		// is down (in case we need to change settings there...)
+		NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+		[alert addButtonWithTitle:@"OK"];
+		[alert setMessageText:@"Problem with MIDI connection!"];
+		[alert setInformativeText:@"Please make sure the MIDI interface is connected and then click OK."];
+		[alert setAlertStyle:NSWarningAlertStyle];
+		
+		int returnCode = [alert runModal];
+		if (returnCode == NSAlertFirstButtonReturn) { //OK: try again
+			[[self MIDILink] handleMIDISetupChange]; //total hack--force this to happen (as it might not happen
+			// in time otherwise before we get back in this spot, thus infinite loop)
+			[self checkOnline];
+		}
+		return NO;
+		
+	}
+	
+	return success;
+}
+
+//called after sending request used for testing whether MIOC is online
+- (void) handleMIOCReply:(NSNotification *)notification
+{
+	//if we get here, we know we're online
+	NSAssert( (_isOnline == YES), @"_isOnline should be YES");
+	//zap the timer
+	[_replyTimer invalidate];
+	[_replyTimer release];
+	_replyTimer = nil;
+	
+	//check if we're correctly hooked up
+	if (_correctPort == NO) {
+		NSLog(@"MIDI interface must be connected to I/O port 8");
+	}
+	
+	[self initialize];
+}
+
+//if we sent our request, and haven't heard back, this is called
+- (void) handleMIOCReplyTimeout:(NSTimer *)timer
+{
+	//if we get here, we haven't yet received a reply
+	NSAssert( (_awaitingReply == YES), @"Should be awaiting a reply!"); //sanity check
+	
+	//we only give it one chance to reply, if not, assume it's offline
+	[_replyTimer invalidate];
+	[_replyTimer release];
+	_replyTimer = nil;
+	_awaitingReply = NO;
+	_isOnline = NO;
+	
+	//now, ask user to get the device online
+	NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+	[alert addButtonWithTitle:@"OK"];
+	[alert setMessageText:@"Problem connecting with MIDI Matrix (PMM 88-E)!"];
+	[alert setInformativeText:@"Please make sure it is turned on and then click OK."];
+	[alert setAlertStyle:NSWarningAlertStyle];
+	int returnCode = [alert runModal];
+	if (returnCode == NSAlertFirstButtonReturn) { //OK: try again
+		[self checkOnline];
+	}
+}
+
+
+//send an un verified query
+- (BOOL) sendMIOCQuery:(NSData *)data
+{
+	if (_isOnline==NO) {
+		NSLog(@"MIOC is not online...connect");
+		return NO;
+	}
+	
+	NSAssert( (_awaitingReply==NO), @"Trying to send sysex before receiving earlier reply");
+	_awaitingReply = YES;
+	//try to send
+	return [_MIDILink sendSysex:data];
+}
+
 - (BOOL) queryDeviceName
 {
 	//send dump request message
 	NSString *sendStr = @"f0 00 20 0d 00 20 00 45 f7";
 	NSData *data = [sendStr convertHexStringToData];
 	NSLog(@"Querying device name\n\tData (%d B): %@", [data length], data);
-	_awaitingReply = YES;
-	return [_MIDILink sendSysex:data];
+	//clear earlier name, in case return fails
+	[_deviceName autorelease];
+	_deviceName = nil;
+	
+	return [self sendMIOCQuery:data];
 }
 
 - (NSString *) deviceName
 {
-	return _deviceName;
+	if (_deviceName != nil)
+		return _deviceName;
+	else
+		return [NSString stringWithString:@"<Not Connected>"];
 }
 
 - (BOOL) setDeviceName:(NSString *) name
@@ -279,13 +434,26 @@ static Byte removeProcessorFlag[1] = {0x00};
 		//add logic here to parse info messages and fill in instance values
 		//also potentially to verify connections made
 		if (reply->opcode==0x05) {
+			_awaitingReply = NO;
 			[_deviceName autorelease];
 			_deviceName = [[NSString stringWithCString:(&reply->data[1]) length:8] retain];
 			//post notification for UI to resync
 			[[NSNotificationCenter defaultCenter] postNotificationName:@"MIOCModelChangeNotification"
 																object:self];
+		// we use this reply as a means to check MIOC is online--
+		} else if (reply->opcode==0x38) { //what ports are we connected to?
+			_awaitingReply = NO;
+			_isOnline = YES;
+			//check we're connected to correct port
+			Byte outport = reply->data[0]; 
+			Byte inport = reply->data[1];
+			if (outport==0x07 && inport==0x07) //should be connected to port #8
+				_correctPort = YES;
+			else
+				_correctPort = NO;
+			[[NSNotificationCenter defaultCenter] postNotificationName:@"MIOCReplyNotification"
+																object:self];
 		}
-		_awaitingReply = NO;
 	}
 
 }
