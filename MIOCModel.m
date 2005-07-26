@@ -81,14 +81,15 @@ static Byte removeProcessorFlag[1] = {0x00};
 		//reset our model state
 		[_connectionList removeAllObjects];
 		[_velocityProcessorList removeAllObjects];
-		//initialize the MIOC
-		[self initialize];
+		//initialize the MIOC (after checking it's connected
+		[self checkOnline];
 	} else //Cancel: do nothing
 		NSLog(@"Reset cancelled");
 }
 
 - (void) checkOnline
 {
+	//we send a test query--if it is replied to, we know we're online
 	[self queryPortAddress];
 }
 
@@ -125,16 +126,16 @@ static Byte removeProcessorFlag[1] = {0x00};
 		// throw up an alert sheet. One problem w/ this is that I'm not sure we can get at drawer while sheet
 		// is down (in case we need to change settings there...)
 		NSAlert *alert = [[[NSAlert alloc] init] autorelease];
-		[alert addButtonWithTitle:@"OK"];
+		[alert addButtonWithTitle:@"OK (I'll do it)"];
 		[alert setMessageText:@"Problem with MIDI connection!"];
-		[alert setInformativeText:@"Please make sure the MIDI interface is connected and then click OK."];
+		[alert setInformativeText:@"Please follow these steps: After clicking OK, make sure the MIDI interface is connected and the proper MIDI Input and Output are selected. Then press the device 'Reset' button."];
 		[alert setAlertStyle:NSWarningAlertStyle];
 		
 		int returnCode = [alert runModal];
 		if (returnCode == NSAlertFirstButtonReturn) { //OK: try again
-			[[self MIDILink] handleMIDISetupChange]; //total hack--force this to happen (as it might not happen
+			//[[self MIDILink] handleMIDISetupChange]; //total hack--force this to happen (as it might not happen
 			// in time otherwise before we get back in this spot, thus infinite loop)
-			[self checkOnline];
+			//[self checkOnline];
 		}
 		return NO;
 		
@@ -177,13 +178,14 @@ static Byte removeProcessorFlag[1] = {0x00};
 	//now, ask user to get the device online
 	NSAlert *alert = [[[NSAlert alloc] init] autorelease];
 	[alert addButtonWithTitle:@"OK"];
+	[alert addButtonWithTitle:@"Stop trying"];
 	[alert setMessageText:@"Problem connecting with MIDI Matrix (PMM 88-E)!"];
 	[alert setInformativeText:@"Please make sure it is turned on and then click OK."];
 	[alert setAlertStyle:NSWarningAlertStyle];
 	int returnCode = [alert runModal];
 	if (returnCode == NSAlertFirstButtonReturn) { //OK: try again
 		[self checkOnline];
-	}
+	} //otherwise do nothing more
 }
 
 
