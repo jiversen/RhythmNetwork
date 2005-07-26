@@ -6,6 +6,7 @@
 #define kNStoS	1000000000
 
 @class RNNetworkView;
+@class RNDataView;
 @class MIOCSetupController;
 @class RNExperiment;
 @class RNNetwork;
@@ -14,6 +15,7 @@
 {
 	RNExperiment *_experiment;
     IBOutlet RNNetworkView *_networkView;
+	IBOutlet RNDataView	*_dataView;
 	IBOutlet MIOCSetupController *_MIOCController;
 	IBOutlet NSTextField *_titleText; //we are these fields' delegate
 	IBOutlet NSTextView *_notesText;
