@@ -13,6 +13,7 @@
                 ConnectAction = id; 
                 DisconnectAction = id; 
                 SendAction = id; 
+                resetMIOCAction = id; 
                 selectDestination = id; 
                 selectSource = id; 
                 toggle = id; 
@@ -20,9 +21,7 @@
             CLASS = MIOCSetupController; 
             LANGUAGE = ObjC; 
             OUTLETS = {
-                "_MIOCAddress" = NSTextField; 
                 "_MIOCName" = NSTextField; 
-                "_MIOCType" = NSTextField; 
                 "_destinationPopup" = NSPopUpButton; 
                 "_deviceObject" = MIOCModel; 
                 "_inForm" = NSForm; 
@@ -38,7 +37,6 @@
         {
             ACTIONS = {
                 loadExperiment = id; 
-                programMIOCWithNetwork = id; 
                 saveExperiment = id; 
                 startExperiment = id; 
                 stopExperiment = id; 
@@ -49,6 +47,7 @@
             LANGUAGE = ObjC; 
             OUTLETS = {
                 "_MIOCController" = MIOCSetupController; 
+                "_dataView" = RNDataView; 
                 "_experimentPartsController" = NSArrayController; 
                 "_experimentPartsTable" = NSTableView; 
                 "_experimentTimer" = NSTextField; 
@@ -63,6 +62,7 @@
             }; 
             SUPERCLASS = NSWindowController; 
         }, 
+        {CLASS = RNDataView; LANGUAGE = ObjC; SUPERCLASS = NSView; }, 
         {CLASS = RNNetworkView; LANGUAGE = ObjC; SUPERCLASS = NSView; }, 
         {
             ACTIONS = {SendAction = id; }; 
