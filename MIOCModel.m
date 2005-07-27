@@ -244,7 +244,7 @@ static Byte removeProcessorFlag[1] = {0x00};
 			[_connectionList addObject:aConnection];
 			NSLog(@"Connected:    %@",aConnection);
 		} else
-			NSLog(@"\n\tFailed to add Connection Processor (@%).",aConnection);
+			NSLog(@"\n\tFailed to add Connection Processor (%@).",aConnection);
 	} else
 		NSLog(@"Attempt was made to add connection (%@) multiple times.", aConnection);
 }
@@ -280,7 +280,7 @@ static Byte removeProcessorFlag[1] = {0x00};
 			[_connectionList removeObject:aConnection];
 			NSLog(@"Disconnected: %@",aConnection);
 		} else
-			NSLog(@"\n\tFailed to remove Connection Processor (@%).",aConnection);
+			NSLog(@"\n\tFailed to remove Connection Processor (%@).",aConnection);
 	} else
 		NSLog(@"Attempt was made to remove non-existent connection (%@).", aConnection);
 }
