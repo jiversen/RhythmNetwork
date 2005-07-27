@@ -32,3 +32,12 @@ Other one, of course, is to have two isolated clusters w/ different temp and the
 added linking the two.
 
 Finally, gain some intuition by simulating such experiments, and compare results.
+
+7/26/05
+Going to pilot tomorrow
+tons of ideas for experiments
+two subnets forced at different tempi, let free run, then join one node of each together to see how they reconcile
+forced network where forcing comes in only at one node. Let equilibrate then perturb forcing tempo and see how the new
+tempo propagates through the network (or if it does--the key here is that the pacemaker is filtered thru a real tapper,
+so that signal doesn't appear any different from the rest). [NB be careful, since I tend to force 1 & 6, which are the
+lowest and  highest notes, which gives some clue--use 2 and 5 instead.]

@@ -437,6 +437,17 @@ each drumset consist of one or two sounds, spanning full tuning range.
 Using Sysex Librarian, saved this as "SR-16 BasicSet.syx"--then set channel number differently for each node
 
 Trigger->MIDI converter setup
+MIDI Channel: 1-6 (node number, same as trigger #)
+MIDI Prg chg: off
+velocity curve: ld1
+MIDI Note: 64+node number (65...)
+threshold: 1
+sensitivity: 11
+trig type: adt
+scan time: 1.0
+retrig cancel: 1
+mask time: 64
+xtalk cancel: off
 
 First tests
 Realized event histograms were collecting all the time, not only when experiment running. Plus, they did not reset
@@ -449,11 +460,120 @@ Would like: some user interface to design networks, of course. In the mean time,
 how loud the pacing stimuli are. Easiest way: adjust in the drum machine.
 
 ToDo: 
-Don't have histograms record continuously
-prevent quitting w/o saving first
-add a 'reset' connections button to drawer--remove all connections
-at end of experiment, unhilight expt parts
+[done] Don't have histograms record continuously (but my soln also stops flashes--improve this)
+Quitting: prevent quitting w/o saving first
 when quitting, disconnect everything (else will be out of sync when restarting)
+--how catch quit before it happens--app delegate?
+add a 'reset' connections button to drawer--remove all connections & query to powercycle MIOC to be sure
+[done] at end of experiment, unhilight expt parts
+[done!] filter active sense at MIOC input, as well as redundant note offs--added new class for filters. Makes it clear
+I could factor a processor base class out of all of this.
 
+Bug: if midi is not connected, prog crashes on start as MIOC model attempts to send sysex during initialization.
+Easy solution: make sure a destination exists before starting. This doesn't work if default connection isn't there...
+So, doing the better solution: adding error checks to MIDIIO--if no destination exists, or there is some other error,
+this is noted and propagated up layers until original call in MIOCModel--if there was an error, it can be handled.
+For now, simply logs. However, ideal would be to 1) alert user that there's a problem connecting w/ MIOC, and
+2) do something to re-synchronize state: If some things have been added, remove everything and ask user to powercycle
+the MIOC to clear all.
 
+*Added: can now query MIOC for its name. If we get it, post a notification allowing UI in MIOCSetupController to sync.
+But, when to send query--we now do it on startup, but what if the MIOC isn't connected then? How poll for MIOC being
+online? 
+Otherwise, any sysex we send, we assume is received correctly. could wait for an acknowledgement before continuing--but
+what do do if we want to send and are still waiting for an earlier acknowledgement? We have to wait, or block, which
+isn't so cool. What's best way to deal w/ such asynchronous IO?
+
+matlab: creation & analysis
+
+7/22/05
+First experiment today! Ani and myself. Today I spent time setting up the hardware for multiple tappers. All worked
+very smoothly, and the program worked without a hitch! Now there are so many possibilities. The first one simply
+showcased various connection possibilities & went: forcing, no feedback; forcing w/ feedback; continuation; join
+(initially we had different tempi, then had to synchronize w/ eachother)
+
+What would be cool is an online display of ITI for each tapper. Histogram view could be more general. However, a node
+knows how to draw itself, so should it be the one storing the information and doing the calculations?
+
+Also created a test setup that allows all people to check self monitoring, and lets each node in turn be hooked up
+to BB, e.g. for sending out Sysex dumps to the individual drum machines. Right now I have a master machine that I
+suck the sysex from using Sysex Librarian. Using the test netdef, I can send this out to each drum machine (could
+simply broadcast it, too.) Then I need to manually change the MIDI channel for each machine (Right now, let's try to
+reverse engineer the sysex format to find where that channel is stored...not trivial--there are a few differences, but
+I don't see any pattern yet--i.e. it's not as simple as a single nybble showing the MIDI channel).
+
+A wierd one--if you hide the main window, tons of exceptions get raised to do with flashing the node
+
+Thinking about timing. When I schedule a new network, currently have 30ms preroll, and things trigger then. But that's
+the start of programming, not the end, when all is done (in fact I have no good way to measure that). But...given
+MIDI rate of 31500 bps and 10 bits/byte and fact that one connection message is 18 bytes, it'll take ~6ms to send
+each connection/disconnection! So if we have 10 links to change, that's 60ms. So, the truly needed preroll depends on
+the complexity of the difference of the network and previously active one. Could analyze that, of course, but that doesnt
+change the fact that the updates will be spread over a range of time. Just have to decide when I want the update to finish--
+right AT the moment or averaged around it. All things considered, the 30ms preroll will often satisfy the latter, so
+we'll keep it as is.
+
+So, what to do next. 1) MIOC reset (is there a command I can send, or do I have to powercycle?)
+2) keeping of real time stats on tapping. Have hist, which is based on a list of event times (and asynchronies?).
+Want something more general--how split it. Have the tapper node, a stats kind of object, a stats view...
+Would also be cool to have another panel showing a running ITI plot for all the tappers, color coded, together with
+target ITIs...Now, update regularly, or only on receiving a new event? How does info get to histograms now?
+--who has MIDI listener method? 
+RNExperiment		--	Note On only. Convert event time to experiment time. append to event list
+RNNetworkView		--  Decipher node# from channel/note; flash node; add event to appropriate histogram view
+--Sysex listener...
+MIOCModel			--  Parse expected responses to queries
+MIOCSetupController	--  Simply display it in the drawer
+
+Now, reason we  have it going on in network view is that we need to tell the nodes which view to draw in...that is
+the flash updates don't occur within the view object, but the node object. It makes more sense to have the node
+worry about its own events, but we don't want to send to each one, so instead have the experiment (or network) do
+the delivery. I'm starting to like the idea of a stats object that keeps track of a list of events & asynchronies,
+and knows how to display same. Q--does this need to be separate from the node. Well, it needs its own view...and
+I don't like the idea of a node being a view. I guess we could have a node and a node view. I seem to recall that
+pattern. But who knows about who. Do subviews need to know about parent? They do get attached to the network view,
+so that's ok. so generalize RNNodeHistogramView to RNNodeView? But then what does a node actually do?? A repository
+for MIOC port info and...does it know about stimulus it's listening to? What it's connected to?
+[will I ever need a node to tune into multiple stimuli??] 
+
+7/25/05
+Hi. Spent (wasted?) about four hours today on verifying MIOC is online and MIDI is connected correctly--now it will
+test and complain if it can't find MIOC, give you a chance to turn it on/connect MIDI, and then try again. If MIOC
+is simply off, this works fine. If MIDI is disconnected, something's not yet working--it can't reach the MIOC.
+Why this was a waste is that for wednesday I'll be here and these issues won't come up--it's more for someone else
+who is using the system and needs help. Ugh. Really I did it just becaue I was thinking about it and it was a challenge.
+What I really want is some kind of online display of ITIs! And a reset ability. the second, I'll do by hand for now.
+The former...more useful for the experiment! Another goal is to program the experiments carefully and get that ready! So
+these four hours really weren't on target. Also done today--bought the rest of cables, etc needed and did some work on
+marking up and securing devices to the sliding tray. Cable housekeeping. Main goal is for them to be clearly identified
+and with little risk of being accidentally pulled out. Also spent time fixing a svn problem with interface builder, and
+adding decoding of sysex responses to drawer.
+[later] Fixed up the connection verification and reset logic. Problems w/ MIDI connection need user to interact w/ 
+the MIOCSetup drawer, so have to exit the modal dialog and ask them to fix then press 'reset' button. Not great, but
+works. Also had to give them a way out of this infinite loop, as well as when you don't really want to bother connecting
+the MIOC. Still: simply bails if MIOC is offline and try to send other messages.
+
+Expt ideas:
+initially collect behavioral data on individuals
+preferred tempo, deviation
+ability to tap to driven tempi
+ability to react to random stimuli
+
+networks,
+compare ring, nearest neighbor, all connected
+
+Online data display
+Need to think about the architecture
+I have tappers who have individual events and possibly a stimulus associated with them
+An experiment that contains the current state of things: stimuli and network, as well as the parts and timing, 
+defintion and saving of events
+A network with nodes and connections as well as some lower-level translations of this info to use in connecting to MIOC
+and also decoding MIDI input into a node number
+node knows its MIOC port and channel for I/O, and some other stuff useful for drawing them
+Network view, knows its network, as well as histogram views for each node
+the histogram views keep track of their data
+
+Implemented RNDataView, and added this to the interface. Haven't thought about how to drive it, however. First show
+ITI ongoing. X scale? scrolling or fit entire duration of experiment within the window. Do the latter first, and also
+mark on it stimulus and network start/end points. How indicated different tappers? 
 
