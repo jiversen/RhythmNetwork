@@ -4,6 +4,7 @@
 #import "RNExperimentPart.h"
 #import "RNNetwork.h"
 #import "RNNetworkView.h"
+#import "RNDataView.h"
 #import "MIOCModel.h"
 #import "MIDIIO.h"
 
@@ -38,6 +39,9 @@
 	
 	[_experimentTimer setFont:[NSFont fontWithName:@"Helvetica" size:16]];
 	[_experimentTimer setStringValue:@"  -:--"];
+	
+	//show network view where data view is
+	[_networkView setDataView: _dataView];
 	
 	
 }
@@ -288,11 +292,21 @@
 	[_experiment prepareToStartAtTimestamp: AudioConvertNanosToHostTime(now_ns) 
 								 StartDate: startDate ];
 	
+	//setup experiment timer timer
+	_experimentTimerTimer = [[NSTimer scheduledTimerWithTimeInterval:1.0 
+															  target:self 
+															selector:@selector(updateExperimentTimer:) 
+															userInfo:nil 
+															 repeats:YES] retain];
+	
 	//[[[_MIOCController deviceObject] MIDILink] registerMIDIListener:_networkView];
 	[_experiment startRecordingFromDevice:[_MIOCController deviceObject] ];
 	
 	//synchronize view
 	[_networkView synchronizeWithStimuli];
+	
+	//clear data
+	[_dataView clearData];
 	
 	//change UI state
 	[_startButton setTitle:@"Stop Experiment"];
@@ -307,13 +321,6 @@
 	NSTimeInterval timeUntilStart_s = [startDate timeIntervalSinceDate:rightNow];
 	NSLog(@"\n\tStartTime: %@\n\t(Now: %@)\n\t%.3f s before start", startDate, [rightNow description], timeUntilStart_s);
 	NSAssert( (timeUntilStart_s > 0), @"Problem: start time has already passed, init taking too long");
-	
-	//setup experiment timer timer
-	_experimentTimerTimer = [[NSTimer scheduledTimerWithTimeInterval:1.0 
-															target:self 
-														  selector:@selector(updateExperimentTimer:) 
-														  userInfo:nil 
-														   repeats:YES] retain];
 	
 	//from here, experiment is automatically carried out via timers
 	// ending naturally with experiment's stop, or via user action stopExperiment

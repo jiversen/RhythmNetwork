@@ -25,6 +25,8 @@
 	int			_counts[kMaxNumBins];			//array of counts for each bin
 	UInt64		_eventTimes[kMaxNumEvents];		//raw event times (for use if need to re-format histogram w/ new IOI or bin)
 	unsigned int _numEvents;					//number of events stored in _eventTimes
+	double		_ITI_ms;			//instantaneous ITI
+	double		_smoothITI_ms;		//smoothed measure of ITI
 	
 }
 
@@ -33,5 +35,11 @@
 - (void) addEventAtTime: (UInt64) eventTime_ns;		//update with a new event
 
 - (int *) counts;
+
+- (double) lastEventTime;
+- (double) lastITI;
+- (double) smoothedITI;
+
+
 
 @end

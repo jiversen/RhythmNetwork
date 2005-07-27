@@ -105,6 +105,7 @@
 }
 	
 // TO DO: calculate relative to actual eventTimes
+// time_ns is realtime
 - (double) asynchronyForNanoseconds: (UInt64) time_ns
 {
 	UInt64 stimStartTime_ns;
@@ -116,6 +117,11 @@
 	asynchrony_ms = [self IOI_ms] * (modf( (timeSinceStimStart_ms / [self IOI_ms]) + 0.5 , &junk) - 0.5);
 	
 	return asynchrony_ms;
+}
+
+- (UInt64) experimentStartTime
+{
+	return _experimentStartTime_ns;
 }
 
 - (NSString *) description

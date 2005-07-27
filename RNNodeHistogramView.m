@@ -50,6 +50,7 @@
 		_targetIOI_ms = [stim IOI_ms];
 		_yMax = kInitialYMax;
 		_isNormalized = NO;
+		_ITI_ms = 0; //invalid value
 		
 		frame = [self frame];
 		//calculate binWidth based on actual width in pixels, **add some minimum width checking?
@@ -69,6 +70,24 @@
 	return _counts;
 }
 
+- (double) lastEventTime
+{
+	if (_targetStimulus != nil) {
+		double expStart_ms = [_targetStimulus experimentStartTime] / 1e6;
+		return (_eventTimes[_numEvents] / 1e6) - expStart_ms;
+	} else
+		return 0;
+}
+
+- (double) lastITI
+{
+	return _ITI_ms;
+}
+- (double) smoothedITI
+{
+	return _smoothITI_ms;
+}
+
 - (void) addEventAtTime: (UInt64) eventTime_ns
 {
 	//figure out which bin this event belongs into
@@ -77,6 +96,12 @@
 	
 	NSAssert( (_numEvents < kMaxNumEvents) , @"Event storage overflow");
 	_eventTimes[++_numEvents] = eventTime_ns;
+	
+	//calculate estimate of ITI, smoothed after last few points
+	if (_numEvents > 1) { //need more than 1 event (count from 1)
+		_ITI_ms = (_eventTimes[_numEvents] - _eventTimes[_numEvents - 1]) / 1e6;
+		_smoothITI_ms = (3.0*_smoothITI_ms + _ITI_ms) / 4.0; //weight history more than new to smooth
+	}
 	
 	//NSAssert(( _targetStimulus != nil ), @"cannot add event: targetStimulus = nil");
 	if (_targetStimulus != nil) {
@@ -155,13 +180,23 @@
 		if (_targetIOI_ms != 0)
 			IOIStr = [NSString stringWithFormat:@"%.0f", _targetIOI_ms];
 		else
-			IOIStr = [NSString stringWithFormat:@"--"];
+			IOIStr = [NSString stringWithFormat:@"---"];
 		
 		NSDictionary *attributes = [NSDictionary dictionaryWithObjectsAndKeys:[NSColor redColor], NSForegroundColorAttributeName, \
 			[NSFont fontWithName:@"Helvetica" size:7], NSFontAttributeName, nil,nil];
 		//[IOIStr drawAtPoint:NSMakePoint((-_targetIOI_ms/2.0), _yMax) withAttributes:attributes];
 		[IOIStr drawAtPoint:NSMakePoint(-(bounds.size.width/2.0), (bounds.size.height*0.7) ) withAttributes:attributes];
 
+		//smoothed ITI text
+		NSString *ITIStr;
+		if (_ITI_ms != 0)
+			ITIStr = [NSString stringWithFormat:@"%.0f", _ITI_ms];
+		else
+			ITIStr = [NSString stringWithFormat:@"---"];
+		attributes = [NSDictionary dictionaryWithObjectsAndKeys:[NSColor blueColor], NSForegroundColorAttributeName, \
+			[NSFont fontWithName:@"Helvetica" size:7], NSFontAttributeName, nil,nil];
+		[ITIStr drawAtPoint:NSMakePoint((0.15*bounds.size.width/2.0), (bounds.size.height*0.7) ) withAttributes:attributes];
+		
 		//draw histogram
 		[[NSColor blueColor] setFill];
 		nBins = _targetIOI_ms / _binWidth_ms;

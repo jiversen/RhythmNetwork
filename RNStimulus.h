@@ -40,6 +40,7 @@
 - (void) setEventTimes: (NSString *) eventStr;
 
 - (double) asynchronyForNanoseconds: (UInt64) time_ns;
+- (UInt64) experimentStartTime;
 
 - (NSData *) MIDIPacketListForExperimentStartTime: (UInt64) experimentStartTime_ns;
 

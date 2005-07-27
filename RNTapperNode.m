@@ -19,7 +19,7 @@ static NSArray *colorArray;
 {
 	if (colorArray == nil) {
 		colorArray = [[NSArray arrayWithObjects: [NSColor greenColor], [NSColor blueColor], [NSColor orangeColor], \
-			[NSColor purpleColor], [NSColor brownColor], nil] retain];
+			[NSColor purpleColor], [NSColor brownColor], [NSColor blackColor], nil] retain];
 	}
 	return colorArray;
 }

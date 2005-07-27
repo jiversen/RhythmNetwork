@@ -6,6 +6,7 @@
 #import "MIDIIO.h"
 #import "RNStimulus.h"
 #import "RNNodeHistogramView.h"
+#import "RNDataView.h"
 
 #define kRadiusScale 0.75
 
@@ -81,7 +82,7 @@
 			if ([node hearsBigBrother])
 				subChannel = [node bigBrotherSubChannel];
 			else
-				subChannel = 1; //if not, link to first stimulus?
+				subChannel = 1; //if not, link to first stimulus? better would be to link to subnet's dominant stim
 			
 			stim = [[self network] stimulusForChannel:subChannel];
 			histView = [_nodeHistogramViews objectAtIndex:(nodeNumber-1)]; //-1 bec bb node was not added in the array
@@ -144,6 +145,12 @@
 	
 }
 
+- (void) setDataView: (RNDataView *) dataView
+{
+	_dataView = dataView;
+}
+
+
 - (void)drawRect:(NSRect)rect
 {	
 	//clear the rect
@@ -186,6 +193,10 @@
 				if (_nodeHistogramViews != nil) {
 					RNNodeHistogramView *hview = [_nodeHistogramViews objectAtIndex:(iNode-1)]; //**note indexing
 					[hview addEventAtTime:message->eventTime_ns];
+					//mine histogram view data to add to ITI plot
+					if (_dataView != nil) {
+						[_dataView addEventAtTime: [hview lastEventTime] withITI: [hview lastITI] forNode:iNode];
+					}
 				}
 
 			}
