@@ -80,6 +80,8 @@ static NSArray *colorArray;
 	}
 	[_sourceVelocityProcessor release];
 	_sourceVelocityProcessor = nil;
+	[_destVelocityProcessor release];
+	_destVelocityProcessor = nil;
 	
 	//[colorArray release];  // !!!:jri:20050628 This is a class-wide value, not per instance. AND didn't set to nil, so was going to have multiple releases
 	[super dealloc];
@@ -150,11 +152,17 @@ static NSArray *colorArray;
 }
 
 - (MIOCVelocityProcessor *) sourceVelocityProcessor { return _sourceVelocityProcessor; }
-
 - (void) setSourceVelocityProcessor: (MIOCVelocityProcessor *) newSourceVelocityProcessor
 {
 	[_sourceVelocityProcessor autorelease];
 	_sourceVelocityProcessor = [newSourceVelocityProcessor retain];
+}
+
+- (MIOCVelocityProcessor *) destVelocityProcessor { return _destVelocityProcessor; }
+- (void) setDestVelocityProcessor: (MIOCVelocityProcessor *) newDestVelocityProcessor
+{
+	[_destVelocityProcessor autorelease];
+	_destVelocityProcessor = [newDestVelocityProcessor retain];
 }
 
 - (NSPoint) plotLocation { return _plotLocation; }

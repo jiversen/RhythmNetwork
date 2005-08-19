@@ -29,6 +29,7 @@ typedef UInt16 RNNodeNum_t;
 	Byte	_destChan;
 	Byte	_destNote; //can this also be mapped by MIOC?
 	MIOCVelocityProcessor	*_sourceVelocityProcessor; //processing applied to performance
+	MIOCVelocityProcessor	*_destVelocityProcessor; //processing applied to sound sent to tapper
 	BOOL	_hearsSelf;
 	BOOL	_hearsBigBrother;
 	Byte	_bigBrotherSubChannel;
@@ -68,6 +69,9 @@ typedef UInt16 RNNodeNum_t;
 
 - (MIOCVelocityProcessor *) sourceVelocityProcessor;
 - (void) setSourceVelocityProcessor: (MIOCVelocityProcessor *) newSourceVelocityProcessor;
+
+- (MIOCVelocityProcessor *) destVelocityProcessor;
+- (void) setDestVelocityProcessor: (MIOCVelocityProcessor *) newDestVelocityProcessor;
 
 - (NSPoint) plotLocation;
 - (void) setPlotLocation: (NSPoint) newPlotLocation;
