@@ -390,6 +390,8 @@ static void	myReadProc(const MIDIPacketList *pktlist, void *refCon, void *connRe
 				//MIDIData = [NSData dataWithBytes:packet length:packetLength];
 				MIDIData = [NSData dataWithBytes:&thisMessage length:sizeof(NoteOnMessage)];
 				[_MIDIListenerArray makeObjectsPerformSelector:@selector(receiveMIDIData:) withObject:MIDIData];
+			} else {
+				//NSLog(@"Received non note-on event! %x %x %x", packet->data[0], packet->data[1], packet->data[2]);
 			}
 		}
 		packet = MIDIPacketNext(packet);

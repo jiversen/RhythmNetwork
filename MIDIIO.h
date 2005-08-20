@@ -15,6 +15,14 @@ typedef struct _NoteOnMessage {
 	Byte	velocity;
 	Byte	spare;		//seems good to keep it even # of bytes, not sure of impact on storage performance
 } NoteOnMessage;
+
+typedef struct _ProgramChangeMessage {
+	UInt64 	eventTime_ns;
+	Byte	channel;
+	Byte	program;
+	Byte	spare1;
+	Byte	spare2;
+} ProgramChangeMessage;
 	
 @interface MIDIIO : NSObject
 {
