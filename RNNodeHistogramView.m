@@ -3,7 +3,7 @@
 //  RhythmNetwork
 //
 //  Created by John Iversen on 2/24/05.
-//  Copyright 2005 __MyCompanyName__. All rights reserved.
+//  Copyright 2005 John Iversen. All rights reserved.
 //
 
 #import "RNNodeHistogramView.h"
@@ -63,6 +63,18 @@
 			_counts[i] = 0;
 		_numEvents = 0; //necessary when re-setting stimulus
 	}
+}
+
+- (void) clearData
+{
+	int nBins, i;
+	nBins = _targetIOI_ms / _binWidth_ms;
+	//zero out counts (could contain data from last stimulus)
+	for (i=0; i<nBins; i++)
+		_counts[i] = 0;
+	_numEvents = 0; //necessary when re-setting stimulus
+	_ITI_ms = 0;
+	_smoothITI_ms = 0;
 }
 
 - (int *) counts

@@ -11,6 +11,7 @@
 	double		_drawRadius;			//radius of network (assume circular)
 	BOOL		_doShowMIDIActivity;	//whether to dynamically show midi activity
 	BOOL		_doShowNodeHistograms;	//whether to show histograms
+	BOOL		_doPlotData;			// whether midi input is added to data plots
 	NSMutableArray *_nodeHistogramViews; //array of views
 	RNDataView  *_dataView;
 }
@@ -25,6 +26,9 @@
 
 - (void) showNodeHistograms;
 - (void) hideNodeHistograms;
+
+- (void) clearData;
+- (void) setPlotData:(BOOL) doIt;
 
 - (void) setDataView: (RNDataView *) dataView;
 

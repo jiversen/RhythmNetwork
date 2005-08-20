@@ -145,6 +145,35 @@
 	
 }
 
+- (void) clearData
+{
+	//for each tapper node, figure out associated stimulus & initialize a view & make subview of this one
+	id node;
+	RNNodeNum_t nodeNumber;
+	RNNodeHistogramView *histView;
+	
+	if (_nodeHistogramViews == nil) {
+		[self initNodeHistograms];
+	}	
+	
+	NSEnumerator *nodeEnumerator = [[[self network] nodeList] objectEnumerator];
+	
+	while (node = [nodeEnumerator nextObject]) {
+		nodeNumber = [node nodeNumber];
+		if (nodeNumber != 0) {
+			histView = [_nodeHistogramViews objectAtIndex:(nodeNumber-1)]; //-1 bec bb node was not added in the array
+			[histView clearData];
+		}
+	}
+	[self setNeedsDisplay: YES];
+	
+}
+
+- (void) setPlotData:(BOOL) doIt
+{
+	_doPlotData = doIt;
+}
+
 - (void) setDataView: (RNDataView *) dataView
 {
 	_dataView = dataView;
@@ -188,9 +217,11 @@
 														   WithColor:[NSColor greenColor]
 															  inView:self];
 			} else {
-				[[nodeList objectAtIndex:iNode] flashWithColor:[NSColor greenColor] inView:self];
+				NSColor *color;
+				color = [[RNTapperNode colorArray] objectAtIndex:iNode-1];
+				[[nodeList objectAtIndex:iNode] flashWithColor:color inView:self];
 				//send event to appropriate histogramView
-				if (_nodeHistogramViews != nil) {
+				if (_doPlotData == YES && _nodeHistogramViews != nil) {
 					RNNodeHistogramView *hview = [_nodeHistogramViews objectAtIndex:(iNode-1)]; //**note indexing
 					[hview addEventAtTime:message->eventTime_ns];
 					//mine histogram view data to add to ITI plot

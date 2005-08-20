@@ -3,7 +3,7 @@
 //  RhythmNetwork
 //
 //  Created by John Iversen on 2/24/05.
-//  Copyright 2005 __MyCompanyName__. All rights reserved.
+//  Copyright 2005 John Iversen. All rights reserved.
 //
 
 #import <Cocoa/Cocoa.h>
@@ -33,6 +33,8 @@
 - (void) setTargetStimulus: (RNStimulus *) stim;	//initializes histogram
 
 - (void) addEventAtTime: (UInt64) eventTime_ns;		//update with a new event
+
+- (void) clearData;
 
 - (int *) counts;
 
