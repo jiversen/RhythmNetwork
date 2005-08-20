@@ -42,6 +42,7 @@
 	
 	//show network view where data view is
 	[_networkView setDataView: _dataView];
+	[_networkView setPlotData:NO];
 	
 	
 }
@@ -299,14 +300,16 @@
 															userInfo:nil 
 															 repeats:YES] retain];
 	
-	//[[[_MIOCController deviceObject] MIDILink] registerMIDIListener:_networkView];
 	[_experiment startRecordingFromDevice:[_MIOCController deviceObject] ];
 	
 	//synchronize view
 	[_networkView synchronizeWithStimuli];
 	
-	//clear data
+	//clear data, start plotting
 	[_dataView clearData];
+	[_networkView clearData];
+	[_networkView setPlotData:YES];
+
 	
 	//change UI state
 	[_startButton setTitle:@"Stop Experiment"];
@@ -356,8 +359,8 @@
 	[_loadButton setEnabled:YES];
 	[_testPartButton setEnabled:YES];
 	
-	//stop updating display w/ midi input
-	//[[[_MIOCController deviceObject] MIDILink] removeMIDIListener:_networkView];
+	//stop updating plots w/ midi input
+	[_networkView setPlotData:NO];
 	
 	//deselect parts
 	[_experimentPartsController setSelectedObjects:nil];

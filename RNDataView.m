@@ -8,6 +8,8 @@
 
 		//initialize data storage
 		// hardwired for now
+		_x = [[NSMutableArray alloc] initWithCapacity:10];
+		_y = [[NSMutableArray alloc] initWithCapacity:10];
 		_xlim = NSMakeSize(0.0,60.0); //unconventional usage
 		_ylim = NSMakeSize(400.0, 1500.0); //ms
 	}
@@ -37,6 +39,7 @@
 
 - (void) addEventAtTime:(double) time_ms withITI:(double) ITI_ms forNode:(RNNodeNum_t) iNode
 {
+	double px, py;
 	//add event to appropriate array (indexed by node)
 	// if necessary, extend 
 	int nNodes = [_x count]-1; //we use 1-based indexes
@@ -52,6 +55,9 @@
 		[[_x objectAtIndex:iNode] addObject:[NSNumber numberWithDouble:time_ms]];
 		[[_y objectAtIndex:iNode] addObject:[NSNumber numberWithDouble:ITI_ms]];
 		
+		//if exceeds limit, rescale axis limits
+		if (time_ms/1e3 > _xlim.height)
+			_xlim.height = _xlim.height + 10; //add in 10s steps
 		[self setNeedsDisplay:YES];
 	}
 
@@ -88,7 +94,7 @@
 	if (nNodes >= 1) {
 
 		for (iNode = 1; iNode <= nNodes; iNode++) {
-			color = [[RNTapperNode colorArray] objectAtIndex:iNode];
+			color = [[RNTapperNode colorArray] objectAtIndex:iNode-1];
 			thisx = [_x objectAtIndex:iNode];
 			thisy = [_y objectAtIndex:iNode];
 			[aPath removeAllPoints];
@@ -110,6 +116,7 @@
 			//NSLog(@"Draw Node %d (color %@), x data: %@; y data: %@", iNode, color, thisx, [_y objectAtIndex:iNode]);
 		}
 	}
+	//to do: axes, limits
 }
 
 @end
