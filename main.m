@@ -3,7 +3,7 @@
 //  RhythmNetwork
 //
 //  Created by John Iversen on Thu Aug 26 2004.
-//  Copyright (c) 2004 __MyCompanyName__. All rights reserved.
+//  Copyright (c) 2004 John Iversen. All rights reserved.
 //
 
 #import <Cocoa/Cocoa.h>

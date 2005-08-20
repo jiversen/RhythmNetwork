@@ -3,7 +3,7 @@
 //  RhythmNetwork
 //
 //  Created by John Iversen on 2/19/05.
-//  Copyright 2005 __MyCompanyName__. All rights reserved.
+//  Copyright 2005 John Iversen. All rights reserved.
 //
 
 #import "RNBBNode.h"

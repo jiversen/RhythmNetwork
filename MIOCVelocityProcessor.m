@@ -3,7 +3,7 @@
 //  RhythmNetwork
 //
 //  Created by John Iversen on 4/4/05.
-//  Copyright 2005 __MyCompanyName__. All rights reserved.
+//  Copyright 2005 John Iversen. All rights reserved.
 //
 
 #import "MIOCVelocityProcessor.h"

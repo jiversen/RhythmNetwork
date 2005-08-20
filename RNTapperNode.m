@@ -3,7 +3,7 @@
 //  RhythmNetwork
 //
 //  Created by John Iversen on 10/10/04.
-//  Copyright 2004 __MyCompanyName__. All rights reserved.
+//  Copyright 2004 John Iversen. All rights reserved.
 //
 
 #import "RNTapperNode.h"
@@ -245,9 +245,11 @@ static NSArray *colorArray;
 - (void) flashWithColor: (NSColor *) flashColor inView: (NSView *) theView
 {
 	//set flash color, redraw, and set fadeout timer
-	[_flashColor autorelease];
+	[_flashColor autorelease];		// !!!:jri:20050819 TODO: create separate setter for color
 	_flashColor = [flashColor retain];
 	_flashIntensity = 1;
+	
+	// !!!:jri:20050819 TODO: use single class-wide timer, start it up if it's paused
 	
 	if (_flashTimer != nil) {
 		[_flashTimer invalidate];
@@ -262,6 +264,13 @@ static NSArray *colorArray;
 												   repeats:YES] retain];
 }
 
+// !!!:jri:20050819 TODO: replace w/ method operating on class-wide timer, loop thru all
+//	members...uh, that won't work, need to do this at the network level (who calls the flashes anyway...net view)
+//	since we need all the nodes. Sounds like a job for network view? How inefficient is it to dig into nodes each
+//  iteration thru the timer. Would maintaning a simple array of flashIntensities in the view, rather than tapper
+//  nodes themselves be better? We'll still call on each node to draw itself
+
+
 - (void) fadeFlashColor: (NSTimer *) theTimer;
 {
 	RNNetworkView *theView = [_flashTimer userInfo];
@@ -269,7 +278,7 @@ static NSArray *colorArray;
 	[theView lockFocus];
 	[self drawWithRadius: [theView drawRadius]];
 	[theView unlockFocus];
-	[theView setNeedsDisplay:TRUE];
+	//[theView setNeedsDisplay:TRUE];
 	
 	_flashIntensity -= 0.25;
 	if (_flashIntensity <= 0) {

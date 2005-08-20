@@ -3,7 +3,7 @@
 //  RhythmNetwork
 //
 //  Created by John Iversen on 9/17/04.
-//  Copyright 2004 __MyCompanyName__. All rights reserved.
+//  Copyright 2004 John Iversen. All rights reserved.
 //
 
 //representation of a MIOC connection between an input port/channel to output port/channel
