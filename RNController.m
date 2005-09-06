@@ -75,7 +75,7 @@
 {	
 	int result;	
 	
-	//if an experiment is already loaded, and needs saving, check first
+	//if an experiment is already loaded, and needs saving, notify & give chance to save
 	if (_experiment != nil && [_experiment needsSave]) {
 		NSAlert *alert = [[[NSAlert alloc] init] autorelease];
 		[alert addButtonWithTitle:@"OK"];
@@ -92,12 +92,14 @@
 		return;
 	}
 
-		
 	//load it
     NSArray *fileTypes = [NSArray arrayWithObject:@"netdef"];
     NSOpenPanel *oPanel = [NSOpenPanel openPanel];	
     [oPanel setAllowsMultipleSelection:NO];
-    result = [oPanel runModalForDirectory:NSHomeDirectory()
+	//*** starting Path: note, this is relatively hard coded // !!!:jri:20050906 
+	NSString *startPath = [NSString pathWithComponents:[NSArray arrayWithObjects:NSHomeDirectory(), 
+		@"Documents", @"Rhythm Network", @"", nil] ];
+    result = [oPanel runModalForDirectory:startPath
 								     file:nil types:fileTypes];
     if (result == NSOKButton) {		
 		
@@ -152,7 +154,8 @@
 		//add a doubleclick handler--same as for test button (assume controller's updated by double click)
 		[_experimentPartsTable setDoubleAction:@selector(testPart:)];
 		[_experimentPartsTable setTarget:self];
-    }
+		
+    } //Else, user hit cancel; do nothing
 }
 
 //keep text in experiment object in sync with UI
@@ -164,6 +167,7 @@
 		[_experiment setExperimentDescription:[_titleText stringValue] ];
 }
 	
+//experiment notes
 -(void) textDidEndEditing: (NSNotification *) notification
 {
 	id source = [notification object];
