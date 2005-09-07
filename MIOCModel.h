@@ -78,6 +78,10 @@ typedef struct _MIOCMessage {
 
 - (void) addVelocityProcessor:(MIOCVelocityProcessor *) aVelProc;
 - (void) removeVelocityProcessor:(MIOCVelocityProcessor *) aVelProc;
+- (void) addVelocityProcessorsInArray:(NSArray *) aProcessorList;
+- (void) removeVelocityProcessorsInArray:(NSArray *) aProcessorList;
+- (NSArray *) velocityProcessorList;
+- (void) setVelocityProcessorList: (NSArray *) newVelocityProcessorList;
 
 - (void) addFilterProcessors;
 

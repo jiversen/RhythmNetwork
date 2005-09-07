@@ -24,7 +24,7 @@
 		_IOOpcode = kMIOCOutputVelocityProcessorOpcode;
 	//initialize the rest to a no-change processor
 	[self setPosition:0]; //unnecessary, but explicit
-	[self setVelocityMapThreshold:0 GradientAbove:1.0 GradientBelow:1.0 Offset:0];
+	[self setVelocityMapThreshold:64 GradientAbove:1.0 GradientBelow:1.0 Offset:0];
 	return self;
 }
 
@@ -66,7 +66,7 @@
 - (void) setConstantVelocity:(Byte)velocity;
 {
 	NSAssert( (velocity <= 127), @"Velocity out of range");
-	[self setVelocityMapThreshold:0 GradientAbove:0.0 GradientBelow:0.0 Offset:velocity];
+	[self setVelocityMapThreshold:velocity GradientAbove:0.0 GradientBelow:0.0 Offset:0]; // !!!:jri:20050907 midi matrix manual p. 96
 }
 
 - (void) setPosition:(Byte)position
@@ -120,5 +120,20 @@
 	return [NSData dataWithBytes:buf length:8];
 }
 
+- (id)copyWithZone:(NSZone *)zone
+{
+	BOOL isInput = (_IOOpcode == kMIOCInputVelocityProcessorOpcode)?YES:NO;
+	//NB we descend directly from NSObject, so no need to call super's allocWithZone (see NSObject, copy)
+	MIOCVelocityProcessor *newProcessor = [[MIOCVelocityProcessor allocWithZone:zone] initWithPort:_port
+																						   Channel:_channel
+																						   OnInput:isInput];
+	//transfer remainder of parameters
+	newProcessor->_threshold = _threshold;
+	newProcessor->_gradientBelowThreshold = _gradientBelowThreshold;
+	newProcessor->_gradientAboveThreshold = _gradientAboveThreshold;
+	newProcessor->_offset = _offset;
+
+	return newProcessor; //sender 'owns' us, must release on own
+}
 
 @end

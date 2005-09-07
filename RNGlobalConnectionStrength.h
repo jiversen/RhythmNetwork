@@ -24,4 +24,8 @@
 
 - (RNGlobalConnectionStrength *) initWithType:(NSString *)type value:(double)param;
 
+- (MIOCVelocityProcessor *) processor;
+
+//- (NSString *) description;
+
 @end

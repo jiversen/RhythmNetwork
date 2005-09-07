@@ -50,6 +50,7 @@
 //Actions
 - (void) postNewStimulusNotification: (NSTimer *) timer;
 - (void) postNewNetworkNotification: (NSTimer *) timer;
+- (void) postNewGlobalConnectionStrengthNotification: (NSTimer *) timer;
 - (void) scheduleForExperimentStartTime: (NSDate *) time Timestamp: (MIDITimeStamp) timestamp;
 - (void) unschedule;
 

@@ -11,6 +11,7 @@
 #import "MIOCSetupController.h"
 #import "RNTapperNode.h"
 #import "RNStimulus.h"
+#import "RNGlobalConnectionStrength.h"
 #import <CoreAudio/HostTime.h>
 
 @implementation RNController
@@ -34,9 +35,12 @@
 											 selector:@selector(newNetworkNotificationHandler:) 
 												 name:@"newNetworkNotification" object:nil];
 	[[NSNotificationCenter defaultCenter] addObserver:self 
+											 selector:@selector(newGlobalConnectionStrengthNotificationHandler:) 
+												 name:@"newGlobalConnectionStrengthNotification" object:nil];
+	[[NSNotificationCenter defaultCenter] addObserver:self 
 											 selector:@selector(experimentEndNotificationHandler:) 
 												 name:@"experimentHasEndedNotification" object:nil];
-	
+		
 	[_experimentTimer setFont:[NSFont fontWithName:@"Helvetica" size:16]];
 	[_experimentTimer setStringValue:@"  -:--"];
 	
@@ -185,6 +189,16 @@
 	}
 }
 
+- (void) programMIOCVelocityProcessorsForNetwork:(RNNetwork *)newNet
+{
+	if (newNet != nil) {
+		MIOCModel *device = [_MIOCController deviceObject];
+		NSAssert( (device != nil), @"MIOC hasn't been initialized!");
+		
+		[device setVelocityProcessorList:[newNet MIOCVelocityProcessorList] ];	
+	}
+}
+
 //handle notifications of experiment parts becoming active
 // stimulus: shedule midi, update experiment (which updates network), update view
 - (void) newStimulusNotificationHandler: (NSNotification *) notification
@@ -226,6 +240,24 @@
 	
 	[self synchronizePartsListSelection]; 
 }
+
+- (void) newGlobalConnectionStrengthNotificationHandler: (NSNotification *) notification
+{
+	RNExperimentPart *part = [notification object];
+	RNGlobalConnectionStrength *weight = (RNGlobalConnectionStrength *) [ part experimentPart];
+	NSLog(@"received notification global connection strength: %@", [weight description]);
+	[part setActualStartTime:[_experiment secondsSinceExperimentStartDate] ];
+	RNNetwork *net = [_experiment currentNetwork];
+	NSAssert( (net != nil), @"no current network.");
+	[net setGlobalConnectionStrength:weight];
+	[self programMIOCVelocityProcessorsForNetwork:net];
+	NSTimeInterval uncertainty = [_experiment secondsSinceExperimentStartDate] - [part actualStartTime];
+	[part setStartTimeUncertainty:uncertainty];
+	NSLog(@"MIOC has been programmed with velocity processors");
+	
+	[self synchronizePartsListSelection]; 
+}
+
 
 - (void) synchronizePartsListSelection
 {

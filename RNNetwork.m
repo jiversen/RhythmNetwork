@@ -13,6 +13,7 @@
 #import "RNConnection.h"
 #import "RNStimulus.h"
 #import "MIOCConnection.h"
+#import "RNGlobalConnectionStrength.h"
 
 @implementation RNNetwork
 
@@ -185,6 +186,25 @@
 	return [NSArray arrayWithArray:_MIOCConnectionList]; //return non-mutable form, necessary?
 }
 
+// Harvest any processors from nodes
+- (NSArray *) MIOCVelocityProcessorList
+{
+	unsigned int iNode, nNodes;
+	nNodes = [[self nodeList] count] - 1; //number of tappers (exclude BB)
+	NSMutableArray *processorList = [NSMutableArray arrayWithCapacity:nNodes];
+	MIOCVelocityProcessor *processor;
+	for (iNode = 1; iNode <= nNodes; iNode++) {
+		processor = [[_nodeList objectAtIndex:iNode] sourceVelocityProcessor];
+		if (processor != nil)
+			[processorList addObject:processor ];
+		processor = [[_nodeList objectAtIndex:iNode] destVelocityProcessor];
+		if (processor != nil)
+			[processorList addObject:processor ];
+	}
+	
+	return [NSArray arrayWithArray:processorList];
+}
+
 //reminder: channel is 1-based
 - (RNNodeNum_t) nodeIndexForChannel:(Byte) channel Note: (Byte) note
 {
@@ -225,6 +245,17 @@
 			NSAssert( (stim == nil || [[stim className] isEqualToString:@"RNStimulus"]), @"non-stimulus");
 			[self setStimulus:stim ForChannel:i];
 		}
+	}
+}
+
+//add processor for each node
+- (void) setGlobalConnectionStrength: (RNGlobalConnectionStrength *) connectionStrength
+{
+	unsigned int iNode, nNodes;
+	MIOCVelocityProcessor *processor = [connectionStrength processor];
+	nNodes = [[self nodeList] count] - 1; //number of tappers (exclude BB)
+	for (iNode = 1; iNode <= nNodes; iNode++) {
+		[[_nodeList objectAtIndex:iNode] setDestVelocityProcessor:processor];
 	}
 }
 

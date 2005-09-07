@@ -126,8 +126,11 @@
 		return [NSString stringWithFormat:@"S"];
 	} else if ([[self partType] isEqualToString:@"RNNetwork"]) {
 		return [NSString stringWithFormat:@"N"];
+	} else if ([[self partType] isEqualToString: @"RNGlobalConnectionStrength"]) {
+		return [NSString stringWithFormat:@"W"]; //for weight
 	} else {
-		return [NSString stringWithFormat:@""];
+		NSAssert( (0), @"typeInitial called for unknown part type.");
+		return [NSString stringWithFormat:@"?"]; //not reached
 	}
 }
 
@@ -204,7 +207,13 @@
 	RNNetwork *net = (RNNetwork *) [timer userInfo];
 	NSLog(@"activating network %@", [net description]);
 	[[NSNotificationCenter defaultCenter] postNotificationName:@"newNetworkNotification" object:self];
+}
 
+- (void) postNewGlobalConnectionStrengthNotification: (NSTimer *) timer
+{
+	RNGlobalConnectionStrength *weight = (RNGlobalConnectionStrength *) [timer userInfo];
+	NSLog(@"activating global connection strength %@", [weight description]);
+	[[NSNotificationCenter defaultCenter] postNotificationName:@"newGlobalConnectionStrengthNotification" object:self];
 }
 
 //schedule timers
@@ -252,8 +261,24 @@
 		NSLog(@"Scheduling network @T+%.2f: %@\n\t%@",_startTime_s, [self description], [self experimentPart]);
 		NSLog(@"\n\tUncertainty in part timer scheduling is maximum %.3f ms (%g - %g)", uncertainty, interval1, interval2);
 		[self setStartTimer:startTimer];
-	}
-	else
+		
+		
+	} else if ([[self partType] isEqualToString: @"RNGlobalConnectionStrength"]) {
+		preroll = 0.02; //just a guess for how long it'll take to reprogram MIOC
+		NSDate *absStartTime = [time addTimeInterval: _startTime_s];
+		interval1 = [absStartTime timeIntervalSinceNow] - preroll;
+		NSTimer *startTimer = [NSTimer scheduledTimerWithTimeInterval:interval1 
+															   target:self 
+															 selector:@selector(postNewGlobalConnectionStrengthNotification:) 
+															 userInfo:[self experimentPart] 
+															  repeats:NO];
+		interval2 = [absStartTime timeIntervalSinceNow] - preroll;
+		uncertainty = (interval1 - interval2)*1000.0;
+		NSLog(@"Scheduling global connection strength @T+%.2f: %@\n\t%@",_startTime_s, [self description], [self experimentPart]);
+		NSLog(@"\n\tUncertainty in part timer scheduling is maximum %.3f ms (%g - %g)", uncertainty, interval1, interval2);
+		[self setStartTimer:startTimer];
+		
+	} else
 		NSAssert1( 0, @"Unknown experiment part type: %@", [self partType]);
 }
 

@@ -162,7 +162,10 @@ static NSArray *colorArray;
 - (void) setDestVelocityProcessor: (MIOCVelocityProcessor *) newDestVelocityProcessor
 {
 	[_destVelocityProcessor autorelease];
-	_destVelocityProcessor = [newDestVelocityProcessor retain];
+	//patch up the processor so port and channel match ours
+	_destVelocityProcessor = [newDestVelocityProcessor copy]; // !!!:jri:20050907 Need to copy, since all nodes passed same init object
+	[_destVelocityProcessor setPort:[self destPort]];
+	[_destVelocityProcessor setChannel:[self destChan]];
 }
 
 - (NSPoint) plotLocation { return _plotLocation; }

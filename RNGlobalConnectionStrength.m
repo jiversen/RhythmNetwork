@@ -113,4 +113,15 @@
 	return self;
 }
 
+- (MIOCVelocityProcessor *) processor
+{
+	return _processor;
+}
+
+- (NSString *) description
+{
+	NSAssert( (_processor != nil), @"description requested for uninitialized object!");
+	return [_processor description];
+}
+
 @end

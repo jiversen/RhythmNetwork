@@ -14,6 +14,7 @@
 #define kNumMIDINotes 128
 
 @class RNStimulus;
+@class RNGlobalConnectionStrength;
 
 @interface RNNetwork : NSObject {
 	NSMutableArray	*_nodeList;			//will contain RNTapperNode s
@@ -29,6 +30,7 @@
 
 - (NSArray *) nodeList;
 - (NSArray *) MIOCConnectionList;
+- (NSArray *) MIOCVelocityProcessorList;
 - (RNNodeNum_t) nodeIndexForChannel:(Byte) channel Note: (Byte) note;
 
 - (NSString *) description;
@@ -37,6 +39,7 @@
 - (RNStimulus *) stimulusForChannel: (Byte) stimulusChannel;
 - (void) setStimulus: (RNStimulus *) stim ForChannel: (Byte) stimulusChannel;
 - (void) setStimulusArray: (RNStimulus **) stimulusArray;
+- (void) setGlobalConnectionStrength: (RNGlobalConnectionStrength *) connectionStrength;
 
 //- (void) addConnection: (RNConnection *) aConnection;
 //- (void) removeConnection: (RNConnection *) aConnection;

@@ -662,4 +662,26 @@ Now, for the part, we have two options: one is to ramp the slope, other to ramp 
 
 9/7/05 great progress: have the definition and input side done: specify a globalConnectionStrength or 
 globalConnectionStrengthRamp experiment part. The latter is expanded into multiple globalConnectionStrength events.
-This involved a new class RNGlobalConnectionStrength and changes to RNExperimentPart and RNExperiment
+This involved a new class RNGlobalConnectionStrength and changes to RNExperimentPart and RNExperiment (the methods
+that do loading of an experiment and creation of experiment parts array), as well as
+MIOCVelocityProcessor (setters for constant map, and to change port and channel, which we'll need to do when associating
+with nodes).
+
+Today: implement scheduling of this new part type, a timer handler (in RNExperimentPart). Then implement a notification
+handler in RNController that will assign the new velocity processor to all nodes in the network (who owns nodes? RNNetwork?)
+this also must compose and send control messages to the MIOC--use add/remove velocityProcessor type mechanism.
+
+Ok, this is for the most part done, along with a raft of other changes that were needed to graft on this addition: to
+MIOCVelocityProcessor, MIOCModel, RNTapperNode...
+But...just realized a problem--we don't necessarily want peoples OWN feedback to also change velocity, but
+unfortunately, that will also happen...it's a GLOBAL weight. How can I treat people's feedback differently? Rightnow
+it's on output that velocities are filtered, which means all sounds played out are modified. We're using a single
+channel to address each device, so can't do a channel-based solution...I don't see any way out here. We'll have to
+try it and see if it works. Thought drum machine might be able to change velocity map for each voice, but no. That
+would have worked. Any way I can do this w/ filters--e.g. snatch one note and do something with it. An alternative would
+be to have each output be sent to a unique port--this'll make future upgrades difficult. Another more complex possibility
+would route self taps directly with no velocity change (or a high constant one) and route taps desitined for other
+tappers to a special port (one channel for each stream to be modified: for now one per tapper, with same channel number.
+This'll allow us, say 6x5 = 30 tappers, use two ports for this filtering, giving 32 possibilities.
+This is opposed to 6*7 = 40 tappers. What a pain! so: port1,chan1(I) -> port7,chan1(O) FILTER port7,chan1(I) ->port1,chan1(O)
+I'll also look into splitting: three zones: below our note, our note, above our note

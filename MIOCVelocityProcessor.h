@@ -12,7 +12,7 @@
 #define kMIOCInputVelocityProcessorOpcode 24
 #define kMIOCOutputVelocityProcessorOpcode 25
 
-@interface MIOCVelocityProcessor : NSObject <MIOCProcessor> {
+@interface MIOCVelocityProcessor : NSObject <MIOCProcessor, NSCopying> {
 	Byte _port;
 	Byte _channel;
 	Byte _IOOpcode;
@@ -35,6 +35,7 @@
 - (BOOL) isEqual: (id) anObject; //used for uniqueness testing in NSArray
 
 //- (NSData *) MIDIBytes; //convert to MIDI bytestream
+//- (id)copyWithZone:(NSZone *)zone
 
 @end
 

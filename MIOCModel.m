@@ -358,9 +358,10 @@ static Byte removeProcessorFlag[1] = {0x00};
 - (void) addVelocityProcessor:(MIOCVelocityProcessor *) aVelProc
 {
 	if (![_velocityProcessorList containsObject:aVelProc]) {
-		if ([self sendAddVelocityProcessorSysex:aVelProc] == kSendSysexSuccess) 
+		if ([self sendAddVelocityProcessorSysex:aVelProc] == kSendSysexSuccess) {
 			[_velocityProcessorList addObject:aVelProc];
-		else
+			NSLog(@"Added vel proc: %@",aVelProc);
+		} else
 			NSLog(@"\n\tFailed to add Velocity Processor (@%).",aVelProc);
 	} else
 		NSLog(@"Attempt was made to add velocity processor (%@) multiple times.", aVelProc);	
@@ -368,8 +369,73 @@ static Byte removeProcessorFlag[1] = {0x00};
 
 - (void) removeVelocityProcessor:(MIOCVelocityProcessor *) aVelProc
 {
-	
+	if ([_velocityProcessorList containsObject:aVelProc]) {
+		if ([self sendRemoveVelocityProcessorSysex:aVelProc] == kSendSysexSuccess) {
+			[_velocityProcessorList removeObject:aVelProc];
+			NSLog(@"Removed vel proc: %@",aVelProc);
+		} else
+			NSLog(@"\n\tFailed to remove Connection Processor (%@).",aVelProc);
+	} else
+		NSLog(@"Attempt was made to remove non-existent velocity processor (%@).", aVelProc);
 }
+
+// *********************************************
+//  iterate through an array of MIOCVelocityProcessors, adding each one
+- (void) addVelocityProcessorsInArray:(NSArray *) aProcessorList
+{
+	NSAssert( (aProcessorList != nil), @"nil processor List");
+	MIOCVelocityProcessor *processor;
+	NSEnumerator *enumerator = [aProcessorList objectEnumerator];
+	while (processor = [enumerator nextObject]) {
+		[self addVelocityProcessor:processor];
+	}
+}
+
+// *********************************************
+//  iterate through an array of MIOCVelocityProcessors, removing each one
+- (void) removeVelocityProcessorsInArray:(NSArray *) aProcessorList
+{
+	NSAssert( (aProcessorList != nil), @"nil processor List");
+	MIOCVelocityProcessor *processor;
+	NSEnumerator *enumerator = [aProcessorList objectEnumerator];
+	while (processor = [enumerator nextObject]) {
+		[self removeVelocityProcessor:processor];
+	}
+}
+
+// *********************************************
+//  accessors for _velocityProcessorList NSMutableArray
+- (NSArray *) velocityProcessorList
+{
+	return [NSArray arrayWithArray:_velocityProcessorList];
+}
+
+//do an incremental change: determine connections that need to be lost and those needing to be added
+- (void) setVelocityProcessorList: (NSArray *) newVelocityProcessorList
+{
+	NSMutableArray *processorsToRemove = [NSMutableArray arrayWithCapacity:10];
+	NSMutableArray *processorsToAdd = [NSMutableArray arrayWithCapacity:10];
+	
+	//find current velocity processors NOT in new list (to remove)
+	MIOCVelocityProcessor *processor;
+	NSEnumerator   *currentEnumerator = [[self velocityProcessorList] objectEnumerator];
+	while (processor = [currentEnumerator nextObject]) {
+		if ([newVelocityProcessorList containsObject:processor] == NO)
+			[processorsToRemove addObject:processor];
+	}
+	
+	//find new connections not already in current list (to add)
+	NSEnumerator   *newEnumerator = [newVelocityProcessorList objectEnumerator];
+	while (processor = [newEnumerator nextObject]) {
+		if ([[self velocityProcessorList] containsObject:processor] == NO)
+			[processorsToAdd addObject:processor];
+	}
+	
+	[self removeVelocityProcessorsInArray:processorsToRemove];
+	[self addVelocityProcessorsInArray:processorsToAdd];
+	NSLog(@"Update velocity processors: Remove %d; Add %d\n", [processorsToRemove count], [processorsToAdd count]);
+}
+
 
 //filter out active sense and note-offs from all inputs (1-7) that are connected to
 //  trigger to midi converters
