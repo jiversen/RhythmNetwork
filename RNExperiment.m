@@ -55,21 +55,28 @@
 {
 	NSMutableDictionary *aDict;
 	RNExperimentPart *part;
+	NSArray *subPartArray;
+		
 	NSEnumerator *partEnumerator = [partArray objectEnumerator];
 	_experimentParts = [[NSMutableArray arrayWithCapacity:[partArray count]] retain];
 
 	while (aDict = [partEnumerator nextObject]) {
 		aDict = [NSMutableDictionary dictionaryWithDictionary:aDict];
 		[aDict addEntriesFromDictionary:sizeDict]; 		//add size info to aDict
-		part = [RNExperimentPart experimentPartFromDictionary: aDict];
-		[_experimentParts addObject:part];
+		subPartArray = [RNExperimentPart experimentPartArrayFromDictionary: aDict];
+		[_experimentParts addObjectsFromArray:subPartArray];
+		
 		//take the first one, and initialize current network
 		// note, since experiment has not started yet, the MIOC is not programmed
-		if ([[part partType] isEqualToString:@"RNNetwork"]) {
-			if ([part startTime] == 0)
-				[self setCurrentNetwork:[part experimentPart] ];
+		if ([subPartArray count] == 1) {
+			part = [subPartArray objectAtIndex:0]; //grab the first (and only) part
+			if ([[part partType] isEqualToString:@"RNNetwork"]) {
+				if ([part startTime] == 0)
+					[self setCurrentNetwork:[part experimentPart] ];
+			}
 		}
-	}
+		
+	} //enumerate over part-defining dictionaries
 }
 
 - (void) dealloc

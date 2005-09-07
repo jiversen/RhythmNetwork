@@ -13,6 +13,7 @@
 #import "MIDIIO.h"
 #import "RNStimulus.h"
 #import "RNNetwork.h"
+#import "RNGlobalConnectionStrength.h"
 
 @implementation RNExperimentPart
 
@@ -33,15 +34,19 @@
 	if ([type isEqualToString:@"stimulus"]) {
 		NSString *stimStr = [aDict valueForKey:@"stimulus"];
 		NSAssert1( (type != nil), @"Experiment Part is missing Stimulus: %@", aDict);
-		part = [[RNStimulus alloc] initWithString:stimStr];
+		part = [[[RNStimulus alloc] initWithString:stimStr] autorelease];
 		NSAssert1( (part != nil), @"Could not create Stimulus: %@", stimStr);
 		//set start time
 		[part setStartTimeSeconds:startTime_s];
 		
 	} else if ([type isEqualToString:@"network"]) {
-		part = [[RNNetwork alloc] initFromDictionary:aDict];
+		part = [[(RNNetwork *)[RNNetwork alloc] initFromDictionary:aDict] autorelease]; //note cast :jri:20050906 
 		NSAssert1( (part != nil), @"Could not create Network: %@", aDict);
 		
+	} else if ([type isEqualToString:@"globalConnectionStrength"]) {
+		part = [[(RNGlobalConnectionStrength *)[RNGlobalConnectionStrength alloc] initFromDictionary:aDict] autorelease];
+		NSAssert1( (part != nil), @"Could not create globalConnectionStrength event: %@", aDict);
+
 	} else {
 		NSAssert1( 0, @"Experiment Part: unknown type (%@)", type);
 		return nil;
@@ -51,6 +56,36 @@
 													RelativeStartTime:startTime_s
 														  Description:description];
 	return [temp autorelease];
+}
+
+//mutant factory: return an array of parts--takes care of umbrella parts that auto-expand into 
+//  multiple real parts
+//let this be the main entry point, and let non-expanded parts be returned as an array of one part
+// this'll call experimentPartFromDictionary as needed
++ (NSArray *) experimentPartArrayFromDictionary: (NSDictionary *) aDict
+{
+	RNExperimentPart *part;
+	NSMutableArray *partArray = [NSMutableArray arrayWithCapacity:1];
+	NSArray *dictArray;
+	
+	NSString *type = [aDict valueForKey:@"type"];
+	NSAssert1( (type != nil), @"Experiment Part is missing Type: %@", aDict);
+	
+	//handle based on type
+	if ([type isEqualToString:@"globalConnectionStrengthRamp"]) { //expand this kind
+		dictArray = [RNGlobalConnectionStrength globalConnectionStrengthDictionaryArrayFromRampDictionary:aDict];
+		//enumerate over dictionaries, instantiating a part for each one
+		NSEnumerator *partEnumerator = [dictArray objectEnumerator];
+		while (aDict = [partEnumerator nextObject]) {
+			part = [RNExperimentPart experimentPartFromDictionary:aDict];
+			[partArray addObject:part];
+		}
+	} else { //non-expanding kinds: instantiate and wrap in array
+		part = [RNExperimentPart experimentPartFromDictionary:aDict];
+		[partArray addObject:part];
+	}
+
+	return [NSArray arrayWithArray:partArray]; //return non-mutable
 }
 
 - (RNExperimentPart *) initWithObject: (id) anObject RelativeStartTime: (NSTimeInterval) startTime_s Description: (NSString *) description

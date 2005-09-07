@@ -27,6 +27,18 @@
 	[self setVelocityMapThreshold:0 GradientAbove:1.0 GradientBelow:1.0 Offset:0];
 	return self;
 }
+
+- (void) setPort:(Byte)port
+{
+	_port = port;
+}
+
+- (void) setChannel:(Byte)channel
+{
+	NSAssert( (channel >= 1 && channel <= 16), @"channel out of range");
+	_channel = channel;
+}
+
 //massed setter, will need per-variable if we do bindings UI
 // note, here gradients are true gradients: -16...+15.875, not integers as in midi stream
 - (void) setVelocityMapThreshold:(Byte)threshold GradientAbove:(double)gradientAbove GradientBelow:(double)gradientBelow Offset:(Byte)offset
@@ -51,9 +63,10 @@
 	[self setVelocityMapThreshold:0 GradientAbove:weight GradientBelow:1.0 Offset:0];
 }
 
-- (void) setConstant:(SInt8)offset
+- (void) setConstantVelocity:(Byte)velocity;
 {
-	[self setVelocityMapThreshold:0 GradientAbove:0.0 GradientBelow:0.0 Offset:offset];
+	NSAssert( (velocity <= 127), @"Velocity out of range");
+	[self setVelocityMapThreshold:0 GradientAbove:0.0 GradientBelow:0.0 Offset:velocity];
 }
 
 - (void) setPosition:(Byte)position
@@ -87,6 +100,8 @@
 			 && (_offset    == other->_offset));
 	return equal;
 }
+
+//impossible to uniquely hash this
 
  //convert to MIDI bytestream
 - (NSData *) MIDIBytes

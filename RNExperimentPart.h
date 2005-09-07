@@ -24,6 +24,7 @@
 }
 
 + (RNExperimentPart *) experimentPartFromDictionary: (NSDictionary *) aDict;
++ (NSArray *) experimentPartArrayFromDictionary: (NSDictionary *) aDict;
 
 - (RNExperimentPart *) initWithObject: (id) anObject RelativeStartTime: (NSTimeInterval) startTime_s Description: (NSString *) description;
 - (void) dealloc;

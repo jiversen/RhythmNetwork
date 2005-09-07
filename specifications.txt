@@ -575,5 +575,91 @@ the histogram views keep track of their data
 
 Implemented RNDataView, and added this to the interface. Haven't thought about how to drive it, however. First show
 ITI ongoing. X scale? scrolling or fit entire duration of experiment within the window. Do the latter first, and also
-mark on it stimulus and network start/end points. How indicated different tappers? 
+mark on it stimulus and network start/end points. How indicated different tappers? What I did: plots ITI using different
+colors and expands the x range once graph reaches the limits.
 
+7/27/05
+Just did first full experiment and it was a success. Things worked without a hitch, basically. With a full set of 6 people,
+the flashing of nodes on screen got very lagged behind, so I commented that out. Useful for testing, but in this
+case the trigger-midi box shows each tap clearly. Perhaps keep showing the stimulus output as flashes. I was worried that
+this might invalidate the data, but fortunately that's all timestamped on arrival, so it doesn't much matter how
+long I take to process it after that. A few things that need improving--working on experiments is a pain--using the
+text editor; hard to get an overview of things, and prone to error. Also the timing was a bit of a hassle. Would be easier
+to use delta times, delta network defs: add, remove, etc. Also total experiment length--sometimes I wish it would go
+on longer. Unfortunately, we stop recording data once timer stops--would be better to let that continue indefinitely
+for those cases where interesting things are still happening. The program did crash onece after running a long time
+because of the malloc stack logging I'm doing--turn that off!
+ITI display was very useful--nice overview of experiment. Relative phase would be interesting, too, or asynchrony.
+The little histograms and ITI readout were cute, but I didn't refer to them (of course, I was taking place in the
+experiment, so I didn't watch. 
+To do: better experiment programmability--change timing, etc on the fly?
+program change to change sound sets
+keep loging after experiment stops
+
+Just found SR-16 sysex format document...including drumset definitions. You can alter the drumset on the fly
+using 72 data bytes (~24 ms transmission time). Now--when we're transmitting out the interface, we're not blocked
+from receiving with time precision, right? _this_ could be used to implement arbitrary weightings--by setting the
+pad volumes on the fly.
+
+However, to set overall coupling strength, best is to do it only once, for each tapper--filter on output side is best, as 
+will still record normal velocity performance data...
+
+Did I write about this before?: could have a single master node-flash timer that quickly loops thru all nodes and
+adjusts color, rather than a new timer being created for each flash and each node. When all flashes extinguish, could
+pause itself, and then re-establish when a new flash happens. This could be a class-wide object. Another optimization:
+color is specified for each flash, released and retained. Instead, have a setter for color, and flash just works
+using that color
+
+8/28/05 Has it been a month already!? I was away, true, but time flies. for now, not to worry about the flash displays.
+Also stared in with quartz debug to see how much is being redrawn each time. I took out a 'set redraw' kind of code
+for each flash--that caused entire view to redraw. Instead, need a way to add to dirty region only the tiny bit I've
+flashed...
+
+For next experiment, focus on the connection strength global parameter--add a velocity processor to output to each
+tapper. Add a new kind of experiment part that ramps the weight from start to end over a given duration...
+
+9/6/05 Gearing up for next experiment.
+As for drumset changes, on the fly would be cool, however for now could pre-program them in each machine (don't forget
+to manually set MIDI channel for each machine) and then use program changes sent to all. Note, this'll require that
+all outputs are listening to the computer--define a separate channel only for control messages (channel 1 from computer).
+
+However, this is of lower priority now (can always ask each tapper to do the change manually).
+
+Higher priority--rewrite all experiments, employing improvements from earlier. Better yet would be ability to
+edit from within rhythm network program, as doing it as text files is a little difficult. That's another project for
+another day (week?).
+
+Also, try different sets of drum sounds--program in various banks into drum machines and have people swap them. This might
+be best to pilot with only two people. It'd be nice to have a central facility for setting up drum banks within RN.
+Again, for another day.
+
+For RN programming: implement global connection strength. One way is via volume filters alone. Another will play
+distracter noise tones.
+
+Today's changes: Reorganized netdef and experiment files: organize by experiment. Change load code to point to
+new location. (someday: make base directory a preference). DONE
+
+Study best way to do velocity control. Looking at experiment parts--was programmed ad hoc, might want to have a 
+category or protocol to which anything wanting to be a part must conform. Right now, there's a lot of special
+case logic in RNExperimentPart. Postpone.
+
+I think the case I want is one in which the degree of coupling is ramped up from zero to full. I'll specify the
+start time and duration of the ramp. (more generally, also the beginning and ending weight). This'll need
+its own timer to send network-wide weight changes. We'll have to loop thru nodes and transmit a processor for each one.
+Review velocityProc. Problem: velocity processor slopes are quantized, with step of 0.125, so there are only
+eight possible values between 0 and 1. Possible solutions: 1) concatenate two processors, 2) manipulate offset, not
+slope, 3) set to specific constant value (ignore source's velocity).
+
+Have gone and looked at velocity data for original experiment, and find large inter-subject differences. Some
+are heavy tappers, others are light. For some experiments, this is desirable, in a way, allowing people to express
+their urgency. However, it means that different people may have different perceptual weight--this is a question:
+do people w/ louder taps act as leaders? Do they sway others more readily? In the coupling experiment, however,
+I think I want to eliminate this variation.
+To do: add a 'constant' velocity processor (Done).
+
+Now, for the part, we have two options: one is to ramp the slope, other to ramp the constant velocity. We'll add a
+'type' field: 'weight' or 'constant', with parameter ranges [0,1] and [0, 127] respectively.
+
+9/7/05 great progress: have the definition and input side done: specify a globalConnectionStrength or 
+globalConnectionStrengthRamp experiment part. The latter is expanded into multiple globalConnectionStrength events.
+This involved a new class RNGlobalConnectionStrength and changes to RNExperimentPart and RNExperiment
