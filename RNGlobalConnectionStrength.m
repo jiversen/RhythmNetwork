@@ -57,10 +57,12 @@
 	for (iStep = 0; iStep <= nSteps; iStep++) {
 		stepStartTime = startTime_s + iStep*duration_s/nSteps;
 		stepParam = startParam + iStep*paramDelta;
-		stepDict = [NSMutableDictionary dictionaryWithCapacity:3];
+		stepDict = [NSMutableDictionary dictionaryWithCapacity:4];
 		[stepDict setObject:@"globalConnectionStrength" forKey:@"type"];
 		[stepDict setObject:[NSNumber numberWithDouble:stepStartTime] forKey:@"startTime"];
 		[stepDict setObject:[NSNumber numberWithDouble:stepParam] forKey:parameterType];
+		[stepDict setObject:[NSString stringWithFormat:@"%@=%g (%d/%d)", parameterType, stepParam, iStep, nSteps] 
+					 forKey:@"description"];
 		[dictionaryArray addObject:stepDict];
 	}
 	
