@@ -9,8 +9,8 @@
 #import <Cocoa/Cocoa.h>
 #import "MIOCProcessorProtocol.h"
 
-#define kMIOCInputNoteOffFilterProcessorOpcode 8
-#define kMIOCOutputNoteOffFilterProcessorOpcode 9
+#define kMIOCInputNoteOffFilterProcessorOpcode 0x08
+#define kMIOCOutputNoteOffFilterProcessorOpcode 0x09
 
 #define	kMIOCFilterChannelAll 0x00
 

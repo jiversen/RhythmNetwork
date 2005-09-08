@@ -9,8 +9,8 @@
 #import <Cocoa/Cocoa.h>
 #import "MIOCProcessorProtocol.h"
 
-#define kMIOCInputVelocityProcessorOpcode 24
-#define kMIOCOutputVelocityProcessorOpcode 25
+#define kMIOCInputVelocityProcessorOpcode 0x24
+#define kMIOCOutputVelocityProcessorOpcode 0x25
 
 @interface MIOCVelocityProcessor : NSObject <MIOCProcessor, NSCopying> {
 	Byte _port;

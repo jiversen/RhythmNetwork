@@ -45,18 +45,27 @@
 	//nSteps depends on parameter type--
 	if ([parameterType isEqualToString:@"weight"]) {
 		nSteps = (endParam-startParam) * 8; //weight (slope) is quantized to 1/8
+		paramDelta = (endParam-startParam) / nSteps;
+		
 	} else if ([parameterType isEqualToString:@"constant"]) {
-		nSteps = (endParam-startParam) / 4; //change constant in steps of 4 velocity value (what's jnd?)
+		nSteps = duration_s * 2; //constant # steps per second
+		paramDelta = 3.0; //controls acceleration
+			
 	} else {
 		NSAssert1( (0), @"incorrect parameterType (%@)", rampDict);
 	}
 	
-	paramDelta = (endParam-startParam) / nSteps;
 	NSMutableArray *dictionaryArray = [NSMutableArray arrayWithCapacity:nSteps];
 
 	for (iStep = 0; iStep <= nSteps; iStep++) {
 		stepStartTime = startTime_s + iStep*duration_s/nSteps;
-		stepParam = startParam + iStep*paramDelta;
+		
+		if ([parameterType isEqualToString:@"weight"]) {
+			stepParam = startParam + paramDelta*iStep;
+		} else if ([parameterType isEqualToString:@"constant"]) {
+			stepParam = startParam + (endParam-startParam) * pow( (double)iStep / (double) nSteps, paramDelta);
+			stepParam = round(stepParam);
+		}
 		stepDict = [NSMutableDictionary dictionaryWithCapacity:4];
 		[stepDict setObject:@"globalConnectionStrength" forKey:@"type"];
 		[stepDict setObject:[NSNumber numberWithDouble:stepStartTime] forKey:@"startTime"];

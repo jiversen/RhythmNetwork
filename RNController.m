@@ -457,6 +457,11 @@
 		//Program network
 		[self programMIOCWithNetwork:[testPart experimentPart]];
 		[_networkView setNetwork:[testPart experimentPart]];
+	} else if (([[testPart partType] isEqualToString: @"RNGlobalConnectionStrength"])) {
+		RNNetwork *net = [_experiment currentNetwork];
+		NSAssert( (net != nil), @"no current network.");
+		[net setGlobalConnectionStrength:[testPart experimentPart]];
+		[self programMIOCVelocityProcessorsForNetwork:net];
 	}
 	
 }
