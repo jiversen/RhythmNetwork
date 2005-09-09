@@ -49,7 +49,7 @@
 		
 	} else if ([parameterType isEqualToString:@"constant"]) {
 		nSteps = duration_s * 2; //constant # steps per second
-		paramDelta = 3.0; //controls acceleration
+		paramDelta = 2.0; //controls acceleration
 			
 	} else {
 		NSAssert1( (0), @"incorrect parameterType (%@)", rampDict);
