@@ -453,10 +453,14 @@
 		NSData *pl = [[testPart experimentPart] MIDIPacketListForExperimentStartTime:now_ns ];
 		[io sendMIDIPacketList:pl];
 		[_testStopButton setEnabled:YES];
+		
 	} else if ([[testPart partType] isEqualToString: @"RNNetwork"]) {
 		//Program network
-		[self programMIOCWithNetwork:[testPart experimentPart]];
-		[_networkView setNetwork:[testPart experimentPart]];
+		RNNetwork *net = [testPart experimentPart];
+		[self programMIOCWithNetwork:net];
+		[_experiment setCurrentNetwork:net];
+		[_networkView setNetwork:net];
+		
 	} else if (([[testPart partType] isEqualToString: @"RNGlobalConnectionStrength"])) {
 		RNNetwork *net = [_experiment currentNetwork];
 		NSAssert( (net != nil), @"no current network.");
