@@ -302,16 +302,16 @@ static Byte removeProcessorFlag[1] = {0x00};
 }
 
 // *********************************************
-//  disconnect all entries in _connectionList
+//  disconnect all entries in _connectionList & all velocity processors
 - (void) disconnectAll
 {
-	MIOCConnection *conn;
-	NSEnumerator *enumerator = [_connectionList objectEnumerator];
-	while (conn = [enumerator nextObject]) {
-		[self disconnectOne: conn];
-	}		
+	[self setConnectionList:[NSArray array]];
 	//sanity--
 	NSAssert( ([_connectionList count] == 0), @"Non-empty connectionList after disconnectAll");
+	
+	[self setVelocityProcessorList:[NSArray array]];
+	//sanity--
+	NSAssert( ([_velocityProcessorList count] == 0), @"Non-empty velocityProcessorList after disconnectAll");
 }
 
 // *********************************************
@@ -430,8 +430,9 @@ static Byte removeProcessorFlag[1] = {0x00};
 			[processorsToAdd addObject:processor];
 	}
 	
+	[self addVelocityProcessorsInArray:processorsToAdd]; //add before remove seems to work, prevents gap when there's no processor
 	[self removeVelocityProcessorsInArray:processorsToRemove];
-	[self addVelocityProcessorsInArray:processorsToAdd];
+	
 	NSLog(@"Update velocity processors: Remove %d; Add %d\n", [processorsToRemove count], [processorsToAdd count]);
 }
 
