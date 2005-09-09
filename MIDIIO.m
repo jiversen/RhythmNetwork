@@ -19,14 +19,14 @@ static void myMIDINotifyProc(const MIDINotification *message, void * refCon);
 
 - (MIDIIO*)init
 {
-	self = [super init];
-	_MIDIClient = NULL;
-	_inPort		= NULL;
-	_outPort	= NULL;
-	_MIDISource = NULL;
-	_MIDIDest	= NULL;
+	self				= [super init];
+	_MIDIClient			= NULL;
+	_inPort				= NULL;
+	_outPort			= NULL;
+	_MIDISource			= NULL;
+	_MIDIDest			= NULL;
 	_sysexListenerArray = [[NSMutableArray arrayWithCapacity:0] retain];
-	_MIDIListenerArray = [[NSMutableArray arrayWithCapacity:0] retain];
+	_MIDIListenerArray  = [[NSMutableArray arrayWithCapacity:0] retain];
 
 	[self setupMIDI];    
     return self;
@@ -38,7 +38,7 @@ static void myMIDINotifyProc(const MIDINotification *message, void * refCon);
 {
 	MIDIClientDispose(_MIDIClient); //automatically disposes of ports
 	[_sysexListenerArray release];
-	[_MIDIListenerArray release];
+	[_MIDIListenerArray  release];
 	[super dealloc];
 }
 
@@ -47,7 +47,7 @@ static void myMIDINotifyProc(const MIDINotification *message, void * refCon);
 //Setup a midi client, create its input and output ports, connect ports to outside world
 - (void)setupMIDI
 {
-	OSStatus	status;
+	OSStatus status;
     
     //create this client
     status = MIDIClientCreate(CFSTR("MIDIIO"), myMIDINotifyProc, (void*)self, &_MIDIClient);
@@ -183,7 +183,7 @@ static void myMIDINotifyProc(const MIDINotification *message, void * refCon);
     }		
 	if (!didConnect) {
 		NSLog(@"Could not connect: destination %@ does not exist", destinationName);
-		_MIDISource = NULL;
+		_MIDIDest = NULL;
 	}
 	
 	return didConnect;
@@ -333,7 +333,7 @@ static void	myReadProc(const MIDIPacketList *pktlist, void *refCon, void *connRe
 	//pass wrapped list on to our handler, execute on main thread to 
 	//	1) get out of realtime thread asap & 2) stop worrying about memory allocation (use main thread's) autorelease pool
     [selfMIDIIO performSelectorOnMainThread:@selector(handleMIDIInput:) withObject:(NSData *)wrappedPktlist waitUntilDone:NO];
-	CFRelease(wrappedPktlist); //since we created it; one ref still retained by performSelector...
+	CFRelease(wrappedPktlist); //since we created it; one ref still retained by performSelector... as long as it needs it
 }
 
 // *********************************************
@@ -467,7 +467,7 @@ static void	myReadProc(const MIDIPacketList *pktlist, void *refCon, void *connRe
 	MIDIPacketList	*pktlist;
 	MIDIPacket		*curPacket;
 	size_t			dataLength, pktlistLength;
-	OSStatus err;
+	OSStatus status;
 	
 	if ([self destinationIsConnected]==NO)
 		return kSendMIDIFailure;
@@ -480,9 +480,9 @@ static void	myReadProc(const MIDIPacketList *pktlist, void *refCon, void *connRe
 	curPacket		= MIDIPacketListInit(pktlist);
 	curPacket		= MIDIPacketListAdd(pktlist,pktlistLength,curPacket,0,dataLength,[data bytes]);
 	
-	err = MIDISend(_outPort, _MIDIDest, pktlist);
+	status = MIDISend(_outPort, _MIDIDest, pktlist);
 	
-	if (err==0)
+	if (status==noErr)
 		return kSendMIDISuccess;
 	else
 		return kSendMIDIFailure;
@@ -493,15 +493,15 @@ static void	myReadProc(const MIDIPacketList *pktlist, void *refCon, void *connRe
 // 
 - (BOOL)sendMIDIPacketList: (NSData *) wrappedPacketList
 {
-	OSStatus err;
+	OSStatus status;
 	
 	if ([self destinationIsConnected]==NO)
 		return kSendMIDIFailure;
 	
 	MIDIPacketList *pktlist = (MIDIPacketList *) [wrappedPacketList bytes];
-	err = MIDISend(_outPort, _MIDIDest, pktlist);
+	status = MIDISend(_outPort, _MIDIDest, pktlist);
 	
-	if (err==0)
+	if (status==noErr)
 		return kSendMIDISuccess;
 	else
 		return kSendMIDIFailure;
@@ -523,7 +523,7 @@ static void	mySysexCompletionProc(MIDISysexSendRequest *request)
 
 - (BOOL)sendSysex:(NSData *) data
 {
-	OSStatus err;
+	OSStatus status;
 
 	if ([self destinationIsConnected]==NO)
 		return kSendMIDIFailure;
@@ -533,20 +533,20 @@ static void	mySysexCompletionProc(MIDISysexSendRequest *request)
 	MIDISysexSendRequest *req = malloc(sizeof(MIDISysexSendRequest));
 		
 	req->destination		= _MIDIDest;
-	req->data			= (Byte *) [data bytes];
+	req->data				= (Byte *) [data bytes];
 	req->bytesToSend		= [data length];
-	req->complete		= FALSE;
-	req->completionProc  = mySysexCompletionProc;
-	req->completionRefCon = (void *)data;
+	req->complete			= FALSE;
+	req->completionProc		= mySysexCompletionProc;
+	req->completionRefCon	= (void *)data;
 	
-	err = MIDISendSysex(req);
+	status = MIDISendSysex(req);
 	
-	if (err==0)
+	if (status==noErr)
 		return kSendMIDISuccess;
 	else
 		return kSendMIDIFailure;
 	
-	//this would be the place to start a timer if we're concerned about tracking progress
+	// !!! this would be the place to start a timer if we're concerned about tracking progress
 	// for present needs, messages are so short this is overkill
 }
 

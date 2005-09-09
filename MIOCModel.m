@@ -137,7 +137,6 @@ static Byte removeProcessorFlag[1] = {0x00};
 			// in time otherwise before we get back in this spot, thus infinite loop)
 			//[self checkOnline];
 		}
-		return NO;
 		
 	}
 	
@@ -148,7 +147,7 @@ static Byte removeProcessorFlag[1] = {0x00};
 - (void) handleMIOCReply:(NSNotification *)notification
 {
 	//if we get here, we know we're online
-	NSAssert( (_isOnline == YES), @"_isOnline should be YES");
+	NSAssert( (_isOnline == YES), @"_isOnline should be YES"); //sanity check
 	//zap the timer
 	[_replyTimer invalidate];
 	[_replyTimer release];
@@ -156,7 +155,7 @@ static Byte removeProcessorFlag[1] = {0x00};
 	
 	//check if we're correctly hooked up
 	if (_correctPort == NO) {
-		NSLog(@"MIDI interface must be connected to I/O port 8");
+		NSLog(@"MIDI interface must be connected to MIOC I/O port 8");
 	}
 	
 	[self initialize];
@@ -244,7 +243,7 @@ static Byte removeProcessorFlag[1] = {0x00};
 			[_connectionList addObject:aConnection];
 			NSLog(@"Connected:    %@",aConnection);
 		} else
-			NSLog(@"\n\tFailed to add Connection Processor (%@).",aConnection);
+			NSLog(@"\n\tFailed to add connection processor (%@).",aConnection);
 	} else
 		NSLog(@"Attempt was made to add connection (%@) multiple times.", aConnection);
 }
@@ -280,7 +279,7 @@ static Byte removeProcessorFlag[1] = {0x00};
 			[_connectionList removeObject:aConnection];
 			NSLog(@"Disconnected: %@",aConnection);
 		} else
-			NSLog(@"\n\tFailed to remove Connection Processor (%@).",aConnection);
+			NSLog(@"\n\tFailed to remove connection processor (%@).",aConnection);
 	} else
 		NSLog(@"Attempt was made to remove non-existent connection (%@).", aConnection);
 }
@@ -362,7 +361,7 @@ static Byte removeProcessorFlag[1] = {0x00};
 			[_velocityProcessorList addObject:aVelProc];
 			NSLog(@"Added vel proc: %@",aVelProc);
 		} else
-			NSLog(@"\n\tFailed to add Velocity Processor (@%).",aVelProc);
+			NSLog(@"\n\tFailed to add velocity processor (%@).",aVelProc);
 	} else
 		NSLog(@"Attempt was made to add velocity processor (%@) multiple times.", aVelProc);	
 }
@@ -374,7 +373,7 @@ static Byte removeProcessorFlag[1] = {0x00};
 			[_velocityProcessorList removeObject:aVelProc];
 			NSLog(@"Removed vel proc: %@",aVelProc);
 		} else
-			NSLog(@"\n\tFailed to remove Connection Processor (%@).",aVelProc);
+			NSLog(@"\n\tFailed to remove velocity processor (%@).",aVelProc);
 	} else
 		NSLog(@"Attempt was made to remove non-existent velocity processor (%@).", aVelProc);
 }
@@ -521,7 +520,8 @@ static Byte removeProcessorFlag[1] = {0x00};
 				_correctPort = NO;
 			[[NSNotificationCenter defaultCenter] postNotificationName:@"MIOCReplyNotification"
 																object:self];
-		}
+		} else
+			NSLog(@"Unhandled Sysex Message, opcode = %x",reply->opcode);
 	}
 
 }
