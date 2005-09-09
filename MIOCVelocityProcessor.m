@@ -15,21 +15,20 @@
 - (MIOCVelocityProcessor *) initWithPort:(Byte)port Channel:(Byte)channel OnInput:(BOOL)isInput
 {
 	self = [super init];
-	_port = port;
-	NSAssert( (channel >= 1 && channel <= 16), @"channel out of range");
-	_channel = channel;
-	if (isInput == YES)
-		_IOOpcode = kMIOCInputVelocityProcessorOpcode;
-	else
-		_IOOpcode = kMIOCOutputVelocityProcessorOpcode;
-	//initialize the rest to a no-change processor
+	
+	[self setPort:port];
+	[self setChannel:channel];
+	[self setOnInput:isInput];
+	
 	[self setPosition:0]; //unnecessary, but explicit
+	//set to default: no modification of velocity
 	[self setVelocityMapThreshold:64 GradientAbove:1.0 GradientBelow:1.0 Offset:0];
 	return self;
 }
 
 - (void) setPort:(Byte)port
 {
+	NSAssert( (port >= 1 && port <= 8), @"port out of range"); // !!!:jri:20050908 hard wired, assumes one MIOC
 	_port = port;
 }
 
@@ -37,6 +36,14 @@
 {
 	NSAssert( (channel >= 1 && channel <= 16), @"channel out of range");
 	_channel = channel;
+}
+
+- (void) setOnInput:(BOOL)isInput
+{
+	if (isInput == YES)
+		_IOOpcode = kMIOCInputVelocityProcessorOpcode;
+	else
+		_IOOpcode = kMIOCOutputVelocityProcessorOpcode;
 }
 
 //massed setter, will need per-variable if we do bindings UI
@@ -59,7 +66,7 @@
 //set a simple velocity weighting
 - (void) setWeight:(double)weight
 {
-	NSAssert( (weight >= 0.0 && weight <=1.0), @"Weight out of range");
+	NSAssert( (weight >= -16.0 && weight <=15.875), @"Weight out of range"); //redundant, but more informative
 	[self setVelocityMapThreshold:0 GradientAbove:weight GradientBelow:1.0 Offset:0];
 }
 

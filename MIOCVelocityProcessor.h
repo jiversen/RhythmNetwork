@@ -26,6 +26,7 @@
 - (MIOCVelocityProcessor *) initWithPort:(Byte)port Channel:(Byte)channel OnInput:(BOOL)isInput;
 - (void) setPort:(Byte)port;
 - (void) setChannel:(Byte)channel;
+- (void) setOnInput:(BOOL)isInput;
 - (void) setVelocityMapThreshold:(Byte)threshold GradientAbove:(double)gradientAbove GradientBelow:(double)gradientBelow Offset:(Byte)offset;
 - (void) setWeight:(double)weight;
 - (void) setConstantVelocity:(Byte)velocity;
