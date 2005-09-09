@@ -685,3 +685,50 @@ tappers to a special port (one channel for each stream to be modified: for now o
 This'll allow us, say 6x5 = 30 tappers, use two ports for this filtering, giving 32 possibilities.
 This is opposed to 6*7 = 40 tappers. What a pain! so: port1,chan1(I) -> port7,chan1(O) FILTER port7,chan1(I) ->port1,chan1(O)
 I'll also look into splitting: three zones: below our note, our note, above our note
+
+9/8/05 Finished up implementation of connection strength ramp--I like the constant strength one better than the slope,
+allows for smoother change. It does remove individual velocity info. Hmm. We could do a slope from 0 to 2, say (main
+reason I didn't like was that typical taps are nowhere near max velocity, so slope scaling doesn't give much change...
+
+On trigger-midi, reduced threshold to 0 (min) and boosted sensitivity to 14.
+
+Today, implement the second path. This means--a second pair of routings for each node's connections
+	split off input from a given channel to same channel out (if self feedback)
+	and to same channel on port 7, which is looped back to port 7 input, which is then routed to the OTHER connections
+	that tapper goes to
+	so e.g.
+	{1p1, 1p1} as usual
+	{1p1, 2p1} --> {1p1,1p7} & {1p7,2p1}
+	
+	This is taken care of simply when instantiating the net--add code to do this. Also need some kind of global
+	switch to say this is what we want (so we don't need it for non-conneciton strength experiments)--this'll be
+	in a separate field, call it 'isWeighted' BOOL YES?NO. Also, initialize velprocs to pass through
+	put velprocs on output to self, AND output to others (port 7)
+	Then, expand on node to allow setting a connection strength for self feedback, and to others
+	
+Tapper (vp) IN port 1----(direct feedback) ----- (velproc) OUT same channel, port 1
+	            \																			 /------ OUT chanA, port 1
+	             \																			/
+		          \---(vp) OUT same channel, port 7 --(wire link)-- IN same channel, port 7 ---------- OUT chanB, port 1
+																							\
+																							 \------ OUT chanC, port 1
+																							 
+9/9/05 Great, just tested this out with two inputs and it works! Self input goes unchanged, while other's input
+is modified, as desired. What I need now is a way to also modify the self feedback--since it's only about 50%
+of the velocity for a typical strength tap, there's not as much dynamic range. Simplest would be to hang a
+velocity processor on each input to either boost the slope or set to a constant value. Also: check how accurately our
+velocity ramp changes are placed in time--might want to siphon off some input to the computer from port 7 to know
+for sure what velocity each tapper is hearing, but need to worry about affecting timing of tapping data--if there's
+a lot of traffic, how inaccurate does it become? Looked at it, and it's +/- 20ms for the sending of sysex for
+each velocity change. Could I schedule these as midi packets and use core midi to do the scheduling for me? Look into
+this. Now, the output it needs to compete with are the pacing stimuli--if we're in midst of a long sysex burst, it
+could delay a pacing stimulus, no? How does the server prioritize things? Will it interrupt a sysex to play a
+time-requested event? What does it do if many things are scheduled to go out the same time? Again, how does it prioritize?
+
+Also, need a way to set filters to: no filter/ remove them: can easily do this using events in the experimentParts
+--put a weight=1 at start. Also, think of adding an event to modify the input velocity mappings: both tappers and
+computer volume. For the connection-strength, want input at max, so we'll set it to 127.
+
+Also fix up flashing code--simply turn it off for now--plenty of feedback on triggerMIDI converter
+
+Finally, a way to setup drumsets--via program change messages
