@@ -34,7 +34,9 @@
 	//connections
 	NSArray *connectionsArray = [theDict valueForKey:@"connections"];
 	NSAssert( (connectionsArray != nil), @"File is missing connection list");
-	_description = [theDict valueForKey:@"description"]; //instance variable
+	
+	//network description
+	_description = [theDict valueForKey:@"description"];
 	
 	//number of stimulus channels for BigBrother
 	NSNumber *stimulusChannelNum = [theDict valueForKey:@"stimulusChannels"];
@@ -43,6 +45,13 @@
 	else
 		_numStimulusChannels = [stimulusChannelNum intValue];
 	NSAssert1( (_numStimulusChannels < 16), @"Too many stimulus channels (%@).",stimulusChannelNum); 
+	
+	//Is network weighted? (therefore we need to route output to others thru a third port)
+	//	See specifications.txt for rationale 9/8/05
+	_isWeighted = NO; //default
+	NSNumber *isWeightedNum = [theDict valueForKey:@"isWeighted"];
+	if (isWeightedNum != nil)
+		_isWeighted = (BOOL) [isWeightedNum boolValue];
 	
 	// *********************************************
 	//  Construct nodeList (creating the nodes), include as 0 'bigBrother' node, this computer
@@ -72,7 +81,7 @@
 	}
 	
 	// *********************************************
-	//  Construct connectionList
+	//  Construct connectionList -- logical connections, doesn't reflect physical path, which might go via another node
 	//
 	unsigned iConn, nConnections = [connectionsArray count];
 	_connectionList = [[NSMutableArray arrayWithCapacity:nConnections] retain];
@@ -102,14 +111,16 @@
 	// 2) the rest are defined in the input file, viz
 	//		a) bb -> some or all tappers (for pacing stimuli)
 	//		b) tapper to self
-	//		c) tapper to other tapper
+	//		c) tapper to other tapper 
+	//			**new 20050908: if isWeighted = YES, route via a patchthru node and apply velocity processing
 	//  grab port/channel from nodes
+	
 	_MIOCConnectionList = [[NSMutableArray arrayWithCapacity:(nConnections+nNodes)] retain];
 	MIOCConnection *newMIOCConn;
 	Byte sourcePort, sourceChan, destPort, destChan;
 	unsigned int iStim;
 	
-	// 1a) all BB output back to self
+	// 1a) all BB output back to self (so computer can monitor everything it outputs)
 	for (iStim = 1; iStim<= _numStimulusChannels; iStim++) {
 		sourcePort = [ [_nodeList objectAtIndex:0] sourcePort];
 		sourceChan = [ [_nodeList objectAtIndex:0] MIDIChannelForStimulusNumber:iStim];
@@ -118,7 +129,7 @@
 		newMIOCConn = [MIOCConnection connectionWithInPort:sourcePort InChannel:sourceChan OutPort:destPort OutChannel:destChan];
 		[_MIOCConnectionList addObject: newMIOCConn];
 	}
-	// 1b) all tapper nodes to BB
+	// 1b) all tapper nodes to BB (so computer records all taps)
 	for (iNode = 1; iNode <= nNodes; iNode++) {
 		sourcePort = [ [_nodeList objectAtIndex:iNode] sourcePort];
 		sourceChan = [ [_nodeList objectAtIndex:iNode] sourceChan];
@@ -127,19 +138,47 @@
 		newMIOCConn = [MIOCConnection connectionWithInPort:sourcePort InChannel:sourceChan OutPort:destPort OutChannel:destChan];
 		[_MIOCConnectionList addObject: newMIOCConn];
 	}
-	// 2) network **need to take into account subchannels of bb
+	// 2) network
 	NSEnumerator *theEnumerator = [_connectionList objectEnumerator];
 	RNConnection *thisConn;
 	while (thisConn = [theEnumerator nextObject]) {
-		sourcePort = [ [_nodeList objectAtIndex:[thisConn fromNode]] sourcePort];
-		if ([thisConn fromNode] == 0) { //separate case for BB
+		
+		if ([thisConn fromNode] == 0) { //source is BB, take into account stimulus channels
+			sourcePort = [ [_nodeList objectAtIndex:[thisConn fromNode]] sourcePort];
 			sourceChan = [ [_nodeList objectAtIndex:[thisConn fromNode]] MIDIChannelForStimulusNumber:[thisConn fromSubChannel] ];
-		} else {
+			destPort = [ [_nodeList objectAtIndex:[thisConn toNode]] destPort];
+			destChan = [ [_nodeList objectAtIndex:[thisConn toNode]] destChan]; //always kMIOCOutChannelSameAsInput
+			
+		} else { //source is a tapper node
+			sourcePort = [ [_nodeList objectAtIndex:[thisConn fromNode]] sourcePort];
 			sourceChan = [ [_nodeList objectAtIndex:[thisConn fromNode]] sourceChan];
-		}
-		destPort = [ [_nodeList objectAtIndex:[thisConn toNode]] destPort];
-		destChan = [ [_nodeList objectAtIndex:[thisConn toNode]] destChan]; //always kMIOCOutChannelSameAsInput
+			
+			//destination depends on if network is weighted
+			if (_isWeighted == NO) { //not weighted, direct to destination
+				destPort = [ [_nodeList objectAtIndex:[thisConn toNode]] destPort];
+				destChan = [ [_nodeList objectAtIndex:[thisConn toNode]] destChan];
 
+			} else { //weighted, direct to destination if source is same node as dest, otherwise route through other port
+				if ( [thisConn fromNode] == [thisConn toNode]) { //to self
+					destPort = [ [_nodeList objectAtIndex:[thisConn toNode]] destPort];
+					destChan = [ [_nodeList objectAtIndex:[thisConn toNode]] destChan];
+
+				} else { //via other port, source to thru port and from thru to our destination
+					
+					//make connection from thru to destination first, then set up for other connection
+					newMIOCConn = [MIOCConnection connectionWithInPort:[ [_nodeList objectAtIndex:[thisConn fromNode]] otherNodePassthroughPort]
+															 InChannel:[ [_nodeList objectAtIndex:[thisConn fromNode]] otherNodePassthroughChan]
+															   OutPort:[ [_nodeList objectAtIndex:[thisConn toNode]] destPort]
+															OutChannel:[ [_nodeList objectAtIndex:[thisConn toNode]] destChan]];
+					[_MIOCConnectionList addObject:newMIOCConn];
+					
+					//next set dest for instantiation below (source is already source node)
+					destPort = [ [_nodeList objectAtIndex:[thisConn fromNode]] otherNodePassthroughPort];
+					destChan = [ [_nodeList objectAtIndex:[thisConn fromNode]] otherNodePassthroughChan];
+				}
+			}
+		}
+		
 		newMIOCConn = [MIOCConnection connectionWithInPort:sourcePort InChannel:sourceChan OutPort:destPort OutChannel:destChan];
 		[_MIOCConnectionList addObject: newMIOCConn];
 	}
@@ -200,6 +239,9 @@
 		processor = [[_nodeList objectAtIndex:iNode] destVelocityProcessor];
 		if (processor != nil)
 			[processorList addObject:processor ];
+		processor = [[_nodeList objectAtIndex:iNode] otherNodeVelocityProcessor];
+		if (processor != nil)
+			[processorList addObject:processor ];
 	}
 	
 	return [NSArray arrayWithArray:processorList];
@@ -248,14 +290,17 @@
 	}
 }
 
-//add processor for each node
+//add processor for each node--this applies only to connections to OTHER nodes
+// self feedback and pacing stimuli are untouched
 - (void) setGlobalConnectionStrength: (RNGlobalConnectionStrength *) connectionStrength
 {
+	NSAssert( (_isWeighted == YES), @"Network must be weighted: add isWeighted key to definition dictionary.");
+	
 	unsigned int iNode, nNodes;
 	MIOCVelocityProcessor *processor = [connectionStrength processor];
 	nNodes = [[self nodeList] count] - 1; //number of tappers (exclude BB)
 	for (iNode = 1; iNode <= nNodes; iNode++) {
-		[[_nodeList objectAtIndex:iNode] setDestVelocityProcessor:processor];
+		[[_nodeList objectAtIndex:iNode] setOtherNodeVelocityProcessor:processor];
 	}
 }
 

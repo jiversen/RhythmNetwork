@@ -151,21 +151,55 @@ static NSArray *colorArray;
 	_destNote = newDestNote;
 }
 
+//where to route things for velocity weighting
+- (Byte) otherNodePassthroughPort
+{
+	return kPatchThruPort; // !!!:jri:20050908 assumes <= 16 tappers, fix if we expand (by adding multiple patch ports)
+}
+
+- (Byte) otherNodePassthroughChan
+{
+	//assign channels sequentially (channel = node num)
+	Byte patchChan = [self sourceChan] + kNumInputsPerConcentrator * ([self sourcePort] - 1);
+	NSAssert1( (patchChan <= 16), @"patch chan out of range--too many tappers? (%u)", patchChan);
+	return patchChan;
+}
+
+//processor applied to all performance input by a tapper
 - (MIOCVelocityProcessor *) sourceVelocityProcessor { return _sourceVelocityProcessor; }
 - (void) setSourceVelocityProcessor: (MIOCVelocityProcessor *) newSourceVelocityProcessor
 {
 	[_sourceVelocityProcessor autorelease];
-	_sourceVelocityProcessor = [newSourceVelocityProcessor retain];
+	_sourceVelocityProcessor = [newSourceVelocityProcessor copy];
+	[_sourceVelocityProcessor setPort:[self sourcePort]];
+	[_sourceVelocityProcessor setChannel:[self sourceChan]];
+	[_sourceVelocityProcessor setOnInput:YES];
 }
 
+//processor applied to all output sent to a tapper's drum machine
 - (MIOCVelocityProcessor *) destVelocityProcessor { return _destVelocityProcessor; }
 - (void) setDestVelocityProcessor: (MIOCVelocityProcessor *) newDestVelocityProcessor
 {
 	[_destVelocityProcessor autorelease];
 	//patch up the processor so port and channel match ours
-	_destVelocityProcessor = [newDestVelocityProcessor copy]; // !!!:jri:20050907 Need to copy, since all nodes passed same init object
+	_destVelocityProcessor = [newDestVelocityProcessor copy]; // !!!:jri:20050907 Need to copy, since all nodes maay be passed same init object
 	[_destVelocityProcessor setPort:[self destPort]];
 	[_destVelocityProcessor setChannel:[self destChan]];
+	[_destVelocityProcessor setOnInput:NO];
+}
+
+//we split our performance into two paths--one for self feedback, the other is what other tappers hear,
+// routed through an auxiliary port where velocity can be manipulated
+// this processor is applied to that stream
+- (MIOCVelocityProcessor *) otherNodeVelocityProcessor { return _otherNodeVelocityProcessor; }
+- (void) setOtherNodeVelocityProcessor: (MIOCVelocityProcessor *) newVelocityProcessor
+{
+	[_otherNodeVelocityProcessor autorelease];
+	//patch up the processor with correct channel in passthru port
+	_otherNodeVelocityProcessor = [newVelocityProcessor copy];
+	[_otherNodeVelocityProcessor setPort:[self otherNodePassthroughPort] ];
+	[_otherNodeVelocityProcessor setChannel:[self otherNodePassthroughChan] ];
+	[_otherNodeVelocityProcessor setOnInput:NO];
 }
 
 - (NSPoint) plotLocation { return _plotLocation; }

@@ -24,6 +24,7 @@
 	RNNodeNum_t		_nodeLookup[kNumMIDIChans][kNumMIDINotes]; //takes channel,note to node (0-based indexing)
 	unsigned int	_numTapperNodes;
 	unsigned int	_numStimulusChannels; //max number of independent Big Brother stimulus channels needed
+	BOOL			_isWeighted;
 }
 
 - (RNNetwork *) initFromDictionary: (NSDictionary *) theDict;

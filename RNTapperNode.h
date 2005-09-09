@@ -10,6 +10,7 @@
 
 #define kNumConcentrators 4
 #define kNumInputsPerConcentrator 6
+#define kPatchThruPort 7
 #define kBigBrotherPort 8
 #define kBigBrotherChannel 16
 #define kBaseNote 64
@@ -30,6 +31,7 @@ typedef UInt16 RNNodeNum_t;
 	Byte	_destNote; //can this also be mapped by MIOC?
 	MIOCVelocityProcessor	*_sourceVelocityProcessor; //processing applied to performance
 	MIOCVelocityProcessor	*_destVelocityProcessor; //processing applied to sound sent to tapper
+	MIOCVelocityProcessor	*_otherNodeVelocityProcessor; //applied to performance destined for other nodes
 	BOOL	_hearsSelf;
 	BOOL	_hearsBigBrother;
 	Byte	_bigBrotherSubChannel;
@@ -67,11 +69,17 @@ typedef UInt16 RNNodeNum_t;
 - (Byte) destNote;
 - (void) setDestNote: (Byte) newDestNote;
 
+- (Byte) otherNodePassthroughPort;
+- (Byte) otherNodePassthroughChan;
+
 - (MIOCVelocityProcessor *) sourceVelocityProcessor;
 - (void) setSourceVelocityProcessor: (MIOCVelocityProcessor *) newSourceVelocityProcessor;
 
 - (MIOCVelocityProcessor *) destVelocityProcessor;
 - (void) setDestVelocityProcessor: (MIOCVelocityProcessor *) newDestVelocityProcessor;
+
+- (MIOCVelocityProcessor *) otherNodeVelocityProcessor;
+- (void) setOtherNodeVelocityProcessor: (MIOCVelocityProcessor *) newVelocityProcessor;
 
 - (NSPoint) plotLocation;
 - (void) setPlotLocation: (NSPoint) newPlotLocation;
