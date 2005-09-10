@@ -79,10 +79,12 @@
 	unsigned int i;
 	
     _numStimulusChannels = newNumStimulusChannels;
-	for (i=1; i<= _numStimulusChannels; i++) {
-		_flashIntensityArray[i] = 0.0;
-		_flashTimerArray[i] = nil;
-		_stimulusArray[i] = nil;
+	if (_numStimulusChannels > 0) {
+		for (i=1; i<= _numStimulusChannels; i++) {
+			_flashIntensityArray[i] = 0.0;
+			_flashTimerArray[i] = nil;
+			_stimulusArray[i] = nil;
+		}
 	}
 }
 

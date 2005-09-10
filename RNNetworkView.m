@@ -70,6 +70,9 @@
 	RNStimulus *stim;
 	RNNodeHistogramView *histView;
 	
+	if ([[self network] numStimulusChannels] == 0) //only do this if we have stimulus channels
+		return;
+	
 	if (_nodeHistogramViews == nil) {
 		[self initNodeHistograms];
 	}	
@@ -125,6 +128,9 @@
 
 -(void) removeNodeHistograms
 {
+	if (_nodeHistogramViews == nil) //only if histograms have been initialized
+		return;
+	
 	//remove histogram views from view hierarchy
 	NSEnumerator *histEnumerator = [_nodeHistogramViews objectEnumerator];
 	RNNodeHistogramView *hist;
@@ -140,6 +146,7 @@
 {
 	
 }
+
 - (void) hideNodeHistograms
 {
 	
@@ -151,6 +158,9 @@
 	id node;
 	RNNodeNum_t nodeNumber;
 	RNNodeHistogramView *histView;
+	
+	if ([[self network] numStimulusChannels] == 0) //only do this if we have stimulus channels
+		return;
 	
 	if (_nodeHistogramViews == nil) {
 		[self initNodeHistograms];
@@ -219,7 +229,7 @@
 			} else {
 				NSColor *color;
 				color = [[RNTapperNode colorArray] objectAtIndex:iNode-1];
-				[[nodeList objectAtIndex:iNode] flashWithColor:color inView:self];
+				//[[nodeList objectAtIndex:iNode] flashWithColor:color inView:self];
 				//send event to appropriate histogramView
 				if (_doPlotData == YES && _nodeHistogramViews != nil) {
 					RNNodeHistogramView *hview = [_nodeHistogramViews objectAtIndex:(iNode-1)]; //**note indexing
