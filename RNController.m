@@ -254,6 +254,7 @@
 	NSTimeInterval uncertainty = [_experiment secondsSinceExperimentStartDate] - [part actualStartTime];
 	[part setStartTimeUncertainty:uncertainty];
 	NSLog(@"MIOC has been programmed with velocity processors");
+	[_experiment setCurrentGlobalConnectionStrength:weight];
 	
 	[self synchronizePartsListSelection]; 
 }
@@ -369,12 +370,14 @@
 {
 	NSMutableString *timerStr;
 	NSTimeInterval secsSinceStart = [_experiment secondsSinceExperimentStartDate];
-	NSCalendarDate *experimentTime = [NSCalendarDate dateWithTimeIntervalSinceReferenceDate:fabs(secsSinceStart)];
-	NSString *temp = [experimentTime descriptionWithCalendarFormat:@"%M:%S"];
-	if (secsSinceStart < 0)
+	NSTimeInterval modifiedSecsSinceStart = secsSinceStart;
+	if (secsSinceStart < 0) {
 		timerStr = [NSMutableString stringWithString: @"-"];
-	else
+		modifiedSecsSinceStart = fabs(secsSinceStart) + 1;
+	} else
 		timerStr = [NSMutableString stringWithString: @" "];
+	NSCalendarDate *experimentTime = [NSCalendarDate dateWithTimeIntervalSinceReferenceDate:modifiedSecsSinceStart];
+	NSString *temp = [experimentTime descriptionWithCalendarFormat:@"%M:%S"];
 	[timerStr appendString:temp];
 	[_experimentTimer setStringValue:timerStr];
 }
@@ -410,16 +413,18 @@
 
 - (IBAction)saveExperiment:(id)sender
 {
-	
 	//synchronize object with UI data (mainly in case we never left the notes field, in which case it wouldn't have
 	//	been in sync
 	[_experiment setExperimentDescription:[_titleText stringValue] ];
 	[_experiment setExperimentNotes:[_notesText string] ];
 	
+	//save in .experiment file w/ same name as our .netdef file
 	int result;	
-	NSString *fileName = @"test.experiment";
+	NSString *definitionDirectory = [[_experiment definitionFilePath] stringByDeletingLastPathComponent];
+	NSString *fileName = [[ [[_experiment definitionFilePath] lastPathComponent] stringByDeletingPathExtension] stringByAppendingPathExtension:@"experiment"];
+	
     NSSavePanel *sPanel = [NSSavePanel savePanel];	
-    result = [sPanel runModalForDirectory:NSHomeDirectory()
+    result = [sPanel runModalForDirectory:definitionDirectory
 								     file:fileName];
     if (result == NSOKButton) {		
 		NSString *filePath = [sPanel filename];
@@ -428,9 +433,10 @@
 	}
 }
 
-//
+// unused, retire
 - (IBAction)doubleClickPart:(id)sender
 {
+	NSAssert( (0), @"doubleClickPart is obsolete.");
 	int row = [sender clickedRow];
 }
 

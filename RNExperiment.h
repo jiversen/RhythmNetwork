@@ -15,6 +15,7 @@
 @class MIOCModel;
 @class RNStimulus;
 @class RNExperimentPart;
+@class RNGlobalConnectionStrength;
 
 @interface RNExperiment : NSObject 
 {
@@ -24,6 +25,7 @@
 	NSMutableArray	*_experimentParts;		//a list of experiment parts, stimuli, networks w/ associated start times
 	RNNetwork		*_currentNetwork;		//currently active network
 	RNStimulus * 	_currentStimulusArray[17];	//currently active stimuli
+	RNGlobalConnectionStrength *_currentGlobalConnectionStrength;
 	
 	//these refer to an instantiation of the experiment--data to be saved
 	// coming perilously close to document/file wrapper classes, but here will roll my own
@@ -50,11 +52,14 @@
 - (void) initializeExperimentPartsWithArray: (NSArray *) partArray NetworkSizeDict: (NSDictionary *) sizeDict;
 
 //accessors--structure
+- (NSString *) definitionFilePath;
 - (RNNetwork *) currentNetwork;
 - (void) setCurrentNetwork: (RNNetwork *) newNet;
 - (RNStimulus *) currentStimulusForChannel: (Byte) stimulusChannel;
 - (void) setCurrentStimulus: (RNStimulus *) stim ForChannel: (Byte) stimulusChannel;
 - (RNStimulus **) currentStimulusArray;
+- (RNGlobalConnectionStrength *) currentGlobalConnectionStrength;
+- (void) setCurrentGlobalConnectionStrength: (RNGlobalConnectionStrength *) newConnectionStrength;
 - (NSArray *) experimentParts;
 - (RNExperimentPart *) experimentPartContainingObject:(id)aPart;
 - (NSArray *) currentParts;

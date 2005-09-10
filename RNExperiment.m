@@ -11,6 +11,7 @@
 #import "RNExperimentPart.h"
 #import "RNStimulus.h"
 #import "RNNetwork.h"
+#import "RNGlobalConnectionStrength.h"
 #import "RNBBNode.h"
 #import "MIDIIO.h"
 #import "MIOCModel.h"
@@ -116,6 +117,12 @@
 //    Structure
 #pragma mark  Structure
 
+//path to file that defined us
+- (NSString *) definitionFilePath
+{
+	return _definitionFilePath;
+}
+
 //return currently 'active' network
 - (RNNetwork *) currentNetwork
 {
@@ -146,6 +153,16 @@
 - (RNStimulus **) currentStimulusArray
 {
 	return _currentStimulusArray;
+}
+
+- (RNGlobalConnectionStrength *) currentGlobalConnectionStrength
+{
+	return _currentGlobalConnectionStrength;
+}
+
+- (void) setCurrentGlobalConnectionStrength: (RNGlobalConnectionStrength *) newConnectionStrength
+{
+	_currentGlobalConnectionStrength = newConnectionStrength;
 }
 
 - (NSArray *) experimentParts
@@ -185,7 +202,10 @@
 		}
 	}
 	//add active network
-	[currentParts addObject:[self experimentPartContainingObject:[self currentNetwork]]];
+	[currentParts addObject:[self experimentPartContainingObject:[self currentNetwork]] ];
+	
+	//add active global connection strength
+	[currentParts addObject:[self experimentPartContainingObject:[self currentGlobalConnectionStrength]] ];
 	
 	return [NSArray arrayWithArray:currentParts]; //return unmutable
 }
