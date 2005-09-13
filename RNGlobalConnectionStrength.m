@@ -49,7 +49,7 @@
 		
 	} else if ([parameterType isEqualToString:@"constant"]) {
 		nSteps = duration_s * 2; //constant # steps per second
-		paramDelta = 2.0; //controls acceleration
+		paramDelta = 3.0; //controls acceleration
 			
 	} else {
 		NSAssert1( (0), @"incorrect parameterType (%@)", rampDict);
@@ -90,6 +90,9 @@
 	} else if (paramNumber = [aDict objectForKey:@"constant"]) {
 		type = @"constant";
 		param = [paramNumber doubleValue];
+	} else if (paramNumber = [aDict objectForKey:@"constantInput"]) {
+		type = @"constantInput";
+		param = [paramNumber doubleValue];
 	} else {
 		NSAssert1( (0), @"found no weight or constant parameter (%@)", aDict);
 	}	
@@ -115,6 +118,11 @@
 		Byte MIDIVelocity = (Byte) roundf(_param);
 		[_processor setConstantVelocity:MIDIVelocity];
 		
+	} else if ([type isEqualToString:@"constantInput"]) {
+		Byte MIDIVelocity = (Byte) roundf(_param);
+		[_processor setConstantVelocity:MIDIVelocity];
+		[_processor setOnInput:YES];
+		
 	} else {
 		NSAssert1( (0), @"unknown globalConnectionStrength type (%@)", type);
 	}
@@ -125,6 +133,11 @@
 - (MIOCVelocityProcessor *) processor
 {
 	return _processor;
+}
+
+- (NSString *) type
+{
+	return _type;
 }
 
 - (NSString *) description

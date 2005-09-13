@@ -12,7 +12,7 @@
 
 @interface RNGlobalConnectionStrength : NSObject {
 
-	NSString				*_type; // 'weight' or 'constant'
+	NSString				*_type; // 'weight' or 'constant' or 'inputConstant'
 	MIOCVelocityProcessor	*_processor;
 	double					_param; //weight if 'weight', midi velocity if 'constant'
 }
@@ -25,6 +25,7 @@
 - (RNGlobalConnectionStrength *) initWithType:(NSString *)type value:(double)param;
 
 - (MIOCVelocityProcessor *) processor;
+- (NSString *) type;
 
 //- (NSString *) description;
 

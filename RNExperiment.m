@@ -205,6 +205,7 @@
 	[currentParts addObject:[self experimentPartContainingObject:[self currentNetwork]] ];
 	
 	//add active global connection strength
+	if ([self currentGlobalConnectionStrength] != nil) 
 	[currentParts addObject:[self experimentPartContainingObject:[self currentGlobalConnectionStrength]] ];
 	
 	return [NSArray arrayWithArray:currentParts]; //return unmutable
