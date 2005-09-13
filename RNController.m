@@ -9,7 +9,9 @@
 #import "MIDIIO.h"
 
 #import "MIOCSetupController.h"
+#import "MIOCConnection.h"
 #import "RNTapperNode.h"
+#import "RNBBNode.h"
 #import "RNStimulus.h"
 #import "RNGlobalConnectionStrength.h"
 #import <CoreAudio/HostTime.h>
@@ -47,6 +49,8 @@
 	//show network view where data view is
 	[_networkView setDataView: _dataView];
 	[_networkView setPlotData:NO];
+	
+	[_drumSetNumber setStringValue:@"--"];
 	
 	
 }
@@ -431,6 +435,56 @@
 		[_experiment saveToPath: filePath];
 		[_saveButton setEnabled:NO];
 	}
+}
+
+- (IBAction) setDrumSetAction:(id)sender
+{
+	int drumset = [_drumSetNumber intValue];
+	if (_experiment == nil) {
+		[_drumSetNumber setStringValue:@"ex?"];
+		NSLog(@"Must load an experiment before programming drumset",drumset);
+		return;
+	}
+	if (drumset < 0 || drumset > 49) {
+		[_drumSetNumber setStringValue:@"??"];
+		NSLog(@"Drum set number %d out of range (0 to 49)",drumset);
+		return;
+	}
+	//create and send a program change to all drumsets (note, they may not be connected to bb, so connect first)
+	[[_experiment currentNetwork] setDrumsetNumber:drumset];
+	MIOCModel *device = [_MIOCController deviceObject];
+	MIDIIO *io = [device MIDILink];
+	
+	MIOCConnection *con;
+	NSArray *nodeList = [[_experiment currentNetwork] nodeList];
+	unsigned int nNodes, iNode;
+	nNodes = [nodeList count];
+	RNBBNode *bb = [nodeList objectAtIndex:0];
+		
+	//make program change message
+	Byte pcMessage[2];
+	//note on and off MIDI messages
+	pcMessage[0] = 0xC0 + ([bb controlMIDIChannel] - 1); //NB convert to MIDI 0-based index
+	pcMessage[1] = (Byte) drumset;
+	//wrap
+	NSData *pcData = [NSData dataWithBytes:pcMessage length:2];
+	
+	//hack for now--loop over network's nodes, connect each in turn to BB's control channel, send program change message
+	// as is, midi data gets queued ahead of sysex connections, need to make this synchronous,
+	//  easiest way for now is to simply wait...
+	NSLog(@"Setting drum set to #%d",drumset);
+	for (iNode = 1; iNode < nNodes; iNode++) {
+		con = [MIOCConnection connectionWithInPort:[bb sourcePort]
+										 InChannel:[bb controlMIDIChannel]
+										   OutPort:[[nodeList objectAtIndex:iNode] destPort]
+										OutChannel:[[nodeList objectAtIndex:iNode] destChan] ];
+		[device connectOne:con];
+		//sleep for long enough to ensure sysex transmitted before pc
+		[NSThread sleepUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.2]]; 
+		if ([io sendMIDI:pcData] == NO)
+			NSLog(@"could not send program change data to node %d",iNode);
+		[device disconnectOne:con];
+	}	
 }
 
 // unused, retire

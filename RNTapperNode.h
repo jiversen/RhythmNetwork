@@ -29,6 +29,7 @@ typedef UInt16 RNNodeNum_t;
 	Byte	_destPort; //where to send sound for this tapper to hear
 	Byte	_destChan;
 	Byte	_destNote; //can this also be mapped by MIOC?
+	Byte    _drumsetNumber; //program number on drum machine (0 to 49 for user sets)
 	MIOCVelocityProcessor	*_sourceVelocityProcessor; //processing applied to performance
 	MIOCVelocityProcessor	*_destVelocityProcessor; //processing applied to sound sent to tapper
 	MIOCVelocityProcessor	*_otherNodeVelocityProcessor; //applied to performance destined for other nodes
@@ -80,6 +81,9 @@ typedef UInt16 RNNodeNum_t;
 
 - (MIOCVelocityProcessor *) otherNodeVelocityProcessor;
 - (void) setOtherNodeVelocityProcessor: (MIOCVelocityProcessor *) newVelocityProcessor;
+
+- (Byte) drumsetNumber;
+- (void) setDrumsetNumber:(Byte) newDrumsetNumber;
 
 - (NSPoint) plotLocation;
 - (void) setPlotLocation: (NSPoint) newPlotLocation;

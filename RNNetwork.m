@@ -292,15 +292,28 @@
 
 //add processor for each node--this applies only to connections to OTHER nodes
 // self feedback and pacing stimuli are untouched
+// !!! this name is no longer accurate now that it handles global strength & input strength...
 - (void) setGlobalConnectionStrength: (RNGlobalConnectionStrength *) connectionStrength
 {
-	NSAssert( (_isWeighted == YES), @"Network must be weighted: add isWeighted key to definition dictionary.");
-	
 	unsigned int iNode, nNodes;
 	MIOCVelocityProcessor *processor = [connectionStrength processor];
 	nNodes = [[self nodeList] count] - 1; //number of tappers (exclude BB)
 	for (iNode = 1; iNode <= nNodes; iNode++) {
-		[[_nodeList objectAtIndex:iNode] setOtherNodeVelocityProcessor:processor];
+		if ([[connectionStrength type] isEqual:@"constantInput"]) { //apply to input
+			[[_nodeList objectAtIndex:iNode] setSourceVelocityProcessor:processor];
+		} else {
+			NSAssert( (_isWeighted == YES), @"Network must be weighted: add isWeighted key to definition dictionary.");
+			[[_nodeList objectAtIndex:iNode] setOtherNodeVelocityProcessor:processor]; //otherwise apply to other
+		}
+	}
+}
+
+- (void) setDrumsetNumber: (Byte) drumsetNumber
+{
+	unsigned int iNode, nNodes;
+	nNodes = [[self nodeList] count] - 1; //number of tappers (exclude BB)
+	for (iNode = 1; iNode <= nNodes; iNode++) {
+		[[_nodeList objectAtIndex:iNode] setDrumsetNumber:drumsetNumber];
 	}
 }
 

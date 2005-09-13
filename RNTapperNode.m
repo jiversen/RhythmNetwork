@@ -202,6 +202,21 @@ static NSArray *colorArray;
 	[_otherNodeVelocityProcessor setOnInput:NO];
 }
 
+- (Byte) drumsetNumber { return _drumsetNumber; }
+- (void) setDrumsetNumber:(Byte) newDrumsetNumber
+{
+	if (newDrumsetNumber > 49) {
+		NSLog(@"Drum set number %d out of range (0 to 49)",newDrumsetNumber);
+		newDrumsetNumber = 49; //will make it clear
+	}
+	_drumsetNumber = newDrumsetNumber;
+}
+
+// *********************************************
+//    plotting 
+// *********************************************
+#pragma mark  Plotting
+
 - (NSPoint) plotLocation { return _plotLocation; }
 - (void) setPlotLocation: (NSPoint) newPlotLocation
 {

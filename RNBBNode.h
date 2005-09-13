@@ -14,6 +14,7 @@
 
 #define kBigBrotherPort 8
 #define kBigBrotherChannel 16
+#define kBigBrotherControlChannel 1
 
 @class RNStimulus;
 
@@ -29,6 +30,7 @@
 
 - (Byte) stimulusNumberForMIDIChannel: (Byte) midiChannel;
 - (Byte) MIDIChannelForStimulusNumber: (Byte) stimulusChannel;
+- (Byte) controlMIDIChannel;
 
 - (Byte) MIDINoteForStimulusNumber: (Byte) stimulusChannel;
 

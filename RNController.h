@@ -28,6 +28,7 @@
 	IBOutlet NSButton *_testStopButton;
 	IBOutlet NSTextField *_experimentTimer;
 	NSTimer *_experimentTimerTimer;
+	IBOutlet NSTextField	*_drumSetNumber;
 }
 
 - (void) awakeFromNib;
@@ -51,6 +52,8 @@
 - (IBAction)saveExperiment:(id)sender;
 - (IBAction)testPart:(id)sender;
 - (IBAction)stopTestPart:(id)sender;
+
+- (IBAction)setDrumSetAction:(id)sender;
 
 - (void) updateExperimentTimer: (NSTimer *) timer;
 - (void) experimentEndNotificationHandler: (NSNotification *) notification;

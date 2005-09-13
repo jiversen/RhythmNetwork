@@ -41,6 +41,7 @@
 - (void) setStimulus: (RNStimulus *) stim ForChannel: (Byte) stimulusChannel;
 - (void) setStimulusArray: (RNStimulus **) stimulusArray;
 - (void) setGlobalConnectionStrength: (RNGlobalConnectionStrength *) connectionStrength;
+- (void) setDrumsetNumber: (Byte) drumsetNumber;
 
 //- (void) addConnection: (RNConnection *) aConnection;
 //- (void) removeConnection: (RNConnection *) aConnection;

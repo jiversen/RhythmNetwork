@@ -38,6 +38,7 @@
             ACTIONS = {
                 loadExperiment = id; 
                 saveExperiment = id; 
+                setDrumSetAction = id; 
                 startExperiment = id; 
                 stopExperiment = id; 
                 stopTestPart = id; 
@@ -48,6 +49,7 @@
             OUTLETS = {
                 "_MIOCController" = MIOCSetupController; 
                 "_dataView" = RNDataView; 
+                "_drumSetNumber" = NSTextField; 
                 "_experimentPartsController" = NSArrayController; 
                 "_experimentPartsTable" = NSTableView; 
                 "_experimentTimer" = NSTextField; 

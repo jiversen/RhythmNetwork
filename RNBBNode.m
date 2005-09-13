@@ -64,6 +64,11 @@
 	return channel;	
 }
 
+- (Byte) controlMIDIChannel
+{
+	return kBigBrotherControlChannel;
+}
+
 //**in future, could have different notes for each pacing stimulus
 - (Byte) MIDINoteForStimulusNumber: (Byte) stimulusChannel
 {
