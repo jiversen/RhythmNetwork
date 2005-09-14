@@ -104,9 +104,9 @@
     NSArray *fileTypes = [NSArray arrayWithObject:@"netdef"];
     NSOpenPanel *oPanel = [NSOpenPanel openPanel];	
     [oPanel setAllowsMultipleSelection:NO];
-	//*** starting Path: note, this is relatively hard coded // !!!:jri:20050906 
+	//*** starting Path: note, this is  hard coded // !!!:jri:20050906 
 	NSString *startPath = [NSString pathWithComponents:[NSArray arrayWithObjects:NSHomeDirectory(), 
-		@"Documents", @"Rhythm Network", @"", nil] ];
+		@"Documents", @"matlab", @"matlab", @"projects", @"experiment mfiles", @"rhythm", @"Rhythm Network", @"", nil] ];
     result = [oPanel runModalForDirectory:startPath
 								     file:nil types:fileTypes];
     if (result == NSOKButton) {		
