@@ -14,6 +14,7 @@
 	RNNodeNum_t _fromNode;
 	RNNodeNum_t _toNode;
 	double _weight;
+	double _delay_ms;
 	unsigned int	_fromSubChannel; //node 0 can have several separately addressable outputs
 }
 
@@ -32,6 +33,9 @@
 
 - (double) weight;
 - (void) setWeight: (double) newWeight;
+
+- (double) delay;
+- (void) setDelay: (double) newDelay;
 
 - (unsigned int) fromSubChannel;
 - (void) setFromSubChannel: (unsigned int) newFromSubChannel;

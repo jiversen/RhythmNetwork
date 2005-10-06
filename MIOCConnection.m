@@ -40,17 +40,27 @@
 	[super dealloc];
 }
 
-- (void) setWeight:(double)weight
+- (double) weight { return _weight; }
+
+- (void) setWeight:(double)newWeight
 {
-	if (_weight != weight) {
-		_weight = weight;
+	if (_weight != newWeight) {
+		_weight = newWeight;
 		[_velocityProcessor release];
 		_velocityProcessor = nil;
-		if (weight != 1.0) {
+		if (_weight != 1.0) {
 			_velocityProcessor = [[MIOCVelocityProcessor alloc] initWithPort:_outPort Channel:_outChannel OnInput:NO];
-			[_velocityProcessor setWeight:weight];
+			[_velocityProcessor setWeight:newWeight];
 		}
 	}
+}
+
+- (double) delay { return _delay_ms; }
+
+- (void) setDelay: (double) newDelay
+{
+	NSAssert( (newDelay >= 0), @"can't have negative delays!");
+	_delay_ms = newDelay;
 }
 
 
@@ -70,10 +80,14 @@
 	equal = ((_inPort	== other->_inPort) 
 		&& (_inChannel	== other->_inChannel) 
 		&& (_outPort	== other->_outPort) 
-		&& (_outChannel	== other->_outChannel));
+		&& (_outChannel	== other->_outChannel)
+		&& (_weight		== other->_weight)
+		&& (_delay_ms	== other->_delay_ms) );
+	
 	return equal;
 }
 
+//only includes port info, not weight & delay
 - (unsigned) hash
 {
 	unsigned hashval;

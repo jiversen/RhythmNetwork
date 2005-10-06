@@ -5,6 +5,7 @@
 #import "MIOCVelocityProcessor.h"
 #import "MIOCFilterProcessor.h"
 #import "MIDIIO.h"
+#import "MIDICore.h"
 #import "NSStringHexStringCategory.h"
 
 //various components of sysex messages
@@ -36,6 +37,10 @@ static Byte removeProcessorFlag[1] = {0x00};
 	
 	[_MIDILink registerSysexListener:self];
 	
+	//default: use external (MIOC) processor
+	_useInternalMIDIProcessor = NO;
+	_MIDICore = nil;
+	
 	//check it mioc is online--if so, initialize it
 	[[NSNotificationCenter defaultCenter] addObserver:self 
 											 selector:@selector(handleMIOCReply:) 
@@ -62,6 +67,21 @@ static Byte removeProcessorFlag[1] = {0x00};
 	[self addFilterProcessors];
 }
 
+- (BOOL) useInternalMIDIProcessor { return _useInternalMIDIProcessor; }
+
+- (void) setUseInternalMIDIProcessor:(BOOL) useInternal
+{
+	_useInternalMIDIProcessor = useInternal;
+	if (useInternal==YES) {
+		if (_MIDICore == nil)
+			_MIDICore = [[MIDICore alloc] initWithInterface:_MIDILink];
+		//initialize midi core with connections/velocities/delays...
+	} else if (useInternal == NO) {
+		[_MIDICore release]; //restores original readProc
+		_MIDICore = nil;
+	}
+}
+
 //reset MIOC: clear all existing connections, processors
 // to force sync, unfortunately must ask user to power cycle MIOC--there's no reset sysex command we can send
 // and we can't really know if we've removed everything, as there's no way to query
@@ -81,16 +101,18 @@ static Byte removeProcessorFlag[1] = {0x00};
 		//reset our model state
 		[_connectionList removeAllObjects];
 		[_velocityProcessorList removeAllObjects];
-		//initialize the MIOC (after checking it's connected
+		//initialize the MIOC (after checking it's connected)
 		[self checkOnline];
 	} else //Cancel: do nothing
 		NSLog(@"Reset cancelled");
 }
 
+
 - (void) checkOnline
 {
-	//we send a test query--if it is replied to, we know we're online
-	[self queryPortAddress];
+	if (_useInternalMIDIProcessor == NO)
+		//we send a test query--if it is replied to, we know we're online
+		[self queryPortAddress];
 }
 
 - (BOOL) queryPortAddress
@@ -223,6 +245,7 @@ static Byte removeProcessorFlag[1] = {0x00};
 		return [NSString stringWithString:@"<Not Connected>"];
 }
 
+//stub for setting MIOC device name. Not needed at present, so fails
 - (BOOL) setDeviceName:(NSString *) name
 {
 	return NO;
@@ -239,7 +262,7 @@ static Byte removeProcessorFlag[1] = {0x00};
 - (void) connectOne:(MIOCConnection *) aConnection
 {
 	if (![_connectionList containsObject:aConnection]) {
-		if ([self sendConnectSysex:aConnection] == kSendSysexSuccess) {
+		if ([self sendConnect:aConnection] == kSendSysexSuccess) {
 			[_connectionList addObject:aConnection];
 			NSLog(@"Connected:    %@",aConnection);
 		} else
@@ -275,7 +298,7 @@ static Byte removeProcessorFlag[1] = {0x00};
 - (void) disconnectOne:(MIOCConnection *) aConnection
 {
 	if ([_connectionList containsObject:aConnection]) {
-		if ([self sendDisconnectSysex:aConnection] == kSendSysexSuccess) {
+		if ([self sendDisconnect:aConnection] == kSendSysexSuccess) {
 			[_connectionList removeObject:aConnection];
 			NSLog(@"Disconnected: %@",aConnection);
 		} else
@@ -357,7 +380,7 @@ static Byte removeProcessorFlag[1] = {0x00};
 - (void) addVelocityProcessor:(MIOCVelocityProcessor *) aVelProc
 {
 	if (![_velocityProcessorList containsObject:aVelProc]) {
-		if ([self sendAddVelocityProcessorSysex:aVelProc] == kSendSysexSuccess) {
+		if ([self sendAddVelocityProcessor:aVelProc] == kSendSysexSuccess) {
 			[_velocityProcessorList addObject:aVelProc];
 			NSLog(@"Added vel proc: %@",aVelProc);
 		} else
@@ -369,7 +392,7 @@ static Byte removeProcessorFlag[1] = {0x00};
 - (void) removeVelocityProcessor:(MIOCVelocityProcessor *) aVelProc
 {
 	if ([_velocityProcessorList containsObject:aVelProc]) {
-		if ([self sendRemoveVelocityProcessorSysex:aVelProc] == kSendSysexSuccess) {
+		if ([self sendRemoveVelocityProcessor:aVelProc] == kSendSysexSuccess) {
 			[_velocityProcessorList removeObject:aVelProc];
 			NSLog(@"Removed vel proc: %@",aVelProc);
 		} else
@@ -454,7 +477,7 @@ static Byte removeProcessorFlag[1] = {0x00};
 													 Port:iPort 
 												  Channel:kMIOCFilterChannelAll 
 												  OnInput:YES];
-		result = [self sendAddProcessorSysex:aProc];
+		result = [self sendAddProcessor:aProc];
 		if (result == kSendSysexFailure) {
 			_filtersInitialized = NO;
 			break;
@@ -464,7 +487,7 @@ static Byte removeProcessorFlag[1] = {0x00};
 													 Port:iPort 
 												  Channel:kMIOCFilterChannelAll 
 												  OnInput:YES];
-		result = [self sendAddProcessorSysex:aProc];
+		result = [self sendAddProcessor:aProc];
 		if (result == kSendSysexFailure) {
 			_filtersInitialized = NO;
 			break;
@@ -534,14 +557,24 @@ static Byte removeProcessorFlag[1] = {0x00};
 
 // *********************************************
 //  
-- (BOOL) sendConnectSysex:(MIOCConnection *) aConnection
+- (BOOL) sendConnect:(MIOCConnection *) aConnection
 {	
-	return [self sendConnectDisconnectSysex: aConnection withFlag:addProcessorFlag];
+	if (_useInternalMIDIProcessor == NO)
+		return [self sendConnectDisconnectSysex: aConnection withFlag:addProcessorFlag];
+	else {
+		[_MIDICore connect:aConnection];
+		return kSendSysexSuccess;  //cannot fail
+	}
 }
 
-- (BOOL) sendDisconnectSysex:(MIOCConnection *) aConnection
+- (BOOL) sendDisconnect:(MIOCConnection *) aConnection
 {
-	return [self sendConnectDisconnectSysex: aConnection withFlag:removeProcessorFlag];
+	if (_useInternalMIDIProcessor == NO)
+		return [self sendConnectDisconnectSysex: aConnection withFlag:removeProcessorFlag];
+	else {
+		[_MIDICore disconnect:aConnection];
+		return kSendSysexSuccess;  //cannot fail
+	}
 }
 
 // *********************************************
@@ -561,14 +594,24 @@ static Byte removeProcessorFlag[1] = {0x00};
 	// NEW: we add some checks that send completed correctly--destionation exists, etc.
 }
 
-- (BOOL) sendAddVelocityProcessorSysex:(MIOCVelocityProcessor *) aVelProc
+- (BOOL) sendAddVelocityProcessor:(MIOCVelocityProcessor *) aVelProc
 {
-	return [self sendAddRemoveVelocityProcessorSysex: aVelProc withFlag:addProcessorFlag];
+	if (_useInternalMIDIProcessor == NO)
+		return [self sendAddRemoveVelocityProcessorSysex: aVelProc withFlag:addProcessorFlag];
+	else {
+		[_MIDICore addVelocityProcessor:aVelProc];
+		return kSendSysexSuccess;  //cannot fail
+	}
 }
 
-- (BOOL) sendRemoveVelocityProcessorSysex:(MIOCVelocityProcessor *) aVelProc
+- (BOOL) sendRemoveVelocityProcessor:(MIOCVelocityProcessor *) aVelProc
 {
-	return [self sendAddRemoveVelocityProcessorSysex: aVelProc withFlag:removeProcessorFlag];
+	if (_useInternalMIDIProcessor == NO)
+		return [self sendAddRemoveVelocityProcessorSysex: aVelProc withFlag:removeProcessorFlag];
+	else {
+		[_MIDICore removeVelocityProcessor:aVelProc];
+		return kSendSysexSuccess;  //cannot fail
+	}
 }
 
 - (BOOL) sendAddRemoveVelocityProcessorSysex:(MIOCVelocityProcessor *) aVelProc withFlag:(Byte *)flagPtr
@@ -579,14 +622,20 @@ static Byte removeProcessorFlag[1] = {0x00};
 
 // *********************************************
 //  general method to send sysex messages
-- (BOOL) sendAddProcessorSysex:(id <MIOCProcessor>) aProc
+- (BOOL) sendAddProcessor:(id <MIOCProcessor>) aProc
 {
-	return [self sendAddRemoveProcessorSysex: aProc withFlag:addProcessorFlag];
+	if (_useInternalMIDIProcessor == NO)
+		return [self sendAddRemoveProcessorSysex: aProc withFlag:addProcessorFlag];
+	else
+		return kSendSysexSuccess;
 }
 
-- (BOOL) sendRemoveProcessorSysex:(id <MIOCProcessor>) aProc
+- (BOOL) sendRemoveProcessor:(id <MIOCProcessor>) aProc
 {
-	return [self sendAddRemoveProcessorSysex: aProc withFlag:removeProcessorFlag];
+	if (_useInternalMIDIProcessor == NO)
+		return [self sendAddRemoveProcessorSysex: aProc withFlag:removeProcessorFlag];
+	else
+		return kSendSysexSuccess;
 }
 
 - (BOOL) sendAddRemoveProcessorSysex:(id <MIOCProcessor>) aProc withFlag:(Byte *)flagPtr

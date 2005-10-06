@@ -46,17 +46,19 @@ enum connectFormIdx {
 		
 	//hack place--testing
 	
+	//NSLog(@"Unsigned: %d\n",sizeof(unsigned));
+	
 	//RNTapperNode *test = [[RNTapperNode alloc] initWithNodeNumber:6];
 	//test = [[RNTapperNode alloc] initWithNodeNumber:7];
 	
-	//RNConnection *conn;
-	//NSString *str;
+	RNConnection *conn;
+	NSString *str;
 	//conn = [[RNConnection alloc] initWithFromNode: 1 ToNode: 2];
 	//[conn autorelease];
 
-	//str = @"{3, 4} 0.52";
-	//conn = [[RNConnection alloc] initWithString: str];
-	//[conn autorelease];
+	str = @"{3, 4} 0.52, 23.5";
+	conn = [[RNConnection alloc] initWithString: str];
+	[conn autorelease];
 
 	//str = @"{3, 4}";
 	//[conn autorelease];

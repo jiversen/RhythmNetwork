@@ -39,6 +39,12 @@ typedef struct _ProgramChangeMessage {
 - (void)dealloc;
 - (void)setupMIDI;
 
+- (MIDIReadProc) defaultReadProc;
+- (void) setDefaultReadProc;
+- (void) setReadProc:(MIDIReadProc) newReadProc refCon:(void *)refCon;
+- (MIDIPortRef) outPort;
+- (MIDIEndpointRef) MIDIDest;
+
 - (NSArray *) getSourceList;
 - (NSArray *) getDestinationList;
 - (BOOL) useSourceNamed:(NSString *)sourceName;

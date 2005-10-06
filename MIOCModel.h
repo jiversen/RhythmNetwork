@@ -32,7 +32,7 @@ typedef struct _MIOCMessage {
 #define kModeMsgTypeMask (0x03)
 #define kOpcodeDirectionMask (1<<6)
 
-@class MIDIIO, MIOCConnection, MIOCVelocityProcessor;
+@class MIDIIO, MIOCConnection, MIOCVelocityProcessor, MIDICore;
 
 @interface MIOCModel : NSObject
 {
@@ -50,6 +50,8 @@ typedef struct _MIOCMessage {
 	NSTimer			*_replyTimer;		 //timer to check for MIOC reply timeout
 	
 	MIDIIO			*_MIDILink;			//our bridge to MIDI
+	MIDICore		*_MIDICore;			//internal midi processor (stands in for MIOC)
+	BOOL			_useInternalMIDIProcessor; //converse: use internal MIDICore
 }
 
 - (MIOCModel *) init;
@@ -57,6 +59,9 @@ typedef struct _MIOCMessage {
 - (void) reset;
 - (void) initialize;
 - (void) checkOnline;
+
+- (BOOL) useInternalMIDIProcessor;
+- (void) setUseInternalMIDIProcessor:(BOOL) useInternal;
 
 - (BOOL) sendVerifiedMIOCQuery:(NSData *)data;
 - (BOOL) sendMIOCQuery:(NSData *)data;
@@ -92,16 +97,16 @@ typedef struct _MIOCMessage {
 - (void)receiveSysexData:(NSData *)data;
 
 //private
-- (BOOL) sendConnectSysex:(MIOCConnection *) aConnection;
-- (BOOL) sendDisconnectSysex:(MIOCConnection *) aConnection;
+- (BOOL) sendConnect:(MIOCConnection *) aConnection;
+- (BOOL) sendDisconnect:(MIOCConnection *) aConnection;
 - (BOOL) sendConnectDisconnectSysex: (MIOCConnection *) aConnection withFlag:(Byte *)flagPtr;
 
-- (BOOL) sendAddVelocityProcessorSysex:(MIOCVelocityProcessor *) aVelProc;
-- (BOOL) sendRemoveVelocityProcessorSysex:(MIOCVelocityProcessor *) aVelProc;
+- (BOOL) sendAddVelocityProcessor:(MIOCVelocityProcessor *) aVelProc;
+- (BOOL) sendRemoveVelocityProcessor:(MIOCVelocityProcessor *) aVelProc;
 - (BOOL) sendAddRemoveVelocityProcessorSysex:(MIOCVelocityProcessor *) aVelProc withFlag:(Byte *)flagPtr;
 
-- (BOOL) sendAddProcessorSysex:(id <MIOCProcessor>) aProc;
-- (BOOL) sendRemoveProcessorSysex:(id <MIOCProcessor>) aProc;
+- (BOOL) sendAddProcessor:(id <MIOCProcessor>) aProc;
+- (BOOL) sendRemoveProcessor:(id <MIOCProcessor>) aProc;
 - (BOOL) sendAddRemoveProcessorSysex:(id <MIOCProcessor>) aProc withFlag:(Byte *)flagPtr;
 
 - (NSData *) sysexMessageForProcessor: (id <MIOCProcessor>) aProc withFlag:(Byte *)flagPtr;

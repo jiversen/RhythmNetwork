@@ -24,6 +24,7 @@
 	self = [super init];
 	[self setFromNode: fromNode ToNode: toNode];
 	[self setWeight:1.0]; //for now, no weighting
+	[self setDelay:0.0];
 	return self;
 }
 
@@ -31,6 +32,7 @@
 //  e.g. "{2, 2}1.0"  (connection from node 2 to self, weight 1)
 // if from node is 0, can optionally  have two digit decimal to indicate which subchannel
 //	e.g. "{0.01, 2}1.0" refers to subchannel 1 (range: 1 to 16, i.e. 0.01 to 0.16)
+//	// :jri:20050916 add delay (in ms) to specification: "{2, 2}1.0, 23.2"
 
 - (RNConnection *) initWithString: (NSString *) coordString
 {
@@ -39,34 +41,38 @@
 	NSPoint	tempPoint;
 	NSScanner *theScanner;
 	NSCharacterSet *closeBraceSet;
-	double	weight;
+	double	weight = 1.0, delay_ms = 0.0;
 	
 	tempPoint = NSPointFromString(coordString);
 	from = (RNNodeNum_t) floor(tempPoint.x);
+	to = (RNNodeNum_t) floor(tempPoint.y);
+	self = [self initWithFromNode:from ToNode:to];
+
 	//output subchannels of big brother node 0
 	if (from == 0) {
 		subChannel = (tempPoint.x - from) * 100;
 		if (subChannel == 0) //if it's unspecified, default to 1
 			subChannel = 1;
 		NSAssert( (subChannel >= 1 && subChannel <= 16 ), @"subchannel out of range");
+		[self setFromSubChannel:subChannel]; //non-zero only in case of BB
 	}
-	to = (RNNodeNum_t) floor(tempPoint.y);
 	
-	//extract weight, if any
+	//extract weight, and delay, if any
 	closeBraceSet	= [NSCharacterSet characterSetWithCharactersInString:@"}"];
 	theScanner		= [NSScanner scannerWithString:coordString];
 	if ([theScanner scanUpToCharactersFromSet:closeBraceSet intoString:NULL] &&
 		[theScanner scanString:@"}" intoString:NULL]) {
 		if ([theScanner isAtEnd] == NO) 
 			if ([theScanner scanDouble:&weight] == NO) weight = 1.0;
+		if ([theScanner isAtEnd] == NO) {
+			if ([theScanner scanString:@"," intoString:NULL])
+				if ([theScanner scanDouble:&delay_ms] == NO) delay_ms = 0.0;
+		}
+		
 	}
-	
-	self = [self initWithFromNode:from ToNode:to];
 	[self setWeight:weight];
-	
-	if (from == 0)
-		[self setFromSubChannel:subChannel]; //non-zero only in case of BB
-	
+	[self setDelay:delay_ms];
+		
 	return self;
 }
 
@@ -93,6 +99,13 @@
 - (void) setWeight: (double) newWeight
 {
 	_weight = newWeight;
+}
+
+- (double) delay { return _delay_ms; }
+- (void) setDelay: (double) newDelay
+{
+	NSAssert( (newDelay >= 0), @"can't have negative delays!");
+	_delay_ms = newDelay;
 }
 
 - (unsigned int) fromSubChannel

@@ -53,10 +53,10 @@ static void myMIDINotifyProc(const MIDINotification *message, void * refCon);
     status = MIDIClientCreate(CFSTR("MIDIIO"), myMIDINotifyProc, (void*)self, &_MIDIClient);
 	
 	//create an input port
-    status = MIDIInputPortCreate(_MIDIClient, CFSTR("Input Port"), myReadProc, (void*)self, &_inPort);
+    status = MIDIInputPortCreate(_MIDIClient, CFSTR("MIDIIO Input Port"), myReadProc, (void*)self, &_inPort);
 	
 	//create an output port
-	status = MIDIOutputPortCreate(_MIDIClient, CFSTR("Output Port"), &_outPort);
+	status = MIDIOutputPortCreate(_MIDIClient, CFSTR("MIDIIO Output Port"), &_outPort);
 	
 	//set source and destination (take user default, otherwise first--after initial entry, which will be "(not connected)")
 	NSArray *sourceList = [self getSourceList];
@@ -71,6 +71,41 @@ static void myMIDINotifyProc(const MIDINotification *message, void * refCon);
 		[self useDestinationNamed:[destinationList objectAtIndex:0]];
 	}
 }
+
+// *********************************************
+//    external readProc support
+// *********************************************
+#pragma mark external readProc support
+
+- (MIDIReadProc) defaultReadProc
+{
+	return myReadProc;
+}
+
+- (void) setDefaultReadProc
+{
+	[self setReadProc:[self defaultReadProc] refCon:self];
+}
+
+// :jri:20050913 Something new to try--add an external readproc
+- (void) setReadProc:(MIDIReadProc) newReadProc refCon:(void *)refCon
+{
+	NSAssert( (_inPort != NULL), @"an InputPort should already exist");
+	
+	OSStatus status;
+	status = MIDIPortDispose(_inPort);
+	NSAssert( (status == noErr), @"problem disposing old input port");
+	_inPort = NULL;
+	
+	status = MIDIInputPortCreate(_MIDIClient, CFSTR("MIDIIO Input Port"), newReadProc, (void*)refCon, &_inPort);
+}
+
+// *********************************************
+//    things an external readProc will need to know to re-transmit MIDI
+
+- (MIDIPortRef) outPort { return _outPort; }
+
+- (MIDIEndpointRef) MIDIDest { return _MIDIDest; }
 
 // *********************************************
 //    source/destination management
@@ -158,6 +193,7 @@ static void myMIDINotifyProc(const MIDINotification *message, void * refCon);
 		NSLog(@"Could not connect: source %@ does not exist", sourceName);
 		_MIDISource = NULL;
 	}
+		
 	
 	return didConnect;
 }
@@ -185,6 +221,9 @@ static void myMIDINotifyProc(const MIDINotification *message, void * refCon);
 		NSLog(@"Could not connect: destination %@ does not exist", destinationName);
 		_MIDIDest = NULL;
 	}
+	
+	//publish our new destination
+	[[NSNotificationCenter defaultCenter] postNotificationName:@"MIDIIO_newDestinationNotification" object:self];
 	
 	return didConnect;
 }

@@ -7,6 +7,8 @@
 //
 
 //representation of a MIOC connection between an input port/channel to output port/channel
+//:jri:20050917 expanded on the formalism: weight, delay not directly found in MIOC, but
+// would be in the ideal processor.
 
 #import <Cocoa/Cocoa.h>
 #import "MIOCProcessorProtocol.h"
@@ -23,13 +25,18 @@
 	Byte _outPort;
 	Byte _outChannel;
 	double _weight;
+	double _delay_ms;
 	MIOCVelocityProcessor *_velocityProcessor;
 }
 
 + (MIOCConnection *) connectionWithInPort:(int) anInPort InChannel:(int) anInChannel OutPort:(int) anOutPort OutChannel:(int) anOutChannel;
 - (MIOCConnection *) initWithInPort:(int) anInPort InChannel:(int) anInChannel OutPort:(int) anOutPort OutChannel:(int) anOutChannel;
 
-- (void) setWeight:(double)weight;
+- (double) weight;
+- (void) setWeight: (double) newWeight;
+
+- (double) delay;
+- (void) setDelay: (double) newDelay;
 
 - (NSString *) description;
 

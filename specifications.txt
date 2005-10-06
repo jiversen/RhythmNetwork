@@ -727,8 +727,158 @@ time-requested event? What does it do if many things are scheduled to go out the
 
 Also, need a way to set filters to: no filter/ remove them: can easily do this using events in the experimentParts
 --put a weight=1 at start. Also, think of adding an event to modify the input velocity mappings: both tappers and
-computer volume. For the connection-strength, want input at max, so we'll set it to 127.
+computer volume. For the connection-strength, want input at max, so we'll set it to 127. [done]
 
-Also fix up flashing code--simply turn it off for now--plenty of feedback on triggerMIDI converter
+Also fix up flashing code--simply turn it off for now--plenty of feedback on triggerMIDI converter [done]
 
-Finally, a way to setup drumsets--via program change messages
+Finally, a way to setup drumsets--via program change messages [done]--regarding above discussion of scheduling--
+channel messages do seem to take priority over sysex--I scheduled (sysex/channel/sysex)x6, and it was sent as
+sysex(channel x 6) sysex..., so I needed to put a short delay (thread sleep) before each channel message to ensure
+that preceeding sysex had time to finish.
+
+9/12/05 Day of experiment. Got busy this AM--added a type of connectionStrength part to allow setting of input velocity
+map--this was key for todays experiments where connection strength was varied. Also added a way to change drumsets
+on the fly--sends program change to all drum machines. Cool. Created several sets: all same sound;
+same sound, different pitch, different timbres, drumset. Opened up nice possibilities. Experiment was fascinating--
+connection strength sweep, ring, different timbres, some v. humorous moments of rhythmic communication...
+
+What's next. Am thinking about how/if to add delays--that probably a different program.
+Also, at times program got bogged down--do some profiling, perhaps write another program to generate MIDI input,
+possibly on another computer. Also, darn, but it doesn't keep recording events after end of experiment!!I thought I'd
+changed that--sometimes experiments end but data are still interesting. Solution--make sure experiment time is
+set as very long.
+
+A small problem--when no stimulus is generated, the iti plot doesn't happen. This likely because it's tied in
+to histograms, which need a stimulus. Fix it.
+
+Next would be better UI for changing/editing programs on the fly, as well as more automated way of handling multiple
+experiments and/or a real document type of interface. Also, when changing nets, the velocity processors are cleared out--
+think of how to maintain this state across network changes...just tiny little changes. More motivated to think about
+experiments.
+
+Now, how much could the little old computer process--if I put the trigger to midi converter into the computer, and
+the through-box out of the computer...how much data could it process? This would let me do delays, too. Would
+replace the MIOC with something internal. I could even use the same code, just replace the actual model. Want a tight
+little core to do the actual midi processing--this could be a separate process, or a thread within us. Calls to
+set links would simply create a connection matrix (weighted). For each input channel, we'd have a list of output
+channels (and weights, and delays). Make a packet of immediate thru's and transmit, schedule any delayed ones,
+repeat ad infinitum. Sounds rather easy. We could even have a packet list pre-created & we'd just walk it and
+fill in new velocity values if necessary.
+
+9/13/05 Thought a bit more about how best to do this. Looked into interprocess communication a bit, but it's unclear 
+what benefit that would be other than conceptual: We already have a midi receive thread at high priority, this
+is just a change in what it's doing. Before: ignore uninteresting, package and send to processes registered as
+listeners. This would 1) quickly process and re-emit/reschedule, 2) do what we did before (i.e. schedule messages
+to happen on main thread and return). Best would be to patch this into MIOCModel--with a certain flag it would
+initialize to use an internal system--this would mean that the connect/velocity processor type messages would
+translate into setting of some other, very efficient, internal data structures that would be accessed by the
+actual read proc. I don't really want to mess up MIDIIO, so might add functionality there to specify our own
+readproc, and create an additional class containing a function that'll be used as readproc, as well as
+additional pointers to data.
+
+[done] patch into MIDIO to specify own readproc
+make new MIDICore class for processing. It's an affected name, but better than MIDIEngine or something.
+
+9/19/05 Have made incremental additions. Am now pondering best way to 1) translate our high-level network 
+description into data strucures that are most efficient for MIDI processing and 2) how to ensure that we share
+this information with the readproc in a way that gives them priority.
+
+9/23/05 made some small fixes: now continues recording even after experiment reaches end time--changes timer
+color to red, but otherwise no changes. Have to explicitly stop experiment w/ the button now.
+As for data view, it's a bit tangled--it does indeed depend on the histograms being initialized with a stimulus,
+thus in the case there's no stimulus channels, nothing will happen. Histograms show taps relative to an assumed
+stimulus, yet they are also called on to store tap times and report last ITI. Though it may be redundant, seems we
+should also store event times in our ITI data view so it can be independent of the histograms/stimulus. Note: as is
+the histograms can work w/o a stimulus--they store events and calculate iti's. in a way want to separate whatever
+keeps track of a nodes events and different means of displaying this, but keeping it in hist view is tight. Note: data view
+already stores what it plots, but this has to be ITI--it doesn't calculate. This could be changed, however. Note also
+it's storing its numbers in NSArray of NSNumbers, while histogram uses a simple array--is this efficient?
+
+9/29/05 read a very helpful post on coreaudio list pointing to MIDIThruConnection--I'd dismissed it (as had the poster)
+as something simple, but in fact it can filter and? rechannelize midi, and here's the key: within the server, so it's
+more efficient than messaging out to our read thread, giving lower latencies. So this leads to a new architecture:
+set up the instant connections using MIDIThruConnection, so the readproc only needs to deal with the delayed connections,
+which is much more forgiving time-wise, since delays will be on order of ms.
+
+Just read up on it. Settings are thru a params struct. These can be initialized, but main thing is that they have
+a list of sources and destinations and filter everything from all sources and relay (presumably) to all destinations.
+Can think of it as a short circuit between source and destination. In my case, I'll have only one source (MIDI input)
+and one destination (MIDI Output). My program itself acts as another path between source and destination, although
+I do not close that path at present--all input is logged, all output generated independently. So:
+
+tappers -> MIDI interface (SOURCE) >---*--------------* RN, data logging
+		 |							   |			   \
+	  MIOC NET				  {MIDIThruConnection}	    {New: RN, MIDICore delayed connections}
+		 |							   |			   /
+synths  <- MIDI interface  (DEST)  <---*--------------* RN stimulus, programming commands
+
+Current state of affairs is indicated: the only cross connections between tappers and synths is in the MIOC,
+which also does velocity mapping. NEW things are: direct cross connections (no delay) using MIDIThruConnection,
+and and internal shunt within the Rhythm Network that will take care of delayed connections. (Originally I was
+going to do both in RN). This processing will happen during the MIDICore readproc. But we'll still have to
+send data off to other listeners--can we chain the ReadProcs--that is, have our inserted ReadProc then call
+the original one? Another possibility is for the MIDICore to create it's own virtual destination and source,
+so that we'd use MIDIThruConnections to route to this--nah, seems to add a lot of extra processing. In fact, we
+have all input coming into computer, and this will add a lot more output from computer--do we really need to do it
+all in computer, or use MIOC for low-latency patching (it'll surely beat the thruConnection handily) and only
+use the computer for the delays--this is the best solution.
+
+Multiple ports: Thinking ahead to when I expand this: Either use MIOC to route all to single wire MIDI interface, and then
+have each port assigned a range of note values--consistent with each tapper having own sounded note, or get a more powerful
+multi-port interface, maybe what's necessary to handle all the traffic?
+
+Thinking about this more--we want to minimize the traffic in/out of the computer. In is simple, and bounded: taps
+from all the tappers. As we add more tappers we run into a slow-pipe problem: if all events need to squeeze into
+a single MIDI cable, we'll have inaccuracies in timing. Better would be to send them into parallel MIDI inputs and
+then transfer to computer over USB--just what some of the recent interfaces do, plus they have internal patching
+grr-that might be the better option for scaling. Do any of them add their own timestamps that are then read by
+the driver, or does the driver use time of arrival over usb? If the channel from MIDI to computer is faster (USB) then
+we don't have to worry about this. 
+
+Possibilities: Edirol UM-880, MOTU MIDI Express XT. Question: can they do routing on a per-channel basis? Can they do
+velocity transforms? How controlable are they via sysex? 
+If we hit limits w/ current system, might have to use multiple MIOC ports to send data to computer. Ugh. As is each MIOC
+port handles 6 tappers. In worst case, when all tap simultaneously, the actual tap time will be misrepresented
+by up to 6ms. Now, as we add more ports, routed to a single MIDI output, the worst-case scales, so for
+five ports we'd be up to 30 ms. (5 ports is max if we save 2 for velocity manipulations and one for connection to comp).
+Then for more tappers, we'd need another MIOC. If we take two MIDI ports for output to the computer (using a 2 port interface)
+we have only 4 ports for tapping, meaning a total of 24 tappers (could squeeze a 7th->28). We'd need a second MIOC for
+reasonably large network.
+
+A test: single event input, loop back using MIOC, MIDIThru, rhythmNetwork and compare latencies.
+Found good info on Hinton website--a goldmine: http://www.hinton-instruments.co.uk/midi/promidi.html,
+and another: http://www.soundonsound.com/sos/Sep02/articles/pcmusician0902.asp?session=a295434be1857b5898655dd25064fdde
+Shows how to adapt a midi cable to tap the signal for monitoring to measure latencies. What are the quetions I have?
+1) For n simultaneous inputs, what's the spread in outputs--e.g. for a 8 port input, how will it be sent to computer
+over USB?
+2) 
+
+One rule that seems good--keep anything time-critical out of the computer! In addition to the bottleneck of
+scheduling latencies in a single cable, USB can add latency & jitter. Think: to process a message, have to wait for
+that full message to arrive (1ms), then process (fast), then output, so it'll be another ms before the receiver knows
+what the new message is. That's unavoidable. A better solution will (ideally) begin processing after the first byte,
+giving only 0.33 ms. 
+
+Have looked into alternatives: theory of MIDI over USB & Firewire. Looking at motu device (Edirol doesn't have per-channel
+routing). Asked a tech about the timing specs. We'll see.
+
+10/5/05 Thinking more about latency: if I'm going to start looking at delays this becomes more relevant. First: what's
+latency from midi being received to a sound from drum machine? Make a cable and record MIDI out and machine sound. Second,
+scheduled time of a packet is the time of the first byte. Clearly a sound can't even be initiated until the last
+byte has been transmitted, so right there there's a 3ms delay. With the drum machine delay and this, I can schedule the
+packets a bit earlier to account for this--so the sound will be made at precisely the time I want. Will also be some delay
+from tap to MIDI input to computer, then, further, some delay for it to be stuffed into a MIDIPacketList and released.
+How different is the time stamp from the actual time when I receive a packet--can measure this. Fortunately, my processing
+will only be for the delayed events, so timing isn't so critical. What would the shortest latency I could achieve, though?
+
+Bottom line is I need to re-consider my architecture: maintain connections in MIOC for non-delayed, but offload delayed
+connections to MIDI core. Give that first dibs on packets, to process in realtime thread, then pass off the list for
+other processing: plotting, calculations, storage, which aren't so time-critical. Keep it all in MIOC class,
+when it finds a delay connection it passes it on to MIDIcore, which updates its own state and data structures. Problem
+is now we have two lists of connections: MIOC and MIDICore. No problem: maintain both and draw from both when drawing
+the network. The question is: where to split it, at a high level or a low level. I've added a delay param to
+MIOCConnection, which breaks its link to MIOC reality, but would be simpler--a single list of MIOC connections.
+Then, for connect/disconnect I do things differently. [will I ever have multiple connections (e.g. different delays) over
+same path, or is node to node still enough to disambiguate?  Well...already been there: isEqual considers everything,
+so array management will work well. hash, only has port/channel, so it won't. Hash is very limited, as only
+4bytes long. That's used only in sets?]
