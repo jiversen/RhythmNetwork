@@ -42,6 +42,10 @@
 	[[NSNotificationCenter defaultCenter] addObserver:self 
 											 selector:@selector(experimentEndNotificationHandler:) 
 												 name:@"experimentHasEndedNotification" object:nil];
+	[[NSNotificationCenter defaultCenter] addObserver:self 
+											 selector:@selector(experimentOvertimeNotificationHandler:) 
+												 name:@"experimentOvertimeNotification" object:nil];
+
 		
 	[_experimentTimer setFont:[NSFont fontWithName:@"Helvetica" size:16]];
 	[_experimentTimer setStringValue:@"  -:--"];
@@ -386,7 +390,15 @@
 	[_experimentTimer setStringValue:timerStr];
 }
 
-//if experiment stops itself (e.g. at end of allotted time) it'll notify us
+
+//if experiment passes end of allotted time it'll notify us here--we want to keep recording
+- (void) experimentOvertimeNotificationHandler: (NSNotification *) notification
+{
+	//change color of timer to indicate we're still going
+	[_experimentTimer setTextColor:[NSColor redColor] ];
+}
+
+// once experiment has really stopped, we'll be notified here
 - (void) experimentEndNotificationHandler: (NSNotification *) notification
 {
 	//stop time counter

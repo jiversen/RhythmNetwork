@@ -227,19 +227,19 @@
 														   WithColor:[NSColor greenColor]
 															  inView:self];
 			} else {
-				NSColor *color;
-				color = [[RNTapperNode colorArray] objectAtIndex:iNode-1];
+				NSColor *color = [[RNTapperNode colorArray] objectAtIndex:iNode-1];
 				//[[nodeList objectAtIndex:iNode] flashWithColor:color inView:self];
 				//send event to appropriate histogramView
-				if (_doPlotData == YES && _nodeHistogramViews != nil) {
-					RNNodeHistogramView *hview = [_nodeHistogramViews objectAtIndex:(iNode-1)]; //**note indexing
-					[hview addEventAtTime:message->eventTime_ns];
-					//mine histogram view data to add to ITI plot
-					if (_dataView != nil) {
-						[_dataView addEventAtTime: [hview lastEventTime] withITI: [hview lastITI] forNode:iNode];
+				if (_doPlotData == YES) {
+					if (_nodeHistogramViews != nil) {
+						RNNodeHistogramView *hview = [_nodeHistogramViews objectAtIndex:(iNode-1)]; //**note indexing
+						[hview addEventAtTime:message->eventTime_ns];
+						//mine histogram view data to add to ITI plot
+						if (_dataView != nil) {
+							[_dataView addEventAtTime: [hview lastEventTime] withITI: [hview lastITI] forNode:iNode];
+						}
 					}
 				}
-
 			}
 		} else { 	//if it's unexpected, display the offending channel, note info		
 					//NSAssert( (iNode != 0xFFFF), @"Received MIDI channel,note that doesn't correspond to a node!");

@@ -445,13 +445,15 @@
 	[io flushOutput];	
 }
 
-//take care of the ending timer
+//take care of the ending timer !!!:jri:20050923 don't actually stop-keep recording
 - (void) stopTimerHandler: (NSTimer *) timer
 {
 	[_experimentEndTimer invalidate];
 	[_experimentEndTimer autorelease];
 	_experimentEndTimer = nil;
-	[self stop];
+	//[self stop];
+	//send notification to UI that it's stopped?
+	[[NSNotificationCenter defaultCenter] postNotificationName:@"experimentOvertimeNotification" object:self];
 }
 
 - (void) stop

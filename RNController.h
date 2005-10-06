@@ -56,6 +56,7 @@
 - (IBAction)setDrumSetAction:(id)sender;
 
 - (void) updateExperimentTimer: (NSTimer *) timer;
+- (void) experimentOvertimeNotificationHandler: (NSNotification *) notification;
 - (void) experimentEndNotificationHandler: (NSNotification *) notification;
 
 

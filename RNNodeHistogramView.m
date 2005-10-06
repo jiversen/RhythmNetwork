@@ -43,7 +43,7 @@
 	NSRect frame;
 	int nBins, i;
 	
-	//NSAssert( (stim != nil), @"nil stimulus");
+	NSAssert( (stim != nil), @"nil stimulus");
 	
 	if (_targetStimulus != stim && stim != nil) {
 		_targetStimulus = stim;
@@ -106,7 +106,7 @@
 	int iBin, nBins;
 	double asynchrony_ms;
 	
-	NSAssert( (_numEvents < kMaxNumEvents) , @"Event storage overflow");
+	NSAssert( (_numEvents < kMaxNumEvents-1) , @"Event storage overflow");
 	_eventTimes[++_numEvents] = eventTime_ns;
 	
 	//calculate estimate of ITI, smoothed after last few points
