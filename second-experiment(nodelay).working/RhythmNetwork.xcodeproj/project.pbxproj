@@ -1,0 +1,595 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 42;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0B16BA6F0895BBF000188571 /* RNDataView.h in Headers */ = {isa = PBXBuildFile; fileRef = 0B16BA6D0895BBF000188571 /* RNDataView.h */; };
+		0B16BA700895BBF000188571 /* RNDataView.m in Sources */ = {isa = PBXBuildFile; fileRef = 0B16BA6E0895BBF000188571 /* RNDataView.m */; };
+		0B2F157706E0546600693117 /* MIDIIO.h in Headers */ = {isa = PBXBuildFile; fileRef = 0B2F157506E0546600693117 /* MIDIIO.h */; };
+		0B2F157806E0546600693117 /* MIDIIO.m in Sources */ = {isa = PBXBuildFile; fileRef = 0B2F157606E0546600693117 /* MIDIIO.m */; };
+		0B2F157B06E0547600693117 /* MIOCModel.h in Headers */ = {isa = PBXBuildFile; fileRef = 0B2F157906E0547600693117 /* MIOCModel.h */; };
+		0B2F157C06E0547600693117 /* MIOCModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 0B2F157A06E0547600693117 /* MIOCModel.m */; };
+		0B36952D07A816F800FC1B4B /* RNExperimentPart.h in Headers */ = {isa = PBXBuildFile; fileRef = 0B36952B07A816F800FC1B4B /* RNExperimentPart.h */; };
+		0B36952E07A816F800FC1B4B /* RNExperimentPart.m in Sources */ = {isa = PBXBuildFile; fileRef = 0B36952C07A816F800FC1B4B /* RNExperimentPart.m */; };
+		0B36959807A85D0300FC1B4B /* experiment ideas.txt in Resources */ = {isa = PBXBuildFile; fileRef = 0B36959707A85D0300FC1B4B /* experiment ideas.txt */; };
+		0B3695DC07A8BA2100FC1B4B /* MIOC MIDI specs.txt in Resources */ = {isa = PBXBuildFile; fileRef = 0B3695DB07A8BA2100FC1B4B /* MIOC MIDI specs.txt */; };
+		0B37B95407CF0AA400FADE24 /* RNNodeHistogramView.h in Headers */ = {isa = PBXBuildFile; fileRef = 0B37B95207CF0AA400FADE24 /* RNNodeHistogramView.h */; };
+		0B37B95507CF0AA400FADE24 /* RNNodeHistogramView.m in Sources */ = {isa = PBXBuildFile; fileRef = 0B37B95307CF0AA400FADE24 /* RNNodeHistogramView.m */; };
+		0B38936C07826F0C00429A61 /* RNConnection.h in Headers */ = {isa = PBXBuildFile; fileRef = 0B38936A07826F0C00429A61 /* RNConnection.h */; };
+		0B38936D07826F0C00429A61 /* RNConnection.m in Sources */ = {isa = PBXBuildFile; fileRef = 0B38936B07826F0C00429A61 /* RNConnection.m */; };
+		0B38951B07837E5500429A61 /* RNController.h in Headers */ = {isa = PBXBuildFile; fileRef = 0B38951907837E5500429A61 /* RNController.h */; };
+		0B38951C07837E5500429A61 /* RNController.m in Sources */ = {isa = PBXBuildFile; fileRef = 0B38951A07837E5500429A61 /* RNController.m */; };
+		0B3A669E07C85944004591B6 /* RNBBNode.h in Headers */ = {isa = PBXBuildFile; fileRef = 0B3A669C07C85944004591B6 /* RNBBNode.h */; };
+		0B3A669F07C85944004591B6 /* RNBBNode.m in Sources */ = {isa = PBXBuildFile; fileRef = 0B3A669D07C85944004591B6 /* RNBBNode.m */; };
+		0B477B8206E7F5C600926C80 /* NSStringHexStringCategory.h in Headers */ = {isa = PBXBuildFile; fileRef = 0B477B8006E7F5C600926C80 /* NSStringHexStringCategory.h */; };
+		0B477B8306E7F5C600926C80 /* NSStringHexStringCategory.m in Sources */ = {isa = PBXBuildFile; fileRef = 0B477B8106E7F5C600926C80 /* NSStringHexStringCategory.m */; };
+		0B47C56908CE7A170022F637 /* RNGlobalConnectionStrength.h in Headers */ = {isa = PBXBuildFile; fileRef = 0B47C56708CE7A170022F637 /* RNGlobalConnectionStrength.h */; };
+		0B47C56A08CE7A170022F637 /* RNGlobalConnectionStrength.m in Sources */ = {isa = PBXBuildFile; fileRef = 0B47C56808CE7A170022F637 /* RNGlobalConnectionStrength.m */; };
+		0B5BAFE50898985D00460665 /* Alesis SR-16 Sysex.rtf in Resources */ = {isa = PBXBuildFile; fileRef = 0B5BAFE40898985D00460665 /* Alesis SR-16 Sysex.rtf */; };
+		0B5BEECC088F1DC9006DE5C8 /* MIOCFilterProcessor.h in Headers */ = {isa = PBXBuildFile; fileRef = 0B5BEECA088F1DC9006DE5C8 /* MIOCFilterProcessor.h */; };
+		0B5BEECD088F1DC9006DE5C8 /* MIOCFilterProcessor.m in Sources */ = {isa = PBXBuildFile; fileRef = 0B5BEECB088F1DC9006DE5C8 /* MIOCFilterProcessor.m */; };
+		0B668976052F9BA50081A5C8 /* MIOCSetupController.h in Headers */ = {isa = PBXBuildFile; fileRef = 0B668974052F9BA50081A5C8 /* MIOCSetupController.h */; };
+		0B668977052F9BA50081A5C8 /* MIOCSetupController.m in Sources */ = {isa = PBXBuildFile; fileRef = 0B668975052F9BA50081A5C8 /* MIOCSetupController.m */; };
+		0B77FFF70774B1630028C124 /* specifications.txt in Resources */ = {isa = PBXBuildFile; fileRef = 0B77FFF60774B1630028C124 /* specifications.txt */; };
+		0B7D77F8071A50B300C19443 /* RNNetworkView.h in Headers */ = {isa = PBXBuildFile; fileRef = 0B7D77F6071A50B300C19443 /* RNNetworkView.h */; };
+		0B7D77F9071A50B300C19443 /* RNNetworkView.m in Sources */ = {isa = PBXBuildFile; fileRef = 0B7D77F7071A50B300C19443 /* RNNetworkView.m */; };
+		0B7D7802071A514300C19443 /* RNNetwork.h in Headers */ = {isa = PBXBuildFile; fileRef = 0B7D7800071A514300C19443 /* RNNetwork.h */; };
+		0B7D7803071A514300C19443 /* RNNetwork.m in Sources */ = {isa = PBXBuildFile; fileRef = 0B7D7801071A514300C19443 /* RNNetwork.m */; };
+		0B7D7808071A516900C19443 /* RNTapperNode.h in Headers */ = {isa = PBXBuildFile; fileRef = 0B7D7806071A516900C19443 /* RNTapperNode.h */; };
+		0B7D7809071A516900C19443 /* RNTapperNode.m in Sources */ = {isa = PBXBuildFile; fileRef = 0B7D7807071A516900C19443 /* RNTapperNode.m */; };
+		0B89D33F06FC10950024E7BC /* MIOCConnection.h in Headers */ = {isa = PBXBuildFile; fileRef = 0B89D33D06FC10950024E7BC /* MIOCConnection.h */; };
+		0B89D34006FC10950024E7BC /* MIOCConnection.m in Sources */ = {isa = PBXBuildFile; fileRef = 0B89D33E06FC10950024E7BC /* MIOCConnection.m */; };
+		0BB7D18F0800FFF700246F8F /* MIOCVelocityProcessor.h in Headers */ = {isa = PBXBuildFile; fileRef = 0BB7D18D0800FFF700246F8F /* MIOCVelocityProcessor.h */; };
+		0BB7D1900800FFF700246F8F /* MIOCVelocityProcessor.m in Sources */ = {isa = PBXBuildFile; fileRef = 0BB7D18E0800FFF700246F8F /* MIOCVelocityProcessor.m */; };
+		0BCD60B9087B3EED00B1BEE1 /* MIOCProcessorProtocol.h in Headers */ = {isa = PBXBuildFile; fileRef = 0BCD60B7087B3EED00B1BEE1 /* MIOCProcessorProtocol.h */; };
+		0BDDB9E907A5CEB9001C11D6 /* RNExperiment.h in Headers */ = {isa = PBXBuildFile; fileRef = 0BDDB9E707A5CEB9001C11D6 /* RNExperiment.h */; };
+		0BDDB9EA07A5CEB9001C11D6 /* RNExperiment.m in Sources */ = {isa = PBXBuildFile; fileRef = 0BDDB9E807A5CEB9001C11D6 /* RNExperiment.m */; };
+		0BDDBB6407A6D653001C11D6 /* CoreAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0BDDBB6307A6D653001C11D6 /* CoreAudio.framework */; };
+		0BEC11D207A2409C005066BB /* RNStimulus.h in Headers */ = {isa = PBXBuildFile; fileRef = 0BEC11D007A2409C005066BB /* RNStimulus.h */; };
+		0BEC11D307A2409C005066BB /* RNStimulus.m in Sources */ = {isa = PBXBuildFile; fileRef = 0BEC11D107A2409C005066BB /* RNStimulus.m */; };
+		0BF7826B06DF0F2C0091D317 /* CoreMIDI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0BF7826A06DF0F2C0091D317 /* CoreMIDI.framework */; };
+		8D1107280486CEB800E47090 /* RhythmNetwork_Prefix.pch in Headers */ = {isa = PBXBuildFile; fileRef = 32CA4F630368D1EE00C91783 /* RhythmNetwork_Prefix.pch */; };
+		8D11072A0486CEB800E47090 /* MainMenu.nib in Resources */ = {isa = PBXBuildFile; fileRef = 29B97318FDCFA39411CA2CEA /* MainMenu.nib */; };
+		8D11072B0486CEB800E47090 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 089C165CFE840E0CC02AAC07 /* InfoPlist.strings */; };
+		8D11072D0486CEB800E47090 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 29B97316FDCFA39411CA2CEA /* main.m */; settings = {ATTRIBUTES = (); }; };
+		8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXBuildStyle section */
+		4A9504CCFFE6A4B311CA0CBA /* Development */ = {
+			isa = PBXBuildStyle;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+				DEBUGGING_SYMBOLS = YES;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				OPTIMIZATION_CFLAGS = "-O0";
+				ZERO_LINK = NO;
+			};
+			name = Development;
+		};
+		4A9504CDFFE6A4B311CA0CBA /* Deployment */ = {
+			isa = PBXBuildStyle;
+			buildSettings = {
+				COPY_PHASE_STRIP = YES;
+				GCC_ENABLE_FIX_AND_CONTINUE = NO;
+				ZERO_LINK = NO;
+			};
+			name = Deployment;
+		};
+/* End PBXBuildStyle section */
+
+/* Begin PBXFileReference section */
+		089C165DFE840E0CC02AAC07 /* English */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = English; path = English.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		0B16BA6D0895BBF000188571 /* RNDataView.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = RNDataView.h; sourceTree = "<group>"; };
+		0B16BA6E0895BBF000188571 /* RNDataView.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = RNDataView.m; sourceTree = "<group>"; };
+		0B2F157506E0546600693117 /* MIDIIO.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = MIDIIO.h; sourceTree = "<group>"; };
+		0B2F157606E0546600693117 /* MIDIIO.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = MIDIIO.m; sourceTree = "<group>"; };
+		0B2F157906E0547600693117 /* MIOCModel.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = MIOCModel.h; sourceTree = "<group>"; };
+		0B2F157A06E0547600693117 /* MIOCModel.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = MIOCModel.m; sourceTree = "<group>"; };
+		0B36952B07A816F800FC1B4B /* RNExperimentPart.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RNExperimentPart.h; sourceTree = "<group>"; };
+		0B36952C07A816F800FC1B4B /* RNExperimentPart.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RNExperimentPart.m; sourceTree = "<group>"; };
+		0B36959707A85D0300FC1B4B /* experiment ideas.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "experiment ideas.txt"; sourceTree = "<group>"; };
+		0B3695DB07A8BA2100FC1B4B /* MIOC MIDI specs.txt */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = "MIOC MIDI specs.txt"; sourceTree = "<group>"; };
+		0B37B95207CF0AA400FADE24 /* RNNodeHistogramView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RNNodeHistogramView.h; sourceTree = "<group>"; };
+		0B37B95307CF0AA400FADE24 /* RNNodeHistogramView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RNNodeHistogramView.m; sourceTree = "<group>"; };
+		0B38936A07826F0C00429A61 /* RNConnection.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RNConnection.h; sourceTree = "<group>"; };
+		0B38936B07826F0C00429A61 /* RNConnection.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RNConnection.m; sourceTree = "<group>"; };
+		0B38951907837E5500429A61 /* RNController.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = RNController.h; sourceTree = "<group>"; };
+		0B38951A07837E5500429A61 /* RNController.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = RNController.m; sourceTree = "<group>"; };
+		0B3A669C07C85944004591B6 /* RNBBNode.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RNBBNode.h; sourceTree = "<group>"; };
+		0B3A669D07C85944004591B6 /* RNBBNode.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RNBBNode.m; sourceTree = "<group>"; };
+		0B477B8006E7F5C600926C80 /* NSStringHexStringCategory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NSStringHexStringCategory.h; sourceTree = "<group>"; };
+		0B477B8106E7F5C600926C80 /* NSStringHexStringCategory.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NSStringHexStringCategory.m; sourceTree = "<group>"; };
+		0B47C56708CE7A170022F637 /* RNGlobalConnectionStrength.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RNGlobalConnectionStrength.h; sourceTree = "<group>"; };
+		0B47C56808CE7A170022F637 /* RNGlobalConnectionStrength.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RNGlobalConnectionStrength.m; sourceTree = "<group>"; };
+		0B5BAFE40898985D00460665 /* Alesis SR-16 Sysex.rtf */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; path = "Alesis SR-16 Sysex.rtf"; sourceTree = "<group>"; };
+		0B5BEECA088F1DC9006DE5C8 /* MIOCFilterProcessor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MIOCFilterProcessor.h; sourceTree = "<group>"; };
+		0B5BEECB088F1DC9006DE5C8 /* MIOCFilterProcessor.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MIOCFilterProcessor.m; sourceTree = "<group>"; };
+		0B668974052F9BA50081A5C8 /* MIOCSetupController.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = MIOCSetupController.h; sourceTree = "<group>"; };
+		0B668975052F9BA50081A5C8 /* MIOCSetupController.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = MIOCSetupController.m; sourceTree = "<group>"; };
+		0B77FFF60774B1630028C124 /* specifications.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = specifications.txt; sourceTree = "<group>"; };
+		0B7D77F6071A50B300C19443 /* RNNetworkView.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = RNNetworkView.h; sourceTree = "<group>"; };
+		0B7D77F7071A50B300C19443 /* RNNetworkView.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = RNNetworkView.m; sourceTree = "<group>"; };
+		0B7D7800071A514300C19443 /* RNNetwork.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RNNetwork.h; sourceTree = "<group>"; };
+		0B7D7801071A514300C19443 /* RNNetwork.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RNNetwork.m; sourceTree = "<group>"; };
+		0B7D7806071A516900C19443 /* RNTapperNode.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RNTapperNode.h; sourceTree = "<group>"; };
+		0B7D7807071A516900C19443 /* RNTapperNode.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RNTapperNode.m; sourceTree = "<group>"; };
+		0B89D33D06FC10950024E7BC /* MIOCConnection.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MIOCConnection.h; sourceTree = "<group>"; };
+		0B89D33E06FC10950024E7BC /* MIOCConnection.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MIOCConnection.m; sourceTree = "<group>"; };
+		0BB7D18D0800FFF700246F8F /* MIOCVelocityProcessor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MIOCVelocityProcessor.h; sourceTree = "<group>"; };
+		0BB7D18E0800FFF700246F8F /* MIOCVelocityProcessor.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MIOCVelocityProcessor.m; sourceTree = "<group>"; };
+		0BCD60B7087B3EED00B1BEE1 /* MIOCProcessorProtocol.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MIOCProcessorProtocol.h; sourceTree = "<group>"; };
+		0BDDB9E707A5CEB9001C11D6 /* RNExperiment.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RNExperiment.h; sourceTree = "<group>"; };
+		0BDDB9E807A5CEB9001C11D6 /* RNExperiment.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RNExperiment.m; sourceTree = "<group>"; };
+		0BDDBB6307A6D653001C11D6 /* CoreAudio.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreAudio.framework; path = /System/Library/Frameworks/CoreAudio.framework; sourceTree = "<absolute>"; };
+		0BEC11D007A2409C005066BB /* RNStimulus.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RNStimulus.h; sourceTree = "<group>"; };
+		0BEC11D107A2409C005066BB /* RNStimulus.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RNStimulus.m; sourceTree = "<group>"; };
+		0BF7826A06DF0F2C0091D317 /* CoreMIDI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMIDI.framework; path = /System/Library/Frameworks/CoreMIDI.framework; sourceTree = "<absolute>"; };
+		1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = /System/Library/Frameworks/Cocoa.framework; sourceTree = "<absolute>"; };
+		29B97316FDCFA39411CA2CEA /* main.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		29B97319FDCFA39411CA2CEA /* English */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = English; path = English.lproj/MainMenu.nib; sourceTree = "<group>"; };
+		29B97324FDCFA39411CA2CEA /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = /System/Library/Frameworks/AppKit.framework; sourceTree = "<absolute>"; };
+		29B97325FDCFA39411CA2CEA /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
+		32CA4F630368D1EE00C91783 /* RhythmNetwork_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RhythmNetwork_Prefix.pch; sourceTree = "<group>"; };
+		8D1107310486CEB800E47090 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		8D1107320486CEB800E47090 /* RhythmNetwork.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RhythmNetwork.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		8D11072E0486CEB800E47090 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */,
+				0BF7826B06DF0F2C0091D317 /* CoreMIDI.framework in Frameworks */,
+				0BDDBB6407A6D653001C11D6 /* CoreAudio.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		080E96DDFE201D6D7F000001 /* Classes */ = {
+			isa = PBXGroup;
+			children = (
+				0B47C56708CE7A170022F637 /* RNGlobalConnectionStrength.h */,
+				0B47C56808CE7A170022F637 /* RNGlobalConnectionStrength.m */,
+				0B38951907837E5500429A61 /* RNController.h */,
+				0B38951A07837E5500429A61 /* RNController.m */,
+				0BDDB9E707A5CEB9001C11D6 /* RNExperiment.h */,
+				0BDDB9E807A5CEB9001C11D6 /* RNExperiment.m */,
+				0B36952B07A816F800FC1B4B /* RNExperimentPart.h */,
+				0B36952C07A816F800FC1B4B /* RNExperimentPart.m */,
+				0BEC11D007A2409C005066BB /* RNStimulus.h */,
+				0BEC11D107A2409C005066BB /* RNStimulus.m */,
+				0B7D7800071A514300C19443 /* RNNetwork.h */,
+				0B7D7801071A514300C19443 /* RNNetwork.m */,
+				0B7D7806071A516900C19443 /* RNTapperNode.h */,
+				0B7D7807071A516900C19443 /* RNTapperNode.m */,
+				0B3A669C07C85944004591B6 /* RNBBNode.h */,
+				0B3A669D07C85944004591B6 /* RNBBNode.m */,
+				0B38936A07826F0C00429A61 /* RNConnection.h */,
+				0B38936B07826F0C00429A61 /* RNConnection.m */,
+				0B7D77F6071A50B300C19443 /* RNNetworkView.h */,
+				0B7D77F7071A50B300C19443 /* RNNetworkView.m */,
+				0B37B95207CF0AA400FADE24 /* RNNodeHistogramView.h */,
+				0B37B95307CF0AA400FADE24 /* RNNodeHistogramView.m */,
+				0B16BA6D0895BBF000188571 /* RNDataView.h */,
+				0B16BA6E0895BBF000188571 /* RNDataView.m */,
+				0B3B3A1106EAFCF9007B30B3 /* MIOC */,
+				0B2F157506E0546600693117 /* MIDIIO.h */,
+				0B2F157606E0546600693117 /* MIDIIO.m */,
+				0B477B8006E7F5C600926C80 /* NSStringHexStringCategory.h */,
+				0B477B8106E7F5C600926C80 /* NSStringHexStringCategory.m */,
+			);
+			name = Classes;
+			sourceTree = "<group>";
+		};
+		0B3695DF07A8BA3800FC1B4B /* Documentation */ = {
+			isa = PBXGroup;
+			children = (
+				0B5BAFE40898985D00460665 /* Alesis SR-16 Sysex.rtf */,
+				0B3695DB07A8BA2100FC1B4B /* MIOC MIDI specs.txt */,
+				0B36959707A85D0300FC1B4B /* experiment ideas.txt */,
+				0B77FFF60774B1630028C124 /* specifications.txt */,
+			);
+			name = Documentation;
+			sourceTree = "<group>";
+		};
+		0B3B3A1106EAFCF9007B30B3 /* MIOC */ = {
+			isa = PBXGroup;
+			children = (
+				0B5BEECA088F1DC9006DE5C8 /* MIOCFilterProcessor.h */,
+				0B5BEECB088F1DC9006DE5C8 /* MIOCFilterProcessor.m */,
+				0BCD60B7087B3EED00B1BEE1 /* MIOCProcessorProtocol.h */,
+				0BB7D18D0800FFF700246F8F /* MIOCVelocityProcessor.h */,
+				0BB7D18E0800FFF700246F8F /* MIOCVelocityProcessor.m */,
+				0B89D33D06FC10950024E7BC /* MIOCConnection.h */,
+				0B89D33E06FC10950024E7BC /* MIOCConnection.m */,
+				0B2F157906E0547600693117 /* MIOCModel.h */,
+				0B2F157A06E0547600693117 /* MIOCModel.m */,
+				0B668974052F9BA50081A5C8 /* MIOCSetupController.h */,
+				0B668975052F9BA50081A5C8 /* MIOCSetupController.m */,
+			);
+			name = MIOC;
+			sourceTree = "<group>";
+		};
+		1058C7A0FEA54F0111CA2CBB /* Linked Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				29B97325FDCFA39411CA2CEA /* Foundation.framework */,
+				0BDDBB6307A6D653001C11D6 /* CoreAudio.framework */,
+				0BF7826A06DF0F2C0091D317 /* CoreMIDI.framework */,
+				1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */,
+			);
+			name = "Linked Frameworks";
+			sourceTree = "<group>";
+		};
+		1058C7A2FEA54F0111CA2CBB /* Other Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				29B97324FDCFA39411CA2CEA /* AppKit.framework */,
+			);
+			name = "Other Frameworks";
+			sourceTree = "<group>";
+		};
+		19C28FACFE9D520D11CA2CBB /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				8D1107320486CEB800E47090 /* RhythmNetwork.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		29B97314FDCFA39411CA2CEA /* RhythmNetwork */ = {
+			isa = PBXGroup;
+			children = (
+				080E96DDFE201D6D7F000001 /* Classes */,
+				29B97315FDCFA39411CA2CEA /* Other Sources */,
+				29B97317FDCFA39411CA2CEA /* Resources */,
+				0B3695DF07A8BA3800FC1B4B /* Documentation */,
+				29B97323FDCFA39411CA2CEA /* Frameworks */,
+				19C28FACFE9D520D11CA2CBB /* Products */,
+			);
+			comments = "1/25/04 tried disabling ZeroLink to see if launch time better in development";
+			name = RhythmNetwork;
+			sourceTree = "<group>";
+		};
+		29B97315FDCFA39411CA2CEA /* Other Sources */ = {
+			isa = PBXGroup;
+			children = (
+				32CA4F630368D1EE00C91783 /* RhythmNetwork_Prefix.pch */,
+				29B97316FDCFA39411CA2CEA /* main.m */,
+			);
+			name = "Other Sources";
+			sourceTree = "<group>";
+		};
+		29B97317FDCFA39411CA2CEA /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				8D1107310486CEB800E47090 /* Info.plist */,
+				089C165CFE840E0CC02AAC07 /* InfoPlist.strings */,
+				29B97318FDCFA39411CA2CEA /* MainMenu.nib */,
+			);
+			name = Resources;
+			sourceTree = "<group>";
+		};
+		29B97323FDCFA39411CA2CEA /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				1058C7A0FEA54F0111CA2CBB /* Linked Frameworks */,
+				1058C7A2FEA54F0111CA2CBB /* Other Frameworks */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXHeadersBuildPhase section */
+		8D1107270486CEB800E47090 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8D1107280486CEB800E47090 /* RhythmNetwork_Prefix.pch in Headers */,
+				0B2F157706E0546600693117 /* MIDIIO.h in Headers */,
+				0B2F157B06E0547600693117 /* MIOCModel.h in Headers */,
+				0B477B8206E7F5C600926C80 /* NSStringHexStringCategory.h in Headers */,
+				0B89D33F06FC10950024E7BC /* MIOCConnection.h in Headers */,
+				0B668976052F9BA50081A5C8 /* MIOCSetupController.h in Headers */,
+				0B7D77F8071A50B300C19443 /* RNNetworkView.h in Headers */,
+				0B7D7802071A514300C19443 /* RNNetwork.h in Headers */,
+				0B7D7808071A516900C19443 /* RNTapperNode.h in Headers */,
+				0B38936C07826F0C00429A61 /* RNConnection.h in Headers */,
+				0B38951B07837E5500429A61 /* RNController.h in Headers */,
+				0BEC11D207A2409C005066BB /* RNStimulus.h in Headers */,
+				0BDDB9E907A5CEB9001C11D6 /* RNExperiment.h in Headers */,
+				0B36952D07A816F800FC1B4B /* RNExperimentPart.h in Headers */,
+				0B3A669E07C85944004591B6 /* RNBBNode.h in Headers */,
+				0B37B95407CF0AA400FADE24 /* RNNodeHistogramView.h in Headers */,
+				0BB7D18F0800FFF700246F8F /* MIOCVelocityProcessor.h in Headers */,
+				0BCD60B9087B3EED00B1BEE1 /* MIOCProcessorProtocol.h in Headers */,
+				0B5BEECC088F1DC9006DE5C8 /* MIOCFilterProcessor.h in Headers */,
+				0B16BA6F0895BBF000188571 /* RNDataView.h in Headers */,
+				0B47C56908CE7A170022F637 /* RNGlobalConnectionStrength.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
+
+/* Begin PBXNativeTarget section */
+		8D1107260486CEB800E47090 /* RhythmNetwork */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D73752D3098F5B0A00DD839E /* Build configuration list for PBXNativeTarget "RhythmNetwork" */;
+			buildPhases = (
+				8D1107270486CEB800E47090 /* Headers */,
+				8D1107290486CEB800E47090 /* Resources */,
+				8D11072C0486CEB800E47090 /* Sources */,
+				8D11072E0486CEB800E47090 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			buildSettings = {
+				FRAMEWORK_SEARCH_PATHS = "";
+				GCC_ENABLE_TRIGRAPHS = NO;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = RhythmNetwork_Prefix.pch;
+				GCC_WARN_ABOUT_MISSING_PROTOTYPES = NO;
+				GCC_WARN_FOUR_CHARACTER_CONSTANTS = NO;
+				GCC_WARN_UNKNOWN_PRAGMAS = NO;
+				HEADER_SEARCH_PATHS = "";
+				INFOPLIST_FILE = Info.plist;
+				INSTALL_PATH = "$(HOME)/Applications";
+				LIBRARY_SEARCH_PATHS = "";
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				PRODUCT_NAME = RhythmNetwork;
+				SECTORDER_FLAGS = "";
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+				WRAPPER_EXTENSION = app;
+			};
+			dependencies = (
+			);
+			name = RhythmNetwork;
+			productInstallPath = "$(HOME)/Applications";
+			productName = RhythmNetwork;
+			productReference = 8D1107320486CEB800E47090 /* RhythmNetwork.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		29B97313FDCFA39411CA2CEA /* Project object */ = {
+			isa = PBXProject;
+			buildConfigurationList = D73752D7098F5B0A00DD839E /* Build configuration list for PBXProject "RhythmNetwork" */;
+			buildSettings = {
+			};
+			buildStyles = (
+				4A9504CCFFE6A4B311CA0CBA /* Development */,
+				4A9504CDFFE6A4B311CA0CBA /* Deployment */,
+			);
+			hasScannedForEncodings = 1;
+			mainGroup = 29B97314FDCFA39411CA2CEA /* RhythmNetwork */;
+			projectDirPath = "";
+			targets = (
+				8D1107260486CEB800E47090 /* RhythmNetwork */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		8D1107290486CEB800E47090 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8D11072A0486CEB800E47090 /* MainMenu.nib in Resources */,
+				8D11072B0486CEB800E47090 /* InfoPlist.strings in Resources */,
+				0B77FFF70774B1630028C124 /* specifications.txt in Resources */,
+				0B36959807A85D0300FC1B4B /* experiment ideas.txt in Resources */,
+				0B3695DC07A8BA2100FC1B4B /* MIOC MIDI specs.txt in Resources */,
+				0B5BAFE50898985D00460665 /* Alesis SR-16 Sysex.rtf in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		8D11072C0486CEB800E47090 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8D11072D0486CEB800E47090 /* main.m in Sources */,
+				0B2F157806E0546600693117 /* MIDIIO.m in Sources */,
+				0B2F157C06E0547600693117 /* MIOCModel.m in Sources */,
+				0B477B8306E7F5C600926C80 /* NSStringHexStringCategory.m in Sources */,
+				0B89D34006FC10950024E7BC /* MIOCConnection.m in Sources */,
+				0B668977052F9BA50081A5C8 /* MIOCSetupController.m in Sources */,
+				0B7D77F9071A50B300C19443 /* RNNetworkView.m in Sources */,
+				0B7D7803071A514300C19443 /* RNNetwork.m in Sources */,
+				0B7D7809071A516900C19443 /* RNTapperNode.m in Sources */,
+				0B38936D07826F0C00429A61 /* RNConnection.m in Sources */,
+				0B38951C07837E5500429A61 /* RNController.m in Sources */,
+				0BEC11D307A2409C005066BB /* RNStimulus.m in Sources */,
+				0BDDB9EA07A5CEB9001C11D6 /* RNExperiment.m in Sources */,
+				0B36952E07A816F800FC1B4B /* RNExperimentPart.m in Sources */,
+				0B3A669F07C85944004591B6 /* RNBBNode.m in Sources */,
+				0B37B95507CF0AA400FADE24 /* RNNodeHistogramView.m in Sources */,
+				0BB7D1900800FFF700246F8F /* MIOCVelocityProcessor.m in Sources */,
+				0B5BEECD088F1DC9006DE5C8 /* MIOCFilterProcessor.m in Sources */,
+				0B16BA700895BBF000188571 /* RNDataView.m in Sources */,
+				0B47C56A08CE7A170022F637 /* RNGlobalConnectionStrength.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXVariantGroup section */
+		089C165CFE840E0CC02AAC07 /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				089C165DFE840E0CC02AAC07 /* English */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+		29B97318FDCFA39411CA2CEA /* MainMenu.nib */ = {
+			isa = PBXVariantGroup;
+			children = (
+				29B97319FDCFA39411CA2CEA /* English */,
+			);
+			name = MainMenu.nib;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		D73752D4098F5B0A00DD839E /* Development */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+				DEBUGGING_SYMBOLS = YES;
+				FRAMEWORK_SEARCH_PATHS = "";
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				GCC_ENABLE_TRIGRAPHS = NO;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = RhythmNetwork_Prefix.pch;
+				GCC_WARN_ABOUT_MISSING_PROTOTYPES = NO;
+				GCC_WARN_FOUR_CHARACTER_CONSTANTS = NO;
+				GCC_WARN_UNKNOWN_PRAGMAS = NO;
+				HEADER_SEARCH_PATHS = "";
+				INFOPLIST_FILE = Info.plist;
+				INSTALL_PATH = "$(HOME)/Applications";
+				LIBRARY_SEARCH_PATHS = "";
+				OPTIMIZATION_CFLAGS = "-O0";
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				PRODUCT_NAME = RhythmNetwork;
+				SECTORDER_FLAGS = "";
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+				WRAPPER_EXTENSION = app;
+				ZERO_LINK = NO;
+			};
+			name = Development;
+		};
+		D73752D5098F5B0A00DD839E /* Deployment */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = YES;
+				FRAMEWORK_SEARCH_PATHS = "";
+				GCC_ENABLE_FIX_AND_CONTINUE = NO;
+				GCC_ENABLE_TRIGRAPHS = NO;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = RhythmNetwork_Prefix.pch;
+				GCC_WARN_ABOUT_MISSING_PROTOTYPES = NO;
+				GCC_WARN_FOUR_CHARACTER_CONSTANTS = NO;
+				GCC_WARN_UNKNOWN_PRAGMAS = NO;
+				HEADER_SEARCH_PATHS = "";
+				INFOPLIST_FILE = Info.plist;
+				INSTALL_PATH = "$(HOME)/Applications";
+				LIBRARY_SEARCH_PATHS = "";
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				PRODUCT_NAME = RhythmNetwork;
+				SECTORDER_FLAGS = "";
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+				WRAPPER_EXTENSION = app;
+				ZERO_LINK = NO;
+			};
+			name = Deployment;
+		};
+		D73752D6098F5B0A00DD839E /* Default */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				FRAMEWORK_SEARCH_PATHS = "";
+				GCC_ENABLE_TRIGRAPHS = NO;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = RhythmNetwork_Prefix.pch;
+				GCC_WARN_ABOUT_MISSING_PROTOTYPES = NO;
+				GCC_WARN_FOUR_CHARACTER_CONSTANTS = NO;
+				GCC_WARN_UNKNOWN_PRAGMAS = NO;
+				HEADER_SEARCH_PATHS = "";
+				INFOPLIST_FILE = Info.plist;
+				INSTALL_PATH = "$(HOME)/Applications";
+				LIBRARY_SEARCH_PATHS = "";
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				PRODUCT_NAME = RhythmNetwork;
+				SECTORDER_FLAGS = "";
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+				WRAPPER_EXTENSION = app;
+			};
+			name = Default;
+		};
+		D73752D8098F5B0A00DD839E /* Development */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+			};
+			name = Development;
+		};
+		D73752D9098F5B0A00DD839E /* Deployment */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+			};
+			name = Deployment;
+		};
+		D73752DA098F5B0A00DD839E /* Default */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+			};
+			name = Default;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		D73752D3098F5B0A00DD839E /* Build configuration list for PBXNativeTarget "RhythmNetwork" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D73752D4098F5B0A00DD839E /* Development */,
+				D73752D5098F5B0A00DD839E /* Deployment */,
+				D73752D6098F5B0A00DD839E /* Default */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Default;
+		};
+		D73752D7098F5B0A00DD839E /* Build configuration list for PBXProject "RhythmNetwork" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D73752D8098F5B0A00DD839E /* Development */,
+				D73752D9098F5B0A00DD839E /* Deployment */,
+				D73752DA098F5B0A00DD839E /* Default */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Default;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 29B97313FDCFA39411CA2CEA /* Project object */;
+}

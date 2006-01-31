@@ -1,0 +1,43 @@
+1/26/05 ideas for experiments, discussed w/ Anil
+
+Baseline data: paced and continuation tapping of individuals in isolation (with/without self-feedback)
+
+Questions: make all the sounds the same (timbre and or loudness) vs individuating tappers
+Self feedback distinct? Computer pacing distinct?
+
+Network ideas: control #inputs each node gets
+local only
+ring
+
+manipulations: examine dynamics when isolating a node, removing connections, changing connections,
+adding induction to new nodes
+
+Leader follower dynamics--how expressed? Louder taps / leading timing e.g.
+
+6/25/05
+Reading Strogatz's Sync
+Cricket experiment proposed (ever completed?) is very similar to mine. There, they planned to smoothly increase
+connection strength, looking for some kind of phase transition from random to synchrony. For mine, ask people to tap at
+own tempo, ramp up how much they hear others. I predict, however, that even hearing others a little will enable synch,
+but perhaps that's the point--it's not a smooth function of connection strength. (K name). Track down biologist who
+was doing these experiments. 
+
+Other ideas inspired: Stimulated line: one node is driven (receiving external input), the rest are connected linearly.
+Instruction: tap in synch with what you hear. Each person hears only one input. At first the driving input is
+random in time, so taps are in reaction--as driving input becomes regular and thus predictable, chart the emergence of
+synchrony among the tappers. Variations--randomly change who's being driven from beat to beat. Close the circle.
+With/without self feedback. 
+
+Other one, of course, is to have two isolated clusters w/ different temp and then examine behavior as a 'shortcut' is
+added linking the two.
+
+Finally, gain some intuition by simulating such experiments, and compare results.
+
+7/26/05
+Going to pilot tomorrow
+tons of ideas for experiments
+two subnets forced at different tempi, let free run, then join one node of each together to see how they reconcile
+forced network where forcing comes in only at one node. Let equilibrate then perturb forcing tempo and see how the new
+tempo propagates through the network (or if it does--the key here is that the pacemaker is filtered thru a real tapper,
+so that signal doesn't appear any different from the rest). [NB be careful, since I tend to force 1 & 6, which are the
+lowest and  highest notes, which gives some clue--use 2 and 5 instead.]
