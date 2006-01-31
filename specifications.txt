@@ -882,3 +882,14 @@ Then, for connect/disconnect I do things differently. [will I ever have multiple
 same path, or is node to node still enough to disambiguate?  Well...already been there: isEqual considers everything,
 so array management will work well. hash, only has port/channel, so it won't. Hash is very limited, as only
 4bytes long. That's used only in sets?]
+
+1/26/06
+Returning to this after long hiatus. Have just setup svn on this new OS, a few days of happy twiddling on apache,
+php, css and websvn (replacing cvsweb). Look into Trac for future.
+
+As I recall, I was thinking how best to introduce delays, as well as thinking about how to deal with inaccuracy of 
+timing over MIDI when using only a single port into the mac--events have to be serialized. I'd started looking into
+an 8 port interface from MOTU, with unsatisfactory answers from the sales guy. Repeat these questions to tech instead.
+Outstanding questions were to do with latency/time resolution. Basically sounded like they did it right and it would
+be as good as possible, but I need #s. The other question regarded the matrix features and whether they could be
+programmed externally. Maybe the answer was no?
