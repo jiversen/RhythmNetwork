@@ -173,7 +173,7 @@ enum connectFormIdx {
 	NSString *sendStr = [_messageToSend stringValue];
 	NSData *data = [sendStr convertHexStringToData];
 	
-	NSLog(@"Send Button Pressed\n\tData (%d B): %@", [data length], data);
+	NSLog(@"Send Button Pressed\n\tData (%lu B): %@", (unsigned long)[data length], data);
 	[[_deviceObject MIDILink] sendSysex:data];
 	
 	//add outgoing to receive box

@@ -20,7 +20,7 @@ static void	MIDICoreReadProc(const MIDIPacketList *pktlist, void *refCon, void *
 @implementation MIDICore
 
 //designated init
-- (void) initWithInterface:(MIDIIO *)midiIO
+- (MIDICore *) initWithInterface:(MIDIIO *)midiIO
 {
 	self = [super init];
 	
@@ -35,12 +35,14 @@ static void	MIDICoreReadProc(const MIDIPacketList *pktlist, void *refCon, void *
 	[[NSNotificationCenter defaultCenter] addObserver:self 
 											 selector:@selector(newDestinationHandler:) 
 												 name:@"MIDIIO_newDestinationNotification" object:nil];
+    return self;
 }
 
 - (void) dealloc
 {
 	[[NSNotificationCenter defaultCenter] removeObserver:self];
 	[_MIDILink setDefaultReadProc];
+    [super dealloc];
 }
 
 - (void) connect:(MIOCConnection *) aConnection

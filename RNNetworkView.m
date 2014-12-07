@@ -35,6 +35,7 @@
 	_network = nil;
 	[_nodeHistogramViews release];
 	_nodeHistogramViews = nil;
+    [super dealloc];
 }
 
 - (RNNetwork *) network {
@@ -195,7 +196,8 @@
 	//clear the rect
 	//stroke around edges
 	NSBezierPath *aPath = [NSBezierPath bezierPathWithRect:[self bounds]];
-	[[NSColor windowBackgroundColor] setFill];
+	//[[NSColor windowBackgroundColor] setFill];
+    [[NSColor whiteColor] setFill];
 	[aPath fill];
 	[[NSColor blackColor] setStroke];
 	[aPath stroke];
@@ -228,7 +230,7 @@
 															  inView:self];
 			} else {
 				NSColor *color = [[RNTapperNode colorArray] objectAtIndex:iNode-1];
-				//[[nodeList objectAtIndex:iNode] flashWithColor:color inView:self];
+				[[nodeList objectAtIndex:iNode] flashWithColor:color inView:self];
 				//send event to appropriate histogramView
 				if (_doPlotData == YES) {
 					if (_nodeHistogramViews != nil) {

@@ -44,7 +44,7 @@ typedef struct _MIDICoreProcess {
 }
 
 //init: attach to existing MIDIIO, patch in own readProc
-- (void)initWithInterface:(MIDIIO *)midiIO;
+- (MIDICore *)initWithInterface:(MIDIIO *)midiIO;
 
 - (void)dealloc;
 

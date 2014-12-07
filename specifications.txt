@@ -893,3 +893,14 @@ an 8 port interface from MOTU, with unsatisfactory answers from the sales guy. R
 Outstanding questions were to do with latency/time resolution. Basically sounded like they did it right and it would
 be as good as possible, but I need #s. The other question regarded the matrix features and whether they could be
 programmed externally. Maybe the answer was no?
+
+12/7/14
+Returning to this after a really long hiatus! I've kept DrumThang updated over the years for use in demos, and reused the
+input hardware in my Brain/Sync installation for Mozart and Mind (recently wrote chapter on this). Getting up-to-date with
+XCode and using RhythmNetwork as a vehicle for this, but also intrigued by possibilities of doing experiments again. Could
+set up semi-permanently downstairs. I've gone through (yeterday) and fixed a number of errors due to deprecated calls--use
+URLs instead of path strings, etc. Another task is to 'modernize' the code, as well as think about ARC. The latter seems
+pointless at the moment. Re-enabled the flashing code and seems that new hardware has no problems keeping up. I must have
+been running this before on the old G4 and here I am to generations of intel later. I think doing delay would be very cool,
+so will revisit that. Also look into state of the art midi interfaces and adding more pads. Finally, looks like I updated the
+vc to git at some point!? 9/9/10? Good.

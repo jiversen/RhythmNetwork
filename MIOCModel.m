@@ -120,7 +120,7 @@ static Byte removeProcessorFlag[1] = {0x00};
 	//send dump request message
 	NSString *sendStr = @"F0 00 20 0D 7F 7F 00 78 F7";
 	NSData *data = [sendStr convertHexStringToData];
-	NSLog(@"Querying port address\n\tData (%d B): %@", [data length], data);
+	NSLog(@"Querying port address\n\tData (%lu B): %@", (unsigned long)[data length], data);
 	return [self sendVerifiedMIOCQuery:data];
 }
 
@@ -229,7 +229,7 @@ static Byte removeProcessorFlag[1] = {0x00};
 	//send dump request message
 	NSString *sendStr = @"f0 00 20 0d 00 20 00 45 f7";
 	NSData *data = [sendStr convertHexStringToData];
-	NSLog(@"Querying device name\n\tData (%d B): %@", [data length], data);
+	NSLog(@"Querying device name\n\tData (%lu B): %@", (unsigned long)[data length], data);
 	//clear earlier name, in case return fails
 	[_deviceName autorelease];
 	_deviceName = nil;
@@ -242,7 +242,7 @@ static Byte removeProcessorFlag[1] = {0x00};
 	if (_deviceName != nil)
 		return _deviceName;
 	else
-		return [NSString stringWithString:@"<Not Connected>"];
+		return @"<Not Connected>";
 }
 
 //stub for setting MIOC device name. Not needed at present, so fails
@@ -369,7 +369,7 @@ static Byte removeProcessorFlag[1] = {0x00};
 	
 	[self disconnectMany:connectionsToRemove];
 	[self connectMany:connectionsToAdd];
-	NSLog(@"Update connections: Remove %d; Add %d\n", [connectionsToRemove count], [connectionsToAdd count]);
+	NSLog(@"Update connections: Remove %lu; Add %lu\n", (unsigned long)[connectionsToRemove count], (unsigned long)[connectionsToAdd count]);
 }
 
 // *********************************************
@@ -456,7 +456,7 @@ static Byte removeProcessorFlag[1] = {0x00};
 	[self addVelocityProcessorsInArray:processorsToAdd]; //add before remove seems to work, prevents gap when there's no processor
 	[self removeVelocityProcessorsInArray:processorsToRemove];
 	
-	NSLog(@"Update velocity processors: Remove %d; Add %d\n", [processorsToRemove count], [processorsToAdd count]);
+	NSLog(@"Update velocity processors: Remove %lu; Add %lu\n", (unsigned long)[processorsToRemove count], (unsigned long)[processorsToAdd count]);
 }
 
 
@@ -520,14 +520,14 @@ static Byte removeProcessorFlag[1] = {0x00};
 	
 	if (_awaitingReply == YES) {
 		NSString *hexStr = [[NSString alloc] initHexStringWithData:data];
-		NSLog(@"MIOCModel Received Expected Sysex (%d bytes): %@\n",[data length], hexStr);
+		NSLog(@"MIOCModel Received Expected Sysex (%lu bytes): %@\n",(unsigned long)[data length], hexStr);
 		reply = (MIOCMessage *)[data bytes];
 		//add logic here to parse info messages and fill in instance values
 		//also potentially to verify connections made
 		if (reply->opcode==0x05) {
 			_awaitingReply = NO;
 			[_deviceName autorelease];
-			_deviceName = [[NSString stringWithCString:(&reply->data[1]) length:8] retain];
+			_deviceName = [[NSString stringWithCString:(const char *)(&reply->data[1]) length:8] retain];
 			//post notification for UI to resync
 			[[NSNotificationCenter defaultCenter] postNotificationName:@"MIOCModelChangeNotification"
 																object:self];

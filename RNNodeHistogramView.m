@@ -43,7 +43,7 @@
 	NSRect frame;
 	int nBins, i;
 	
-	NSAssert( (stim != nil), @"nil stimulus");
+	//NSAssert( (stim != nil), @"nil stimulus");
 	
 	if (_targetStimulus != stim && stim != nil) {
 		_targetStimulus = stim;

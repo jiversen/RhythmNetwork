@@ -385,7 +385,7 @@
 	
 	//set up experiment ending timer
 	NSTimeInterval interval1, interval2, uncertainty;
-	NSDate *absEndTime = [[self experimentStartDate] addTimeInterval: _experimentDuration_s]; //***add accessor
+	NSDate *absEndTime = [[self experimentStartDate] dateByAddingTimeInterval: _experimentDuration_s]; //***add accessor
 	interval1 = [absEndTime timeIntervalSinceNow];
 	_experimentEndTimer = [[NSTimer scheduledTimerWithTimeInterval:interval1 
 															target:self 

@@ -85,7 +85,7 @@
 
 - (IBAction)loadExperiment:(id)sender;
 {	
-	int result;	
+	int result;
 	
 	//if an experiment is already loaded, and needs saving, notify & give chance to save
 	if (_experiment != nil && [_experiment needsSave]) {
@@ -108,12 +108,13 @@
     NSArray *fileTypes = [NSArray arrayWithObject:@"netdef"];
     NSOpenPanel *oPanel = [NSOpenPanel openPanel];	
     [oPanel setAllowsMultipleSelection:NO];
-	//*** starting Path: note, this is  hard coded // !!!:jri:20050906 
-	NSString *startPath = [NSString pathWithComponents:[NSArray arrayWithObjects:NSHomeDirectory(), 
-		@"Documents", @"matlab", @"matlab", @"projects", @"experiment mfiles", @"rhythm", @"Rhythm Network", @"", nil] ];
-    result = [oPanel runModalForDirectory:startPath
-								     file:nil types:fileTypes];
-    if (result == NSOKButton) {		
+	//*** starting Path: note, this is  hard coded // !!!:jri:20050906
+    NSURL *startPath = [NSURL fileURLWithPathComponents: [NSArray arrayWithObjects:NSHomeDirectory(),
+		@"Documents", @"matlab", @"matlab", @"projects", @"experiment_mfiles", @"rhythm_network", @"Rhythm Network", @"", nil] ];
+    [oPanel setDirectoryURL:startPath];
+    [oPanel setAllowedFileTypes:fileTypes];
+    result = [oPanel runModal];
+    if (result == NSFileHandlingPanelOKButton) {		
 		
 		//clear out the old one
 		if (_experiment != nil) {
@@ -138,8 +139,7 @@
 		}
 		
 		//instantiate experiment from file
-        NSArray *filesToOpen = [oPanel filenames];
-		NSString *filePath = [filesToOpen objectAtIndex:0];
+		NSString *filePath = [[oPanel URL] path];
 		_experiment = [[RNExperiment alloc] initFromPath: filePath];
 		
 		//Configure view: current network and register view to receive midi
@@ -328,7 +328,7 @@
 	UInt64 granularity = AudioGetHostClockMinimumTimeDelta();
 	UInt64 granularity_ns = AudioConvertHostTimeToNanos(granularity);
 	//test error
-	NSLog(@"\n\tStart Time max possible error: %g ms (granularity = %d; %qu ns)", maxPossibleError_ns / 1000000.0 , granularity, granularity_ns);
+	NSLog(@"\n\tStart Time max possible error: %g ms (granularity = %llu; %qu ns)", maxPossibleError_ns / 1000000.0 , granularity, granularity_ns);
 	NSAssert1( (maxPossibleError_ns < 200000), @"Time Uncertainty > 0.2 ms (%g ms)", maxPossibleError_ns / 1000000.0 );
 	
 	//now advance these times by start time delay
@@ -436,14 +436,15 @@
 	
 	//save in .experiment file w/ same name as our .netdef file
 	int result;	
-	NSString *definitionDirectory = [[_experiment definitionFilePath] stringByDeletingLastPathComponent];
-	NSString *fileName = [[ [[_experiment definitionFilePath] lastPathComponent] stringByDeletingPathExtension] stringByAppendingPathExtension:@"experiment"];
+    NSURL *definitionDirectory = [NSURL fileURLWithPath:[[_experiment definitionFilePath] stringByDeletingLastPathComponent] isDirectory:TRUE];
+	NSURL *fileName = [NSURL fileURLWithPath:[[ [[_experiment definitionFilePath] lastPathComponent] stringByDeletingPathExtension] stringByAppendingPathExtension:@"experiment"] isDirectory:FALSE];
 	
-    NSSavePanel *sPanel = [NSSavePanel savePanel];	
-    result = [sPanel runModalForDirectory:definitionDirectory
-								     file:fileName];
-    if (result == NSOKButton) {		
-		NSString *filePath = [sPanel filename];
+    NSSavePanel *sPanel = [NSSavePanel savePanel];
+    [sPanel setDirectoryURL:definitionDirectory];
+    [sPanel setNameFieldStringValue:[fileName path]];
+    result = [sPanel runModal];
+    if (result == NSFileHandlingPanelOKButton) {
+		NSString *filePath = [[sPanel URL] path];
 		[_experiment saveToPath: filePath];
 		[_saveButton setEnabled:NO];
 	}
@@ -454,7 +455,7 @@
 	int drumset = [_drumSetNumber intValue];
 	if (_experiment == nil) {
 		[_drumSetNumber setStringValue:@"ex?"];
-		NSLog(@"Must load an experiment before programming drumset",drumset);
+		NSLog(@"Must load an experiment before programming drumset %d",drumset);
 		return;
 	}
 	if (drumset < 0 || drumset > 49) {
@@ -503,7 +504,7 @@
 - (IBAction)doubleClickPart:(id)sender
 {
 	NSAssert( (0), @"doubleClickPart is obsolete.");
-	int row = [sender clickedRow];
+	//int row = [sender clickedRow];
 }
 
 //

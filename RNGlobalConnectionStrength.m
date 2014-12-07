@@ -84,18 +84,18 @@
 	double param;
 	//will have a parameter keyed as 'weight' or 'constant'--take the type from the key & param from value
 	NSNumber *paramNumber;
-	if (paramNumber = [aDict objectForKey:@"weight"]) {
+	if ((paramNumber = [aDict objectForKey:@"weight"])) {
 		type = @"weight";
 		param = [paramNumber doubleValue];
-	} else if (paramNumber = [aDict objectForKey:@"constant"]) {
+	} else if ((paramNumber = [aDict objectForKey:@"constant"])) {
 		type = @"constant";
 		param = [paramNumber doubleValue];
-	} else if (paramNumber = [aDict objectForKey:@"constantInput"]) {
+	} else if ((paramNumber = [aDict objectForKey:@"constantInput"])) {
 		type = @"constantInput";
 		param = [paramNumber doubleValue];
 	} else {
 		NSAssert1( (0), @"found no weight or constant parameter (%@)", aDict);
-	}	
+	}
 	
 	return [[RNGlobalConnectionStrength alloc] initWithType:type value:param];
 }

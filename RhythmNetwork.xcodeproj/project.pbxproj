@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 42;
+	objectVersion = 46;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -23,6 +23,8 @@
 		0B38936D07826F0C00429A61 /* RNConnection.m in Sources */ = {isa = PBXBuildFile; fileRef = 0B38936B07826F0C00429A61 /* RNConnection.m */; };
 		0B38951B07837E5500429A61 /* RNController.h in Headers */ = {isa = PBXBuildFile; fileRef = 0B38951907837E5500429A61 /* RNController.h */; };
 		0B38951C07837E5500429A61 /* RNController.m in Sources */ = {isa = PBXBuildFile; fileRef = 0B38951A07837E5500429A61 /* RNController.m */; };
+		0B399E3A16EFA8CC006683E5 /* MIDICore.h in Headers */ = {isa = PBXBuildFile; fileRef = 0B399E3816EFA8CC006683E5 /* MIDICore.h */; };
+		0B399E3B16EFA8CC006683E5 /* MIDICore.m in Sources */ = {isa = PBXBuildFile; fileRef = 0B399E3916EFA8CC006683E5 /* MIDICore.m */; };
 		0B3A669E07C85944004591B6 /* RNBBNode.h in Headers */ = {isa = PBXBuildFile; fileRef = 0B3A669C07C85944004591B6 /* RNBBNode.h */; };
 		0B3A669F07C85944004591B6 /* RNBBNode.m in Sources */ = {isa = PBXBuildFile; fileRef = 0B3A669D07C85944004591B6 /* RNBBNode.m */; };
 		0B477B8206E7F5C600926C80 /* NSStringHexStringCategory.h in Headers */ = {isa = PBXBuildFile; fileRef = 0B477B8006E7F5C600926C80 /* NSStringHexStringCategory.h */; };
@@ -59,32 +61,6 @@
 		8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
 /* End PBXBuildFile section */
 
-/* Begin PBXBuildStyle section */
-		4A9504CCFFE6A4B311CA0CBA /* Development */ = {
-			isa = PBXBuildStyle;
-			buildSettings = {
-				COPY_PHASE_STRIP = NO;
-				DEBUGGING_SYMBOLS = YES;
-				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_ENABLE_FIX_AND_CONTINUE = YES;
-				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				OPTIMIZATION_CFLAGS = "-O0";
-				ZERO_LINK = NO;
-			};
-			name = Development;
-		};
-		4A9504CDFFE6A4B311CA0CBA /* Deployment */ = {
-			isa = PBXBuildStyle;
-			buildSettings = {
-				COPY_PHASE_STRIP = YES;
-				GCC_ENABLE_FIX_AND_CONTINUE = NO;
-				ZERO_LINK = NO;
-			};
-			name = Deployment;
-		};
-/* End PBXBuildStyle section */
-
 /* Begin PBXFileReference section */
 		089C165DFE840E0CC02AAC07 /* English */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = English; path = English.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		0B16BA6D0895BBF000188571 /* RNDataView.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = RNDataView.h; sourceTree = "<group>"; };
@@ -103,6 +79,8 @@
 		0B38936B07826F0C00429A61 /* RNConnection.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RNConnection.m; sourceTree = "<group>"; };
 		0B38951907837E5500429A61 /* RNController.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = RNController.h; sourceTree = "<group>"; };
 		0B38951A07837E5500429A61 /* RNController.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = RNController.m; sourceTree = "<group>"; };
+		0B399E3816EFA8CC006683E5 /* MIDICore.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MIDICore.h; sourceTree = "<group>"; };
+		0B399E3916EFA8CC006683E5 /* MIDICore.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MIDICore.m; sourceTree = "<group>"; };
 		0B3A669C07C85944004591B6 /* RNBBNode.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RNBBNode.h; sourceTree = "<group>"; };
 		0B3A669D07C85944004591B6 /* RNBBNode.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RNBBNode.m; sourceTree = "<group>"; };
 		0B477B8006E7F5C600926C80 /* NSStringHexStringCategory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NSStringHexStringCategory.h; sourceTree = "<group>"; };
@@ -185,6 +163,8 @@
 				0B16BA6E0895BBF000188571 /* RNDataView.m */,
 				0B3B3A1106EAFCF9007B30B3 /* MIOC */,
 				0B2F157506E0546600693117 /* MIDIIO.h */,
+				0B399E3816EFA8CC006683E5 /* MIDICore.h */,
+				0B399E3916EFA8CC006683E5 /* MIDICore.m */,
 				0B2F157606E0546600693117 /* MIDIIO.m */,
 				0B477B8006E7F5C600926C80 /* NSStringHexStringCategory.h */,
 				0B477B8106E7F5C600926C80 /* NSStringHexStringCategory.m */,
@@ -318,6 +298,7 @@
 				0B5BEECC088F1DC9006DE5C8 /* MIOCFilterProcessor.h in Headers */,
 				0B16BA6F0895BBF000188571 /* RNDataView.h in Headers */,
 				0B47C56908CE7A170022F637 /* RNGlobalConnectionStrength.h in Headers */,
+				0B399E3A16EFA8CC006683E5 /* MIDICore.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -335,30 +316,6 @@
 			);
 			buildRules = (
 			);
-			buildSettings = {
-				FRAMEWORK_SEARCH_PATHS = "";
-				GCC_ENABLE_TRIGRAPHS = NO;
-				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
-				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = RhythmNetwork_Prefix.pch;
-				GCC_WARN_ABOUT_MISSING_PROTOTYPES = NO;
-				GCC_WARN_FOUR_CHARACTER_CONSTANTS = NO;
-				GCC_WARN_UNKNOWN_PRAGMAS = NO;
-				HEADER_SEARCH_PATHS = "";
-				INFOPLIST_FILE = Info.plist;
-				INSTALL_PATH = "$(HOME)/Applications";
-				LIBRARY_SEARCH_PATHS = "";
-				OTHER_CFLAGS = "";
-				OTHER_LDFLAGS = "";
-				PRODUCT_NAME = RhythmNetwork;
-				SECTORDER_FLAGS = "";
-				WARNING_CFLAGS = (
-					"-Wmost",
-					"-Wno-four-char-constants",
-					"-Wno-unknown-pragmas",
-				);
-				WRAPPER_EXTENSION = app;
-			};
 			dependencies = (
 			);
 			name = RhythmNetwork;
@@ -372,16 +329,19 @@
 /* Begin PBXProject section */
 		29B97313FDCFA39411CA2CEA /* Project object */ = {
 			isa = PBXProject;
-			buildConfigurationList = D77DCA9D0989409700D2416B /* Build configuration list for PBXProject "RhythmNetwork" */;
-			buildSettings = {
+			attributes = {
+				LastUpgradeCheck = 0610;
 			};
-			buildStyles = (
-				4A9504CCFFE6A4B311CA0CBA /* Development */,
-				4A9504CDFFE6A4B311CA0CBA /* Deployment */,
-			);
+			buildConfigurationList = D77DCA9D0989409700D2416B /* Build configuration list for PBXProject "RhythmNetwork" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
 			hasScannedForEncodings = 1;
+			knownRegions = (
+				en,
+			);
 			mainGroup = 29B97314FDCFA39411CA2CEA /* RhythmNetwork */;
 			projectDirPath = "";
+			projectRoot = "";
 			targets = (
 				8D1107260486CEB800E47090 /* RhythmNetwork */,
 			);
@@ -429,6 +389,7 @@
 				0B5BEECD088F1DC9006DE5C8 /* MIOCFilterProcessor.m in Sources */,
 				0B16BA700895BBF000188571 /* RNDataView.m in Sources */,
 				0B47C56A08CE7A170022F637 /* RNGlobalConnectionStrength.m in Sources */,
+				0B399E3B16EFA8CC006683E5 /* MIDICore.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -457,11 +418,13 @@
 		D77DCA9A0989409700D2416B /* Development */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 0.1;
 				DEBUGGING_SYMBOLS = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				FRAMEWORK_SEARCH_PATHS = "";
 				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_ENABLE_FIX_AND_CONTINUE = YES;
 				GCC_ENABLE_TRIGRAPHS = NO;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
@@ -474,11 +437,13 @@
 				INFOPLIST_FILE = Info.plist;
 				INSTALL_PATH = "$(HOME)/Applications";
 				LIBRARY_SEARCH_PATHS = "";
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				OPTIMIZATION_CFLAGS = "-O0";
 				OTHER_CFLAGS = "";
 				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = RhythmNetwork;
 				SECTORDER_FLAGS = "";
+				VERSIONING_SYSTEM = "";
 				WARNING_CFLAGS = (
 					"-Wmost",
 					"-Wno-four-char-constants",
@@ -492,9 +457,11 @@
 		D77DCA9B0989409700D2416B /* Deployment */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
+				CURRENT_PROJECT_VERSION = 0.1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				FRAMEWORK_SEARCH_PATHS = "";
-				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				GCC_ENABLE_TRIGRAPHS = NO;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
@@ -506,10 +473,12 @@
 				INFOPLIST_FILE = Info.plist;
 				INSTALL_PATH = "$(HOME)/Applications";
 				LIBRARY_SEARCH_PATHS = "";
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				OTHER_CFLAGS = "";
 				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = RhythmNetwork;
 				SECTORDER_FLAGS = "";
+				VERSIONING_SYSTEM = "";
 				WARNING_CFLAGS = (
 					"-Wmost",
 					"-Wno-four-char-constants",
@@ -523,6 +492,9 @@
 		D77DCA9C0989409700D2416B /* Default */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 0.1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				FRAMEWORK_SEARCH_PATHS = "";
 				GCC_ENABLE_TRIGRAPHS = NO;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
@@ -535,10 +507,12 @@
 				INFOPLIST_FILE = Info.plist;
 				INSTALL_PATH = "$(HOME)/Applications";
 				LIBRARY_SEARCH_PATHS = "";
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				OTHER_CFLAGS = "";
 				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = RhythmNetwork;
 				SECTORDER_FLAGS = "";
+				VERSIONING_SYSTEM = "";
 				WARNING_CFLAGS = (
 					"-Wmost",
 					"-Wno-four-char-constants",
@@ -551,18 +525,21 @@
 		D77DCA9E0989409700D2416B /* Development */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				MACOSX_DEPLOYMENT_TARGET = 10.10;
 			};
 			name = Development;
 		};
 		D77DCA9F0989409700D2416B /* Deployment */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				MACOSX_DEPLOYMENT_TARGET = 10.10;
 			};
 			name = Deployment;
 		};
 		D77DCAA00989409700D2416B /* Default */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				MACOSX_DEPLOYMENT_TARGET = 10.10;
 			};
 			name = Default;
 		};

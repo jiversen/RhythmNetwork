@@ -108,6 +108,7 @@
 	_description = nil;
 	[_subEventTimes release];
 	_subEventTimes = nil;
+    [super dealloc];
 }
 
 // *********************************************
@@ -227,7 +228,7 @@
 	if ([[self partType] isEqualToString: @"RNStimulus"]) {
 		NSLog(@"Scheduling stimulus: %@\n\t%@",[self description], [self experimentPart]);
 		preroll = 0.001; //empirical: notification received ~1ms after timer fires
-		absStartTime = [time addTimeInterval: _startTime_s];
+		absStartTime = [time dateByAddingTimeInterval: _startTime_s];
 		interval1 = [absStartTime timeIntervalSinceNow] - preroll;
 		NSTimer *startTimer = [NSTimer scheduledTimerWithTimeInterval:interval1 
 															   target:self 
@@ -244,7 +245,7 @@
 	//for network, setup a timer to trigger the reprogramming
 	} else if ([[self partType] isEqualToString: @"RNNetwork"]) {
 		preroll = 0.03; //just a guess for how long it'll take to reprogram MIOC
-		NSDate *absStartTime = [time addTimeInterval: _startTime_s];
+		NSDate *absStartTime = [time dateByAddingTimeInterval: _startTime_s];
 		interval1 = [absStartTime timeIntervalSinceNow] - preroll;
 		NSTimer *startTimer = [NSTimer scheduledTimerWithTimeInterval:interval1 
 															   target:self 
@@ -265,7 +266,7 @@
 		
 	} else if ([[self partType] isEqualToString: @"RNGlobalConnectionStrength"]) {
 		preroll = 0.02; //just a guess for how long it'll take to reprogram MIOC
-		NSDate *absStartTime = [time addTimeInterval: _startTime_s];
+		NSDate *absStartTime = [time dateByAddingTimeInterval: _startTime_s];
 		interval1 = [absStartTime timeIntervalSinceNow] - preroll;
 		NSTimer *startTimer = [NSTimer scheduledTimerWithTimeInterval:interval1 
 															   target:self 

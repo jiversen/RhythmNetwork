@@ -330,7 +330,7 @@ static NSArray *colorArray;
 	[theView lockFocus];
 	[self drawWithRadius: [theView drawRadius]];
 	[theView unlockFocus];
-	//[theView setNeedsDisplay:TRUE];
+	[theView setNeedsDisplay:TRUE];
 	
 	_flashIntensity -= 0.25;
 	if (_flashIntensity <= 0) {
