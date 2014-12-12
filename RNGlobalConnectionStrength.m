@@ -67,11 +67,10 @@
 			stepParam = round(stepParam);
 		}
 		stepDict = [NSMutableDictionary dictionaryWithCapacity:4];
-		[stepDict setObject:@"globalConnectionStrength" forKey:@"type"];
-		[stepDict setObject:[NSNumber numberWithDouble:stepStartTime] forKey:@"startTime"];
-		[stepDict setObject:[NSNumber numberWithDouble:stepParam] forKey:parameterType];
-		[stepDict setObject:[NSString stringWithFormat:@"%@=%g (%d/%d)", parameterType, stepParam, iStep, nSteps] 
-					 forKey:@"description"];
+		stepDict[@"type"] = @"globalConnectionStrength";
+		stepDict[@"startTime"] = @(stepStartTime);
+		stepDict[parameterType] = @(stepParam);
+		stepDict[@"description"] = [NSString stringWithFormat:@"%@=%g (%d/%d)", parameterType, stepParam, iStep, nSteps];
 		[dictionaryArray addObject:stepDict];
 	}
 	
@@ -84,13 +83,13 @@
 	double param;
 	//will have a parameter keyed as 'weight' or 'constant'--take the type from the key & param from value
 	NSNumber *paramNumber;
-	if ((paramNumber = [aDict objectForKey:@"weight"])) {
+	if ((paramNumber = aDict[@"weight"])) {
 		type = @"weight";
 		param = [paramNumber doubleValue];
-	} else if ((paramNumber = [aDict objectForKey:@"constant"])) {
+	} else if ((paramNumber = aDict[@"constant"])) {
 		type = @"constant";
 		param = [paramNumber doubleValue];
-	} else if ((paramNumber = [aDict objectForKey:@"constantInput"])) {
+	} else if ((paramNumber = aDict[@"constantInput"])) {
 		type = @"constantInput";
 		param = [paramNumber doubleValue];
 	} else {

@@ -142,7 +142,7 @@
 	[aPath fill];
 	
 	//edge color: according to stimulus channel (use 0 based indexing)
-	[[[RNTapperNode colorArray] objectAtIndex:(stimulusChannel-1)]  setStroke];
+	[[RNTapperNode colorArray][(stimulusChannel-1)]  setStroke];
 
 	[aPath setLineWidth:2.0];
 	[aPath stroke];

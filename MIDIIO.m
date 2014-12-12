@@ -63,12 +63,12 @@ static void myMIDINotifyProc(const MIDINotification *message, void * refCon);
 	//try to use default
 	if ([self useSourceNamed:[self defaultSourceName]] == NO) {
 		//set to no connection
-		[self useSourceNamed:[sourceList objectAtIndex:0]]; //during init, list will always have (not connected) as first
+		[self useSourceNamed:sourceList[0]]; //during init, list will always have (not connected) as first
 	}
 	
 	NSArray *destinationList = [self getDestinationList];
 	if ([self useDestinationNamed:[self defaultDestinationName]] == NO) {
-		[self useDestinationNamed:[destinationList objectAtIndex:0]];
+		[self useDestinationNamed:destinationList[0]];
 	}
 }
 
@@ -245,7 +245,7 @@ static void myMIDINotifyProc(const MIDINotification *message, void * refCon);
 		MIDIObjectGetStringProperty(_MIDIDest, kMIDIPropertyName, &name);	
 		return [NSString stringWithString:(NSString *)name];
 	} else
-		return [NSString stringWithString:@"(not connected)"];
+		return @"(not connected)";
 }
 
 //simple queries of connection state

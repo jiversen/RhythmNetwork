@@ -105,12 +105,12 @@
 	}
 
 	//load it
-    NSArray *fileTypes = [NSArray arrayWithObject:@"netdef"];
+    NSArray *fileTypes = @[@"netdef"];
     NSOpenPanel *oPanel = [NSOpenPanel openPanel];	
     [oPanel setAllowsMultipleSelection:NO];
 	//*** starting Path: note, this is  hard coded // !!!:jri:20050906
-    NSURL *startPath = [NSURL fileURLWithPathComponents: [NSArray arrayWithObjects:NSHomeDirectory(),
-		@"Documents", @"matlab", @"matlab", @"projects", @"experiment_mfiles", @"rhythm_network", @"Rhythm Network", @"", nil] ];
+    NSURL *startPath = [NSURL fileURLWithPathComponents: @[NSHomeDirectory(),
+		@"Documents", @"matlab", @"matlab", @"projects", @"experiment_mfiles", @"rhythm_network", @"Rhythm Network", @""] ];
     [oPanel setDirectoryURL:startPath];
     [oPanel setAllowedFileTypes:fileTypes];
     result = [oPanel runModal];
@@ -121,7 +121,7 @@
 			[[[_MIOCController deviceObject] MIDILink] removeMIDIListener:_networkView]; //***fix, may already be removed
 			[_networkView setNetwork:nil];
 			
-			[_experimentPartsController setSelectedObjects:[NSArray array]]; //??pass empty array to clear?
+			[_experimentPartsController setSelectedObjects:@[]]; //??pass empty array to clear?
 			[_experimentPartsController setContent:nil];
 			[_testPartButton setEnabled:NO];
 
@@ -472,7 +472,7 @@
 	NSArray *nodeList = [[_experiment currentNetwork] nodeList];
 	unsigned int nNodes, iNode;
 	nNodes = [nodeList count];
-	RNBBNode *bb = [nodeList objectAtIndex:0];
+	RNBBNode *bb = nodeList[0];
 		
 	//make program change message
 	Byte pcMessage[2];
@@ -489,8 +489,8 @@
 	for (iNode = 1; iNode < nNodes; iNode++) {
 		con = [MIOCConnection connectionWithInPort:[bb sourcePort]
 										 InChannel:[bb controlMIDIChannel]
-										   OutPort:[[nodeList objectAtIndex:iNode] destPort]
-										OutChannel:[[nodeList objectAtIndex:iNode] destChan] ];
+										   OutPort:[nodeList[iNode] destPort]
+										OutChannel:[nodeList[iNode] destChan] ];
 		[device connectOne:con];
 		//sleep for long enough to ensure sysex transmitted before pc
 		[NSThread sleepUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.2]]; 
@@ -514,8 +514,8 @@
 	NSArray *selectedParts = [_experimentPartsController selectedObjects];
 	if ([selectedParts count] == 0)
 		return;
-	testPart = [selectedParts objectAtIndex:0];
-	[_experimentPartsController setSelectedObjects: [NSArray arrayWithObject:testPart] ]; //visually indicate we only test the first selected one
+	testPart = selectedParts[0];
+	[_experimentPartsController setSelectedObjects: @[testPart] ]; //visually indicate we only test the first selected one
 	
 	[_experimentTimer setStringValue:@"  -:--"]; //to make clear that experiment is not running
 	

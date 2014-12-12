@@ -18,8 +18,8 @@ static NSArray *colorArray;
 + (NSArray *) colorArray
 {
 	if (colorArray == nil) {
-		colorArray = [[NSArray arrayWithObjects: [NSColor greenColor], [NSColor blueColor], [NSColor orangeColor], \
-			[NSColor purpleColor], [NSColor brownColor], [NSColor blackColor], nil] retain];
+		colorArray = [@[[NSColor greenColor], [NSColor blueColor], [NSColor orangeColor], \
+			[NSColor purpleColor], [NSColor brownColor], [NSColor blackColor]] retain];
 	}
 	return colorArray;
 }
@@ -286,7 +286,7 @@ static NSArray *colorArray;
 	//red: hears no stimulus
 	//color code according to which channel of BB is heard--defined by # induction sequences...
 	if ([self hearsBigBrother]) {
-		[[[RNTapperNode colorArray] objectAtIndex:([self bigBrotherSubChannel]-1)]  setStroke];
+		[[RNTapperNode colorArray][([self bigBrotherSubChannel]-1)]  setStroke];
 	} else {
 		[[NSColor redColor] setStroke];
 	}

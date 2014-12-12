@@ -52,8 +52,8 @@
 	}
 	//don't add 0 iti (e.g. first tap has no ITI defined)
 	if (ITI_ms > 0) {
-		[[_x objectAtIndex:iNode] addObject:[NSNumber numberWithDouble:time_ms]];
-		[[_y objectAtIndex:iNode] addObject:[NSNumber numberWithDouble:ITI_ms]];
+		[_x[iNode] addObject:@(time_ms)];
+		[_y[iNode] addObject:@(ITI_ms)];
 		
 		//if exceeds limit, rescale axis limits
 		if (time_ms/1e3 > _xlim.height)
@@ -94,14 +94,14 @@
 	if (nNodes >= 1) {
 
 		for (iNode = 1; iNode <= nNodes; iNode++) {
-			color = [[RNTapperNode colorArray] objectAtIndex:iNode-1];
-			thisx = [_x objectAtIndex:iNode];
-			thisy = [_y objectAtIndex:iNode];
+			color = [RNTapperNode colorArray][iNode-1];
+			thisx = _x[iNode];
+			thisy = _y[iNode];
 			[aPath removeAllPoints];
 			nPoints = [thisx count];
 			for (iPoint = 0; iPoint < nPoints; iPoint++) {
-				px = [[thisx objectAtIndex:iPoint] doubleValue] / 1e3; //convert to s
-				py = [[thisy objectAtIndex:iPoint] doubleValue];
+				px = [thisx[iPoint] doubleValue] / 1e3; //convert to s
+				py = [thisy[iPoint] doubleValue];
 				//scale into pixels (nb w = min; h = max for axes limits)
 				px = (px - _xlim.width) / (_xlim.height - _xlim.width) * bounds.size.width;
 				py = (py - _ylim.width) / (_ylim.height - _ylim.width) * bounds.size.height;

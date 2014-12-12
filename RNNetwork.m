@@ -88,7 +88,7 @@
 	RNConnection *tempConn;
 	NSString *connString;
 	for (iConn = 0; iConn < nConnections; iConn++) {
-		connString = [connectionsArray objectAtIndex:iConn];
+		connString = connectionsArray[iConn];
 		tempConn = [[RNConnection alloc] initWithString:connString];
 		[_connectionList addObject: [tempConn autorelease]];
 		//now, test to see if this connection is from bb or self
@@ -96,11 +96,11 @@
 		RNNodeNum_t from = [tempConn fromNode];
 		RNNodeNum_t to = [tempConn toNode];		
 		if (from==0) {
-			[[_nodeList objectAtIndex:to] setHearsBigBrother:TRUE];
-			[[_nodeList objectAtIndex:to] setBigBrotherSubChannel:[tempConn fromSubChannel]];
+			[_nodeList[to] setHearsBigBrother:TRUE];
+			[_nodeList[to] setBigBrotherSubChannel:[tempConn fromSubChannel]];
 		}
 		if (from==to) {
-			[[_nodeList objectAtIndex:to] setHearsSelf:TRUE];
+			[_nodeList[to] setHearsSelf:TRUE];
 		}
 	}
 	
@@ -122,19 +122,19 @@
 	
 	// 1a) all BB output back to self (so computer can monitor everything it outputs)
 	for (iStim = 1; iStim<= _numStimulusChannels; iStim++) {
-		sourcePort = [ [_nodeList objectAtIndex:0] sourcePort];
-		sourceChan = [ [_nodeList objectAtIndex:0] MIDIChannelForStimulusNumber:iStim];
-		destPort = [ [_nodeList objectAtIndex:0] destPort]; //big brother
-		destChan = [ [_nodeList objectAtIndex:0] destChan]; //keep it on same chan as output
+		sourcePort = [ _nodeList[0] sourcePort];
+		sourceChan = [ _nodeList[0] MIDIChannelForStimulusNumber:iStim];
+		destPort = [ _nodeList[0] destPort]; //big brother
+		destChan = [ _nodeList[0] destChan]; //keep it on same chan as output
 		newMIOCConn = [MIOCConnection connectionWithInPort:sourcePort InChannel:sourceChan OutPort:destPort OutChannel:destChan];
 		[_MIOCConnectionList addObject: newMIOCConn];
 	}
 	// 1b) all tapper nodes to BB (so computer records all taps)
 	for (iNode = 1; iNode <= nNodes; iNode++) {
-		sourcePort = [ [_nodeList objectAtIndex:iNode] sourcePort];
-		sourceChan = [ [_nodeList objectAtIndex:iNode] sourceChan];
-		destPort = [ [_nodeList objectAtIndex:0] destPort]; //big brother
-		destChan = [ [_nodeList objectAtIndex:0] destChan];
+		sourcePort = [ _nodeList[iNode] sourcePort];
+		sourceChan = [ _nodeList[iNode] sourceChan];
+		destPort = [ _nodeList[0] destPort]; //big brother
+		destChan = [ _nodeList[0] destChan];
 		newMIOCConn = [MIOCConnection connectionWithInPort:sourcePort InChannel:sourceChan OutPort:destPort OutChannel:destChan];
 		[_MIOCConnectionList addObject: newMIOCConn];
 	}
@@ -144,37 +144,37 @@
 	while (thisConn = [theEnumerator nextObject]) {
 		
 		if ([thisConn fromNode] == 0) { //source is BB, take into account stimulus channels
-			sourcePort = [ [_nodeList objectAtIndex:[thisConn fromNode]] sourcePort];
-			sourceChan = [ [_nodeList objectAtIndex:[thisConn fromNode]] MIDIChannelForStimulusNumber:[thisConn fromSubChannel] ];
-			destPort = [ [_nodeList objectAtIndex:[thisConn toNode]] destPort];
-			destChan = [ [_nodeList objectAtIndex:[thisConn toNode]] destChan]; //always kMIOCOutChannelSameAsInput
+			sourcePort = [ _nodeList[[thisConn fromNode]] sourcePort];
+			sourceChan = [ _nodeList[[thisConn fromNode]] MIDIChannelForStimulusNumber:[thisConn fromSubChannel] ];
+			destPort = [ _nodeList[[thisConn toNode]] destPort];
+			destChan = [ _nodeList[[thisConn toNode]] destChan]; //always kMIOCOutChannelSameAsInput
 			
 		} else { //source is a tapper node
-			sourcePort = [ [_nodeList objectAtIndex:[thisConn fromNode]] sourcePort];
-			sourceChan = [ [_nodeList objectAtIndex:[thisConn fromNode]] sourceChan];
+			sourcePort = [ _nodeList[[thisConn fromNode]] sourcePort];
+			sourceChan = [ _nodeList[[thisConn fromNode]] sourceChan];
 			
 			//destination depends on if network is weighted
 			if (_isWeighted == NO) { //not weighted, direct to destination
-				destPort = [ [_nodeList objectAtIndex:[thisConn toNode]] destPort];
-				destChan = [ [_nodeList objectAtIndex:[thisConn toNode]] destChan];
+				destPort = [ _nodeList[[thisConn toNode]] destPort];
+				destChan = [ _nodeList[[thisConn toNode]] destChan];
 
 			} else { //weighted, direct to destination if source is same node as dest, otherwise route through other port
 				if ( [thisConn fromNode] == [thisConn toNode]) { //to self
-					destPort = [ [_nodeList objectAtIndex:[thisConn toNode]] destPort];
-					destChan = [ [_nodeList objectAtIndex:[thisConn toNode]] destChan];
+					destPort = [ _nodeList[[thisConn toNode]] destPort];
+					destChan = [ _nodeList[[thisConn toNode]] destChan];
 
 				} else { //via other port, source to thru port and from thru to our destination
 					
 					//make connection from thru to destination first, then set up for other connection
-					newMIOCConn = [MIOCConnection connectionWithInPort:[ [_nodeList objectAtIndex:[thisConn fromNode]] otherNodePassthroughPort]
-															 InChannel:[ [_nodeList objectAtIndex:[thisConn fromNode]] otherNodePassthroughChan]
-															   OutPort:[ [_nodeList objectAtIndex:[thisConn toNode]] destPort]
-															OutChannel:[ [_nodeList objectAtIndex:[thisConn toNode]] destChan]];
+					newMIOCConn = [MIOCConnection connectionWithInPort:[ _nodeList[[thisConn fromNode]] otherNodePassthroughPort]
+															 InChannel:[ _nodeList[[thisConn fromNode]] otherNodePassthroughChan]
+															   OutPort:[ _nodeList[[thisConn toNode]] destPort]
+															OutChannel:[ _nodeList[[thisConn toNode]] destChan]];
 					[_MIOCConnectionList addObject:newMIOCConn];
 					
 					//next set dest for instantiation below (source is already source node)
-					destPort = [ [_nodeList objectAtIndex:[thisConn fromNode]] otherNodePassthroughPort];
-					destChan = [ [_nodeList objectAtIndex:[thisConn fromNode]] otherNodePassthroughChan];
+					destPort = [ _nodeList[[thisConn fromNode]] otherNodePassthroughPort];
+					destChan = [ _nodeList[[thisConn fromNode]] otherNodePassthroughChan];
 				}
 			}
 		}
@@ -197,14 +197,14 @@
 	}
 	//add BB entries (possibly multiple stimulus channels
 	for (iStim = 1; iStim<= _numStimulusChannels; iStim++) {
-		chan = [[_nodeList objectAtIndex:0] MIDIChannelForStimulusNumber:iStim];
-		note = [[_nodeList objectAtIndex:0] MIDINoteForStimulusNumber:iStim];
+		chan = [_nodeList[0] MIDIChannelForStimulusNumber:iStim];
+		note = [_nodeList[0] MIDINoteForStimulusNumber:iStim];
 		_nodeLookup[chan][note] = 0;
 	}
 	//add tapper nodes
 	for (iNode = 1; iNode <= nNodes; iNode++) {
-		chan = [ [_nodeList objectAtIndex:iNode] sourceChan];
-		note = [ [_nodeList objectAtIndex:iNode] sourceNote];
+		chan = [ _nodeList[iNode] sourceChan];
+		note = [ _nodeList[iNode] sourceNote];
 		_nodeLookup[chan][note] = iNode;	//NB chan index is 1-based
 	}
 	return self;
@@ -233,13 +233,13 @@
 	NSMutableArray *processorList = [NSMutableArray arrayWithCapacity:nNodes];
 	MIOCVelocityProcessor *processor;
 	for (iNode = 1; iNode <= nNodes; iNode++) {
-		processor = [[_nodeList objectAtIndex:iNode] sourceVelocityProcessor];
+		processor = [_nodeList[iNode] sourceVelocityProcessor];
 		if (processor != nil)
 			[processorList addObject:processor ];
-		processor = [[_nodeList objectAtIndex:iNode] destVelocityProcessor];
+		processor = [_nodeList[iNode] destVelocityProcessor];
 		if (processor != nil)
 			[processorList addObject:processor ];
-		processor = [[_nodeList objectAtIndex:iNode] otherNodeVelocityProcessor];
+		processor = [_nodeList[iNode] otherNodeVelocityProcessor];
 		if (processor != nil)
 			[processorList addObject:processor ];
 	}
@@ -267,12 +267,12 @@
 // they associate the correct stimuli with it
 - (RNStimulus *) stimulusForChannel: (Byte) stimulusChannel
 {
-	RNBBNode *bbNode = [[self nodeList] objectAtIndex:0];
+	RNBBNode *bbNode = [self nodeList][0];
 	return [bbNode stimulusForChannel:stimulusChannel];
 }
 - (void) setStimulus: (RNStimulus *) stim ForChannel: (Byte) stimulusChannel
 {
-	RNBBNode *bbNode = [[self nodeList] objectAtIndex:0];
+	RNBBNode *bbNode = [self nodeList][0];
 	[bbNode setStimulus:stim ForChannel:stimulusChannel];
 }
 //grab stimuli from the array
@@ -300,10 +300,10 @@
 	nNodes = [[self nodeList] count] - 1; //number of tappers (exclude BB)
 	for (iNode = 1; iNode <= nNodes; iNode++) {
 		if ([[connectionStrength type] isEqual:@"constantInput"]) { //apply to input
-			[[_nodeList objectAtIndex:iNode] setSourceVelocityProcessor:processor];
+			[_nodeList[iNode] setSourceVelocityProcessor:processor];
 		} else {
 			NSAssert( (_isWeighted == YES), @"Network must be weighted: add isWeighted key to definition dictionary.");
-			[[_nodeList objectAtIndex:iNode] setOtherNodeVelocityProcessor:processor]; //otherwise apply to other
+			[_nodeList[iNode] setOtherNodeVelocityProcessor:processor]; //otherwise apply to other
 		}
 	}
 }
@@ -313,7 +313,7 @@
 	unsigned int iNode, nNodes;
 	nNodes = [[self nodeList] count] - 1; //number of tappers (exclude BB)
 	for (iNode = 1; iNode <= nNodes; iNode++) {
-		[[_nodeList objectAtIndex:iNode] setDrumsetNumber:drumsetNumber];
+		[_nodeList[iNode] setDrumsetNumber:drumsetNumber];
 	}
 }
 
@@ -333,8 +333,8 @@
 	
 	while (thisConn = [theEnumerator nextObject]) {
 		if ([thisConn fromNode] > 0 && [thisConn fromNode] != [thisConn toNode]) {
-			fromPt = [[_nodeList objectAtIndex:[thisConn fromNode]] plotLocation];
-			toPt = [[_nodeList objectAtIndex:[thisConn toNode]] plotLocation];
+			fromPt = [_nodeList[[thisConn fromNode]] plotLocation];
+			toPt = [_nodeList[[thisConn toNode]] plotLocation];
 			fromPt.x *= radius;
 			fromPt.y *= radius;
 			toPt.x *= radius;

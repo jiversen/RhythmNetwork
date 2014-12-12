@@ -89,7 +89,7 @@
 				subChannel = 1; //if not, link to first stimulus? better would be to link to subnet's dominant stim
 			
 			stim = [[self network] stimulusForChannel:subChannel];
-			histView = [_nodeHistogramViews objectAtIndex:(nodeNumber-1)]; //-1 bec bb node was not added in the array
+			histView = _nodeHistogramViews[(nodeNumber-1)]; //-1 bec bb node was not added in the array
 			[histView setTargetStimulus:stim];
 		}
 	}
@@ -172,7 +172,7 @@
 	while (node = [nodeEnumerator nextObject]) {
 		nodeNumber = [node nodeNumber];
 		if (nodeNumber != 0) {
-			histView = [_nodeHistogramViews objectAtIndex:(nodeNumber-1)]; //-1 bec bb node was not added in the array
+			histView = _nodeHistogramViews[(nodeNumber-1)]; //-1 bec bb node was not added in the array
 			[histView clearData];
 		}
 	}
@@ -224,17 +224,17 @@
 		if (iNode != 0xFFFF) {
 			//for bb, recover which subchannel this is based on the midi channel
 			if ( iNode == 0) {
-				Byte stimulusChannel = [[nodeList objectAtIndex:iNode] stimulusNumberForMIDIChannel:message->channel];
-				[[nodeList objectAtIndex:iNode] flashStimulusChannel:stimulusChannel
+				Byte stimulusChannel = [nodeList[iNode] stimulusNumberForMIDIChannel:message->channel];
+				[nodeList[iNode] flashStimulusChannel:stimulusChannel
 														   WithColor:[NSColor greenColor]
 															  inView:self];
 			} else {
-				NSColor *color = [[RNTapperNode colorArray] objectAtIndex:iNode-1];
-				[[nodeList objectAtIndex:iNode] flashWithColor:color inView:self];
+				NSColor *color = [RNTapperNode colorArray][iNode-1];
+				[nodeList[iNode] flashWithColor:color inView:self];
 				//send event to appropriate histogramView
 				if (_doPlotData == YES) {
 					if (_nodeHistogramViews != nil) {
-						RNNodeHistogramView *hview = [_nodeHistogramViews objectAtIndex:(iNode-1)]; //**note indexing
+						RNNodeHistogramView *hview = _nodeHistogramViews[(iNode-1)]; //**note indexing
 						[hview addEventAtTime:message->eventTime_ns];
 						//mine histogram view data to add to ITI plot
 						if (_dataView != nil) {

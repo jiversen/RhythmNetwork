@@ -328,11 +328,11 @@ static Byte removeProcessorFlag[1] = {0x00};
 //  disconnect all entries in _connectionList & all velocity processors
 - (void) disconnectAll
 {
-	[self setConnectionList:[NSArray array]];
+	[self setConnectionList:@[]];
 	//sanity--
 	NSAssert( ([_connectionList count] == 0), @"Non-empty connectionList after disconnectAll");
 	
-	[self setVelocityProcessorList:[NSArray array]];
+	[self setVelocityProcessorList:@[]];
 	//sanity--
 	NSAssert( ([_velocityProcessorList count] == 0), @"Non-empty velocityProcessorList after disconnectAll");
 }

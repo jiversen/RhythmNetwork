@@ -70,7 +70,7 @@
 		//take the first one, and initialize current network
 		// note, since experiment has not started yet, the MIOC is not programmed
 		if ([subPartArray count] == 1) {
-			part = [subPartArray objectAtIndex:0]; //grab the first (and only) part
+			part = subPartArray[0]; //grab the first (and only) part
 			if ([[part partType] isEqualToString:@"RNNetwork"]) {
 				if ([part startTime] == 0)
 					[self setCurrentNetwork:[part experimentPart] ];
@@ -342,32 +342,34 @@
 	NSMutableDictionary *temp = [NSMutableDictionary dictionaryWithCapacity:1];
 	
 	//now add what we want to save
-	[temp setObject:_definitionFilePath forKey:@"definitionFilePath"];
-	[temp setObject:_definitionDictionary forKey:@"definitionDictionary"];
+	temp[@"definitionFilePath"] = _definitionFilePath;
+	temp[@"definitionDictionary"] = _definitionDictionary;
 	//wrap our starting timestamp in NSNumber
-	NSNumber *timestamp = [NSNumber numberWithUnsignedLongLong: [self experimentStartTimestamp]];
-	[temp setObject:timestamp forKey:@"experimentStartTimestamp"];
-	[temp setObject:_experimentStartDate forKey:@"experimentStartDate"];
-	NSNumber *endTime = [NSNumber numberWithDouble:_experimentActualStopTime_s];
-	[temp setObject:endTime forKey:@"experimentStopTime"];
-	[temp setObject:[self recordedEventsString] forKey:@"recordedEvents"];
-	[temp setObject:_experimentDescription forKey:@"experimentDescription"];
-	[temp setObject:_experimentNotes forKey:@"experimentNotes"];
+	NSNumber *timestamp = @([self experimentStartTimestamp]);
+	temp[@"experimentStartTimestamp"] = timestamp;
+	temp[@"experimentStartDate"] = _experimentStartDate;
+	NSNumber *endTime = @(_experimentActualStopTime_s);
+	temp[@"experimentStopTime"] = endTime;
+	temp[@"recordedEvents"] = [self recordedEventsString];
+	temp[@"experimentDescription"] = _experimentDescription;
+	temp[@"experimentNotes"] = _experimentNotes;
 	//save data on part scheduling times (note: only meaningful for network, but include all)
 	NSEnumerator *partEnumerator = [_experimentParts objectEnumerator];
 	RNExperimentPart *part;
 	NSMutableArray *partTimingArray = [NSMutableArray arrayWithCapacity:1];
 	NSDictionary *dict;
 	while (part = [partEnumerator nextObject]) {
-		dict = [NSDictionary dictionaryWithObjectsAndKeys:[part partType], @"type", \
-			[[part experimentPart] description], @"description", \
-			[NSNumber numberWithDouble:[part startTime]], @"startTime", \
-			[NSNumber numberWithDouble:[part actualStartTime]], @"actualStartTime", \
-			[NSNumber numberWithDouble:[part startTimeUncertainty]], @"startTimeUncertainty", \
-			[part subEventTimes], @"subEventTimes", nil]; // ???:jri:20050627 How sleazy is this? If subEventTimes undefined, it's nil therefore ending dict
+		dict = @{@"type": [part partType], \
+			@"description": [[part experimentPart] description], \
+			@"startTime": @([part startTime]), \
+			@"actualStartTime": @([part actualStartTime]), \
+			@"startTimeUncertainty": @([part startTimeUncertainty]), \
+            @"subEventTimes": [part subEventTimes]?:@"" };
+        // ???:jri:20050627 How sleazy is this? If subEventTimes undefined, it's nil therefore ending dict;
+        // ???:jri:20141211 pretty sleazy! this now breaks modern-style dictionary definition, so use empty string when subEventTimes is empty--for this use of 'binary' form of ternary, see http://stackoverflow.com/questions/18190323/ternary-operator-assignment-in-objective-c
 		[partTimingArray addObject:dict];
 	}
-	[temp setObject:partTimingArray forKey:@"partTiming"];
+	temp[@"partTiming"] = partTimingArray;
 	
 	return [NSDictionary dictionaryWithDictionary:temp];
 }
