@@ -437,11 +437,11 @@
 	//save in .experiment file w/ same name as our .netdef file
 	int result;	
     NSURL *definitionDirectory = [NSURL fileURLWithPath:[[_experiment definitionFilePath] stringByDeletingLastPathComponent] isDirectory:TRUE];
-	NSURL *fileName = [NSURL fileURLWithPath:[[ [[_experiment definitionFilePath] lastPathComponent] stringByDeletingPathExtension] stringByAppendingPathExtension:@"experiment"] isDirectory:FALSE];
+	NSString *expFileName = [[[[_experiment definitionFilePath] lastPathComponent] stringByDeletingPathExtension] stringByAppendingPathExtension:@"experiment"];
 	
     NSSavePanel *sPanel = [NSSavePanel savePanel];
     [sPanel setDirectoryURL:definitionDirectory];
-    [sPanel setNameFieldStringValue:[fileName path]];
+    [sPanel setNameFieldStringValue:expFileName];
     result = [sPanel runModal];
     if (result == NSFileHandlingPanelOKButton) {
 		NSString *filePath = [[sPanel URL] path];
