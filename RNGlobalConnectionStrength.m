@@ -60,7 +60,7 @@
 	for (iStep = 0; iStep <= nSteps; iStep++) {
 		stepStartTime = startTime_s + iStep*duration_s/nSteps;
 		
-		if ([parameterType isEqualToString:@"weight"]) {
+		if ([parameterType isEqualToString:@"weight"]) { //assert above catches invalid parameterType so can assume one of these two paths will execute
 			stepParam = startParam + paramDelta*iStep;
 		} else if ([parameterType isEqualToString:@"constant"]) {
 			stepParam = startParam + (endParam-startParam) * pow( (double)iStep / (double) nSteps, paramDelta);

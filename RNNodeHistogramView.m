@@ -211,7 +211,7 @@
 		
 		//draw histogram
 		[[NSColor blueColor] setFill];
-		nBins = _targetIOI_ms / _binWidth_ms;
+		//nBins = _targetIOI_ms / _binWidth_ms;
 		nBins = bounds.size.width;
 		float yCount;
 		for (iBin=0; iBin < nBins; iBin++) {
