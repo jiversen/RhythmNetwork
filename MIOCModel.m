@@ -95,7 +95,7 @@ static Byte removeProcessorFlag[1] = {0x00};
 	[alert setInformativeText:@"Please turn the Midi Matrix (PMM 88-E) off, then on. Click OK when done."];
 	[alert setAlertStyle:NSWarningAlertStyle];
 	
-	int returnCode = [alert runModal];
+	long returnCode = [alert runModal];
 
 	if (returnCode == NSAlertFirstButtonReturn) { //OK: assume they've powercycled
 		//reset our model state
@@ -153,7 +153,7 @@ static Byte removeProcessorFlag[1] = {0x00};
 		[alert setInformativeText:@"Please follow these steps: After clicking OK, make sure the MIDI interface is connected and the proper MIDI Input and Output are selected. Then press the device 'Reset' button."];
 		[alert setAlertStyle:NSWarningAlertStyle];
 		
-		int returnCode = [alert runModal];
+		long returnCode = [alert runModal];
 		if (returnCode == NSAlertFirstButtonReturn) { //OK: try again
 			//[[self MIDILink] handleMIDISetupChange]; //total hack--force this to happen (as it might not happen
 			// in time otherwise before we get back in this spot, thus infinite loop)
@@ -203,7 +203,7 @@ static Byte removeProcessorFlag[1] = {0x00};
 	[alert setMessageText:@"Problem connecting with MIDI Matrix (PMM 88-E)!"];
 	[alert setInformativeText:@"Please make sure it is turned on and then click OK."];
 	[alert setAlertStyle:NSWarningAlertStyle];
-	int returnCode = [alert runModal];
+	long returnCode = [alert runModal];
 	if (returnCode == NSAlertFirstButtonReturn) { //OK: try again
 		[self checkOnline];
 	} //otherwise do nothing more
@@ -527,7 +527,7 @@ static Byte removeProcessorFlag[1] = {0x00};
 		if (reply->opcode==0x05) {
 			_awaitingReply = NO;
 			[_deviceName autorelease];
-			_deviceName = [[NSString stringWithCString:(const char *)(&reply->data[1]) length:8] retain];
+            _deviceName = [[[NSString alloc] initWithBytes:(const char *)(&reply->data[1]) length:8 encoding:NSASCIIStringEncoding] retain];
 			//post notification for UI to resync
 			[[NSNotificationCenter defaultCenter] postNotificationName:@"MIOCModelChangeNotification"
 																object:self];
@@ -735,7 +735,7 @@ static Byte removeProcessorFlag[1] = {0x00};
 {
 	Byte msbByte, thisByte, encodedLength = 0;
 	Byte *source, *end, *blockEnd, *sp;
-	unsigned inputLength, blockIdx;
+	unsigned long inputLength, blockIdx;
 	//unsigned checksum;
 	NSRange firstByte = NSMakeRange(0,1);
 	

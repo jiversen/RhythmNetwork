@@ -235,7 +235,7 @@ static void myMIDINotifyProc(const MIDINotification *message, void * refCon);
 		MIDIObjectGetStringProperty(_MIDISource, kMIDIPropertyName, &name);		
 		return [NSString stringWithString:(NSString *)name];
 	} else
-		return [NSString stringWithString:@"(not connected)"];
+        return @"(not connected)";
 }
 
 - (NSString *) destinationName

@@ -32,7 +32,7 @@
 		strcat(cStr, tmpStr);
 	}
 	
-	self = [self initWithCString:cStr];
+    self = [self initWithCString:cStr encoding:NSASCIIStringEncoding];
 	free(cStr);
 	return self;
 
