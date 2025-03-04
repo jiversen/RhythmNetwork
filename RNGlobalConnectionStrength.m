@@ -79,8 +79,8 @@
 
 - (RNGlobalConnectionStrength *) initFromDictionary:(NSDictionary *)aDict;
 {
-	NSString *type;
-	double param;
+    NSString *type = nil;
+    double param = 0.0;
 	//will have a parameter keyed as 'weight' or 'constant'--take the type from the key & param from value
 	NSNumber *paramNumber;
 	if ((paramNumber = aDict[@"weight"])) {
