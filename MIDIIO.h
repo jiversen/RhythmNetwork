@@ -4,6 +4,8 @@
 
 #import <Cocoa/Cocoa.h>
 #import <CoreMIDI/MIDIServices.h>
+#import <os/log.h>
+//#import "TPCircularBuffer.h"
 
 #define kSendMIDISuccess		TRUE
 #define kSendMIDIFailure		FALSE
@@ -27,12 +29,15 @@ typedef struct _ProgramChangeMessage {
 @interface MIDIIO : NSObject
 {
 	MIDIClientRef	_MIDIClient;
-	MIDIPortRef		_inPort;
-	MIDIPortRef		_outPort;
-	MIDIEndpointRef _MIDISource;	//only one source & destination
-	MIDIEndpointRef _MIDIDest;
-	NSMutableArray	*_sysexListenerArray;
-	NSMutableArray	*_MIDIListenerArray;
+	MIDIPortRef	   _inPort;
+	MIDIPortRef	   _outPort;
+	MIDIEndpointRef  _MIDISource;	//only one source & destination
+	MIDIEndpointRef  _MIDIDest;
+	NSMutableArray  *_sysexListenerArray;
+	NSMutableArray  *_MIDIListenerArray;
+    dispatch_queue_t _midiLoggingQueue;
+    NSMutableData   *_sysexData;
+    BOOL            _isReceivingSysex;
 }
 
 - (MIDIIO*)init;

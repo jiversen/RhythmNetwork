@@ -2,6 +2,7 @@
 
 #import <CoreMIDI/MIDIServices.h>
 #import <CoreAudio/HostTime.h>
+#import "NSStringHexStringCategory.h"
 
 // wrapper for simple midi io
 
@@ -9,6 +10,8 @@
 static void	myReadProc(const MIDIPacketList *pktlist, void *refCon, void *connRefCon);
 static void	mySysexCompletionProc(MIDISysexSendRequest *request);
 static void myMIDINotifyProc(const MIDINotification *message, void * refCon);
+static void logMIDIPacketList(const MIDIPacketList *packetList, long pktlistLengthconst, MIDIIO *selfMIDIO);
+
 
 @implementation MIDIIO
 
@@ -22,11 +25,16 @@ static void myMIDINotifyProc(const MIDINotification *message, void * refCon);
 	self				= [super init];
 	_MIDIClient			= NULL;
 	_inPort				= NULL;
-	_outPort			= NULL;
+	_outPort			    = NULL;
 	_MIDISource			= NULL;
 	_MIDIDest			= NULL;
 	_sysexListenerArray = [[NSMutableArray arrayWithCapacity:0] retain];
 	_MIDIListenerArray  = [[NSMutableArray arrayWithCapacity:0] retain];
+    
+    _midiLoggingQueue = dispatch_queue_create("org.johniversen.midiLogging", DISPATCH_QUEUE_SERIAL);
+    
+    _sysexData = [[NSMutableData alloc] initWithCapacity:1024];
+    _isReceivingSysex = NO;
 
 	[self setupMIDI];    
     return self;
@@ -39,6 +47,7 @@ static void myMIDINotifyProc(const MIDINotification *message, void * refCon);
 	MIDIClientDispose(_MIDIClient); //automatically disposes of ports
 	[_sysexListenerArray release];
 	[_MIDIListenerArray  release];
+    [_sysexData release];
 	[super dealloc];
 }
 
@@ -347,33 +356,56 @@ static void myMIDINotifyProc(const MIDINotification *message, void * refCon)
 // *********************************************
 #pragma mark RECEIVING
 
-//quickly pass on to the object method and get out of the thread
+//quickly pass on to a dispatch_async queue to get out of the thread. Do minimal potentially blocking work here
 static void	myReadProc(const MIDIPacketList *pktlist, void *refCon, void *connRefCon)
 {
-	unsigned int i, pktlistLength;
     MIDIIO *selfMIDIIO = (MIDIIO *) refCon;
-	
-	//find total length of packet list
-	MIDIPacket *packet = (MIDIPacket *) &pktlist->packet[0];
-    for (i = 0; i < pktlist->numPackets; i++) {
-		packet = MIDIPacketNext(packet);
-	}
-	pktlistLength = (Byte *) packet - (Byte *) pktlist;
-	
-	//wrap packet list as object (we're ignoring connRefCon for now)
-	// we can use packet list bytes in place, but how long are these guaranteed? Who frees them?
-	// presumably it's the caller, so let's not trust it. So, shucks, let's go ahead and allocate
-	// a new object here.
-	// otherwise, could use a shared ring-buffer
-	
-	//CFDataRef wrappedPktlist = CFDataCreateWithBytesNoCopy(NULL,pktlist,pktlistLength,kCFAllocatorNull);
-	CFDataRef wrappedPktlist = CFDataCreate(kCFAllocatorDefault,(const UInt8 *) pktlist, (CFIndex) pktlistLength);
-	
-	//pass wrapped list on to our handler, execute on main thread to 
-	//	1) get out of realtime thread asap & 2) stop worrying about memory allocation (use main thread's) autorelease pool
-    [selfMIDIIO performSelectorOnMainThread:@selector(handleMIDIInput:) withObject:(NSData *)wrappedPktlist waitUntilDone:NO];
-	CFRelease(wrappedPktlist); //since we created it; one ref still retained by performSelector... as long as it needs it
+    
+    //find total length of packet list
+    MIDIPacket *packet = (MIDIPacket *) &pktlist->packet[0];
+    for (int i = 0; i < pktlist->numPackets; i++) {
+        packet = MIDIPacketNext(packet);
+    }
+    long pktlistLength = (Byte *) packet - (Byte *) pktlist;
+    
+    MIDIPacketList *packetListCopy = malloc(pktlistLength);
+    if (packetListCopy) {
+        memcpy(packetListCopy, pktlist, pktlistLength);
+        
+        dispatch_async(selfMIDIIO->_midiLoggingQueue, ^{
+            logMIDIPacketList(packetListCopy, pktlistLength, selfMIDIIO);
+            free(packetListCopy);
+        });
+    }
 }
+
+// logging and forwarding received packets on async queue
+
+void logMIDIPacketList(const MIDIPacketList *packetList, long pktlistLength, const MIDIIO *selfMIDIO) {
+    
+    // LOG
+#if 0
+    os_log(OS_LOG_DEFAULT, "MIDI PacketList - Length: %d", packetList->numPackets);
+
+    const MIDIPacket *packet = packetList->packet;
+    for (int i = 0; i < packetList->numPackets; i++) {
+        NSMutableString *dataString = [NSMutableString string];
+
+        for (int j = 0; j < packet->length; j++) {
+            [dataString appendFormat:@"%02X ", packet->data[j]];
+        }
+
+        os_log(OS_LOG_DEFAULT, " MIDI Packet - Timestamp: %llu, Length: %d, Data: %@", packet->timeStamp, packet->length, dataString);
+
+        packet = MIDIPacketNext(packet);
+    }
+#endif
+    
+    // WRAP and forward to our  handler
+    CFDataRef wrappedPktlist = CFDataCreate(kCFAllocatorDefault,(const UInt8 *) packetList, (CFIndex) pktlistLength);
+    [selfMIDIO handleMIDIInput:(NSData *) wrappedPktlist];
+}
+
 
 // *********************************************
 //  parse packets and send out to listeners
@@ -381,66 +413,57 @@ static void	myReadProc(const MIDIPacketList *pktlist, void *refCon, void *connRe
 //	Note that input argument was retained by performSelectorOnMainThread, so we don't have to retain
 - (void)handleMIDIInput:(NSData *) wrappedPktlist
 {
-    unsigned int i;
-		
-	//i = [wrappedPktlist retainCount];
-	//printf("ref %d\n",i);
-
-	MIDIPacketList *pktlist = (MIDIPacketList *) [wrappedPktlist bytes];	
-	MIDIPacket *packet = (MIDIPacket *) &pktlist->packet[0];
-	NSMutableData *sysexData = nil;
-	NSData *MIDIData;
-	NoteOnMessage thisMessage;
-	Byte *bp, *packetEnd;
+	const MIDIPacketList *pktlist = (const MIDIPacketList *) [wrappedPktlist bytes];
+	const MIDIPacket *packet = pktlist->packet;
+    NSData *MIDIData = nil;
 
 	//parse midi--keeping it simple for now, and only doing what we need
-    for (i = 0; i < pktlist->numPackets; i++) {
-        if ( packet->data[0] == 0xF0 || packet->data[0] <0x80) {	//Sysex start or continuation (exhaustive?)
+    for (int i = 0; i < pktlist->numPackets; i++) {
+        const UInt8 *bp = packet->data;
+        const UInt8 *packetEnd = bp + packet->length; //could include single-byte realtime, so copy one byte at a time
+        
+        while (bp < packetEnd) {
+            const UInt8 byte = *bp++;
+            
+            if ( byte == 0xF0 ) { //Sysex start
+                _isReceivingSysex = YES;
+                [_sysexData setLength:0];
+                [_sysexData appendBytes:&byte length:1];
+            } else if (_isReceivingSysex) { //Sysex continuation
+                [_sysexData appendBytes:&byte length:1];
+                if (byte == 0xF7) { //Sysex end
+                    if (bp != packetEnd) {
+                        NSLog(@"Interesting: %ld bytes following end of sysex message in packet.",  packetEnd - bp);
+                    }
+                    NSString *hexStr = [[NSString alloc] initHexStringWithData:_sysexData];
+                    NSLog(@"MIDIIO Received Sysex (%lu bytes): %@\n",(unsigned long)[_sysexData length], hexStr);
+                    [_sysexListenerArray makeObjectsPerformSelector:@selector(receiveSysexData:) withObject:_sysexData];
+                    _isReceivingSysex = NO;
+                }
+            } else { // non sysex
+                //note-on (all we care about in RhythmNetwork, so this is hardly general purpose)
+                // we create our own structure, one step abstracted from raw MIDI, and with time in real units
+                if ( (byte & 0xF0) == 0x90 ) {
+                    NSAssert(bp+1<packetEnd, @"Problem: partial note-on message in packet. Shouldn't happen");
+                    Byte note = *bp++;
+                    Byte velocity = *bp++;
+                    if (velocity > 0) { //only note on
+                        NoteOnMessage thisMessage;
+                        thisMessage.eventTime_ns = AudioConvertHostTimeToNanos(packet->timeStamp);
+                        thisMessage.channel = (byte & 0x0F) + 1; //we use 1-based counting
+                        thisMessage.note = note;
+                        thisMessage.velocity = velocity;
+                        MIDIData = [NSData dataWithBytes:&thisMessage length:sizeof(NoteOnMessage)];
+                        [_MIDIListenerArray makeObjectsPerformSelector:@selector(receiveMIDIData:) withObject:MIDIData];
+                    }
+                } else {
+                    //NSLog(@"Received non note-on event! %x %x %x", packet->data[0], packet->data[1], packet->data[2]);
+                }
+            }
+        } // loop over packet contents
 			
-			if (sysexData == nil)
-				sysexData = [NSMutableData dataWithCapacity:packet->length];
-			
-			packetEnd = packet->data + packet->length - 1; //could include single-byte realtime, so copy one byte at a time
-			bp = packet->data;
-			[sysexData appendBytes:bp length:1];
-			bp++;
-			//note, assuming only one (or part of one) sysex message per packet
-			//	so a little overkill to end at first 0xF7--there 'should' never be anything worth including
-			//	after that
-			while (bp <= packetEnd && *bp != 0xF7) {
-				if (*bp < 0x80)
-					[sysexData appendBytes:bp length:1];
-				bp++;
-			}
-			if (*bp == 0xF7) 
-				[sysexData appendBytes:bp length:1];
-			//***just for curiousity
-			NSAssert2( (bp == packetEnd), @"Interesting: bytes following end of sysex message in packet. F7@%x, end@%x", bp, packetEnd);
-
-        } else { //non sysex
-			//note-on (all we care about in RhythmNetwork, so this is hardly general purpose)
-			// we create our own structure, one step abstracted from raw MIDI, and with time in real units
-			if ( (packet->data[0] & 0xF0) == 0x90 && packet->data[2] > 0) {				
-				thisMessage.eventTime_ns = AudioConvertHostTimeToNanos(packet->timeStamp);
-				thisMessage.channel = (packet->data[0] & 0x0F) + 1; //we use 1-based counting
-				thisMessage.note = packet->data[1];
-				thisMessage.velocity = packet->data[2];
-				//packetLength = sizeof(MIDITimeStamp) + sizeof(UInt16) + (packet->length); //**depends on packet structure
-				//MIDIData = [NSData dataWithBytes:packet length:packetLength];
-				MIDIData = [NSData dataWithBytes:&thisMessage length:sizeof(NoteOnMessage)];
-				[_MIDIListenerArray makeObjectsPerformSelector:@selector(receiveMIDIData:) withObject:MIDIData];
-			} else {
-				//NSLog(@"Received non note-on event! %x %x %x", packet->data[0], packet->data[1], packet->data[2]);
-			}
-		}
 		packet = MIDIPacketNext(packet);
-    }
-	// if we got sysex data, send it to our client(s)
-	//		for now, we ensure that it has a receiveSysexData: method in registerSysexListener
-	if ( ([sysexData length] > 0) && ([_sysexListenerArray count] > 0) )
-	{
-		[_sysexListenerArray makeObjectsPerformSelector:@selector(receiveSysexData:) withObject:sysexData];
-	}
+    } // loop over packets
 }
 
 
