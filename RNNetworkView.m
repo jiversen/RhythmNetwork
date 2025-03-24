@@ -216,6 +216,29 @@ static RNNetworkView *_sharedNetworkView = nil;
 	}	
 }
 
+// TEST CODE
+// test flashing with key 1-6
+- (void)keyDown:(NSEvent *)event {
+    NSString *chars = [event charactersIgnoringModifiers];
+    unichar c = [chars characterAtIndex:0];
+    
+    NSArray *nodeList = [_network nodeList];
+    
+    if (c >= '1' && c <= '6') {
+        NSInteger index = c - '0';
+        [nodeList[index] flashWithColor:[NSColor systemBlueColor]];
+    }
+}
+
+- (BOOL)acceptsFirstResponder {
+    return YES;
+}
+
+- (void) viewDidMoveToWindow {
+    [self.window makeFirstResponder:self];
+}
+// TEST CODE END
+
 // this is merely for display purposes: to flash nodes when input has arrived
 // need to do it here, as network itself doesn't know the view it's drawn in
 - (void) receiveMIDIData: (NSData *) MIDIData
