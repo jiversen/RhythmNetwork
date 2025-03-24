@@ -33,9 +33,21 @@ static RNNetworkView *_sharedNetworkView = nil;
 									 -NSWidth([self bounds])/2.0,
 									 -NSHeight([self bounds])/2.0)];
 	}
-	
+
 	[self setNeedsDisplay: YES];
 	return self;
+}
+
+// workaround for manually scaling up the UI in RNController awakeFromNib
+- (void)updateDrawingMetricsForScale:(CGFloat) scale {
+    NSRect frameRect = self.frame;
+    _drawRadius = fmax(NSHeight(frameRect), NSWidth(frameRect)) / 2.0 * kRadiusScale;
+
+    // Recenter the coordinate system
+    CGFloat shiftRatio = (scale - 1.0) / (2.0 * scale);
+    [self setBounds:NSOffsetRect([self bounds],
+                                 -NSWidth([self bounds]) * shiftRatio,
+                                 -NSHeight([self bounds]) * shiftRatio)];
 }
 
 - (void) dealloc

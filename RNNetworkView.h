@@ -15,7 +15,9 @@
 	NSMutableArray *_nodeHistogramViews; //array of views
 	RNDataView  *_dataView;
 }
+
 + (instancetype)sharedNetworkView;
+- (void)updateDrawingMetricsForScale:(CGFloat) scale;
 
 - (RNNetwork *) network;
 - (void) setNetwork: (RNNetwork *) newNetwork;

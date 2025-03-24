@@ -7,6 +7,8 @@
 #import "RNDataView.h"
 #import "MIOCModel.h"
 #import "MIDIIO.h"
+#import "RNCustomButton.h"
+
 
 #import "MIOCSetupController.h"
 #import "MIOCConnection.h"
@@ -20,10 +22,23 @@
 
 - (void) awakeFromNib
 {
-	//set up the UI to reflect no-experiment open
-	//e.g. disable start-experiment, save-experiment, text fields
+    
+    // Scale up the UI by 150%
+    CGFloat scaleFactor = 2.0;
+    [self applyUIScale:scaleFactor];
+    
+    // origial buttons do not do well with scaling
+    _loadButton = (NSButton *)[self replaceOldButton:_loadButton];
+    _saveButton = (NSButton *)[self replaceOldButton:_saveButton];
+    _startButton = (NSButton *)[self replaceOldButton:_startButton];
+    _testPartButton = (NSButton *)[self replaceOldButton:_testPartButton];
+    _testStopButton = (NSButton *)[self replaceOldButton:_testStopButton];
+
+    //set up the UI to reflect no-experiment open
+    //e.g. disable start-experiment, save-experiment, text fields
 	[_titleText setEnabled:NO];
 	[_notesText setEditable:NO];
+    [_loadButton setEnabled:YES];
 	[_saveButton setEnabled:NO];
 	[_startButton setEnabled:NO];
 	[_testPartButton setEnabled:NO];
@@ -55,8 +70,74 @@
 	[_networkView setPlotData:NO];
 	
 	[_drumSetNumber setStringValue:@"--"];
+    
+    //a few fixes for dark mose
+    [_experimentPartsTable setBackgroundColor:[NSColor controlBackgroundColor]];
+    [_titleText setDrawsBackground:NO];
 	
-	
+}
+
+- (void) applyUIScale:(CGFloat)scaleFactor {
+    NSView *contentView = self.window.contentView;
+    [self scaleSubviewsOfView:contentView byFactor:scaleFactor];
+
+    // Resize the window to match the scaled content
+    NSRect frame = self.window.frame;
+    NSRect contentRect = [self.window contentRectForFrameRect:frame];
+
+    // Scale the content size
+    contentRect.size.width *= scaleFactor;
+    contentRect.size.height *= scaleFactor;
+
+    // Convert back to full window frame size (including title bar etc.)
+    NSRect scaledWindowFrame = [self.window frameRectForContentRect:contentRect];
+
+    // Optionally reposition to keep it centered
+    scaledWindowFrame.origin.x -= (scaledWindowFrame.size.width - frame.size.width) / 2;
+    scaledWindowFrame.origin.y -= (scaledWindowFrame.size.height - frame.size.height) / 2;
+
+    // Apply new frame
+    [self.window setFrame:scaledWindowFrame display:YES animate:NO];
+    [self.window makeKeyAndOrderFront:nil];
+    
+    [_networkView updateDrawingMetricsForScale:scaleFactor];
+    [_networkView setNeedsDisplay:YES];
+}
+
+- (void)scaleSubviewsOfView:(NSView *)view byFactor:(CGFloat)scale {
+    for (NSView *subview in view.subviews) {
+        // Disable constraints to allow manual sizing
+        subview.translatesAutoresizingMaskIntoConstraints = YES;
+        
+        // Scale frame
+        NSRect f = subview.frame;
+        f.origin.x *= scale;
+        f.origin.y *= scale;
+        f.size.width *= scale;
+        f.size.height *= scale;
+        [subview setFrame:f];
+
+        if ([subview respondsToSelector:@selector(font)]) {
+            NSFont *font = [subview performSelector:@selector(font)];
+            if (font) {
+                NSFont *scaledFont = [NSFont fontWithDescriptor:font.fontDescriptor size:font.pointSize * scale];
+                [subview performSelector:@selector(setFont:) withObject:scaledFont];
+            }
+        }
+
+        [self scaleSubviewsOfView:subview byFactor:scale];
+    }
+}
+
+- (RNCustomButton *)replaceOldButton:(NSButton *)oldButton {
+    RNCustomButton *newButton = [[RNCustomButton alloc] initWithButtonToReplace:oldButton];
+    newButton.translatesAutoresizingMaskIntoConstraints = YES;
+
+    NSView *parent = oldButton.superview;
+    if (parent) {
+        [parent replaceSubview:oldButton with:newButton];
+    }
+    return newButton;
 }
 
 - (void) dealloc
