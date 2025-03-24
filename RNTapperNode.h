@@ -7,6 +7,7 @@
 //
 
 #import <Cocoa/Cocoa.h>
+#import <QuartzCore/QuartzCore.h>
 
 #define kNumConcentrators 4
 #define kNumInputsPerConcentrator 6
@@ -40,7 +41,12 @@ typedef UInt16 RNNodeNum_t;
 	NSColor *_flashColor;
 	double	_flashIntensity;  //1 then fades to 0
 	NSTimer	*_flashTimer;
+    CAShapeLayer *_flashLayer;
+    CAShapeLayer *_ringLayer;
 }
+
++ (CAShapeLayer *)flashLayerForRect:(NSRect)rect;
++ (CAShapeLayer *)ringLayerForRect:(NSRect)rect;
 
 + (NSArray *) colorArray;
 
@@ -99,8 +105,7 @@ typedef UInt16 RNNodeNum_t;
 - (void) setBigBrotherSubChannel: (Byte) newSubChannel;
 
 - (void) drawWithRadius: (double) radius;
-- (void) flashWithColor: (NSColor *) flashColor inView: (NSView *) theView;
-- (void) fadeFlashColor: (NSTimer *)theTimer;
+- (void) flashWithColor: (NSColor *) flashColor;
 
 
 @end

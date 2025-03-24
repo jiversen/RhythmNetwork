@@ -15,6 +15,7 @@
 	NSMutableArray *_nodeHistogramViews; //array of views
 	RNDataView  *_dataView;
 }
++ (instancetype)sharedNetworkView;
 
 - (RNNetwork *) network;
 - (void) setNetwork: (RNNetwork *) newNetwork;

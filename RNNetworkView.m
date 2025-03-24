@@ -10,11 +10,20 @@
 
 #define kRadiusScale 0.75
 
+static RNNetworkView *_sharedNetworkView = nil;
+
 @implementation RNNetworkView
+
++ (instancetype)sharedNetworkView {
+    return _sharedNetworkView;
+}
 
 - (id)initWithFrame:(NSRect)frameRect
 {
 	if ((self = [super initWithFrame:frameRect]) != nil) {
+        if (!_sharedNetworkView)
+            _sharedNetworkView = self;
+        self.wantsLayer = YES;
 		_network = nil;
 		_doShowMIDIActivity = YES;
 		//calculate radius from frameRect size
@@ -197,9 +206,9 @@
 	//stroke around edges
 	NSBezierPath *aPath = [NSBezierPath bezierPathWithRect:[self bounds]];
 	//[[NSColor windowBackgroundColor] setFill];
-    [[NSColor whiteColor] setFill];
+    [[NSColor whiteColor] setFill]; // Not Dark-mode friendly, but I don't like windowBackgroundColor look so keep it
 	[aPath fill];
-	[[NSColor blackColor] setStroke];
+    [[NSColor blackColor] setStroke];
 	[aPath stroke];
 	
 	if (_network != nil) {
@@ -225,13 +234,11 @@
 			//for bb, recover which subchannel this is based on the midi channel
 			if ( iNode == 0) {
 				Byte stimulusChannel = [nodeList[iNode] stimulusNumberForMIDIChannel:message->channel];
-				[nodeList[iNode] flashStimulusChannel:stimulusChannel
-														   WithColor:[NSColor greenColor]
-															  inView:self];
+				[nodeList[iNode] flashStimulusChannel:stimulusChannel];
 			} else {
-				NSColor *color = [RNTapperNode colorArray][iNode-1];
-				[nodeList[iNode] flashWithColor:color inView:self];
-				//send event to appropriate histogramView
+                [nodeList[iNode] flashWithColor:[NSColor blueColor]];
+				
+                //send event to appropriate histogramView
 				if (_doPlotData == YES) {
 					if (_nodeHistogramViews != nil) {
 						RNNodeHistogramView *hview = _nodeHistogramViews[(iNode-1)]; //**note indexing

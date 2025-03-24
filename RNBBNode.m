@@ -39,12 +39,8 @@
 	unsigned int i;
 	
 	for (i=1; i<= _numStimulusChannels; i++) {
-		_flashIntensityArray[i] = 0.0;
-		if (_flashTimerArray[i] != nil) {			//test isn't really necessary
-			[_flashTimerArray[i] invalidate];
-			[_flashTimerArray[i] release];
-			_flashTimerArray[i] = nil;
-		}
+        [_flashLayerArray[i] removeFromSuperlayer];
+        _flashLayerArray[i] = nil;
 	}
 	[super dealloc];
 }
@@ -81,16 +77,17 @@
 - (Byte) numStimulusChannels { return _numStimulusChannels; }
 - (void) setNumStimulusChannels: (Byte) newNumStimulusChannels
 {
-	unsigned int i;
-	
-    _numStimulusChannels = newNumStimulusChannels;
+    if (newNumStimulusChannels == _numStimulusChannels)
+        return;
+    
+    // invalidate existing layers
 	if (_numStimulusChannels > 0) {
-		for (i=1; i<= _numStimulusChannels; i++) {
-			_flashIntensityArray[i] = 0.0;
-			_flashTimerArray[i] = nil;
-			_stimulusArray[i] = nil;
+		for (unsigned int i=1; i<= _numStimulusChannels; i++) {
+            [_flashLayerArray[i] removeFromSuperlayer];
+            _flashLayerArray[i] = nil;
 		}
 	}
+    _numStimulusChannels = newNumStimulusChannels;
 }
 
 - (RNStimulus *) stimulusForChannel: (Byte) stimulusChannel
@@ -130,23 +127,16 @@
 	
 	NSRect aRect = NSMakeRect( centerPt.x * radius - nodeRadius, centerPt.y * radius - nodeRadius, nodeRadius*2.0, nodeRadius*2.0);
 	NSBezierPath *aPath = [NSBezierPath bezierPathWithOvalInRect:aRect];
-	
-	if (_flashIntensityArray[stimulusChannel] > 0) {
-		NSColor *tempColor = [[NSColor whiteColor] blendedColorWithFraction:_flashIntensityArray[stimulusChannel]
-																	ofColor:_flashColor];
-		[tempColor setFill];
-	} else {
-		[[NSColor whiteColor] setFill];
-	}
-	
-	[aPath fill];
-	
+    
+    [[NSColor whiteColor] setFill];
+    [aPath fill];
+    
 	//edge color: according to stimulus channel (use 0 based indexing)
 	[[RNTapperNode colorArray][(stimulusChannel-1)]  setStroke];
 
 	[aPath setLineWidth:2.0];
 	[aPath stroke];
-	
+    
 	//descriptive text regarding stimulus
 	RNStimulus *stim = [self stimulusForChannel:stimulusChannel];
 	NSString *stimStr;
@@ -159,61 +149,37 @@
 			[NSFont fontWithName:@"Helvetica" size:7], NSFontAttributeName, nil,nil];
 		[stimStr drawAtPoint:NSMakePoint( (centerPt.x + 1.5 * kNodeScale) * radius, (centerPt.y - 0.45 * kNodeScale) * radius ) withAttributes:attributes];
 	}
+    
+    // init flash animation layer
+    if (_flashLayerArray[stimulusChannel] == nil) {
+        _flashLayerArray[stimulusChannel] = [RNTapperNode flashLayerForRect:aRect];
+        [[RNNetworkView sharedNetworkView].layer addSublayer: _flashLayerArray[stimulusChannel]];
+    }
 	
 }
 
-- (void) flashStimulusChannel: (Byte) stimulusChannel WithColor: (NSColor *) flashColor inView: (NSView *) theView
+- (void) flashStimulusChannel: (Byte) stimulusChannel
 {
-	//set flash color, redraw, and set fadeout timer
-	[_flashColor autorelease];
-	_flashColor = [flashColor retain];
-	_flashIntensityArray[stimulusChannel] = 1;
-	
-	if (_flashTimerArray[stimulusChannel] != nil) {
-		[_flashTimerArray[stimulusChannel] invalidate];
-		[_flashTimerArray[stimulusChannel] release];
-		_flashTimerArray[stimulusChannel] = nil;
-	}
-	
-	_flashTimerArray[stimulusChannel] = [[NSTimer scheduledTimerWithTimeInterval:0.05
-													target:self
-												  selector:@selector(fadeFlashColor:)
-												  userInfo:theView
-												   repeats:YES] retain];
+    if (_flashLayerArray[stimulusChannel] == nil)
+        return;
+    
+    NSColor *flashColor = [RNTapperNode colorArray][MIN(stimulusChannel-1, [[RNTapperNode colorArray] count])];
+    
+    //set up animation on _flashLayerArray[stimulusChannel]
+    _flashLayerArray[stimulusChannel].fillColor = [[NSColor clearColor] CGColor];
+
+    // Create a fade-out animation
+    CABasicAnimation *fadeAnimation = [CABasicAnimation animationWithKeyPath:@"fillColor"];
+    fadeAnimation.fromValue = (__bridge id)[flashColor CGColor]; // Start with full color
+    fadeAnimation.toValue = (__bridge id)[[NSColor clearColor] CGColor]; // Fade to transparent
+    fadeAnimation.duration = 0.3;
+    fadeAnimation.removedOnCompletion = YES;
+    fadeAnimation.fillMode = kCAFillModeRemoved;
+    
+    // Add animation to the flash layer
+    [_flashLayerArray[stimulusChannel] addAnimation:fadeAnimation forKey:@"flashFade"];
+    
 }
 
-//the only twist is we need to recover stimulusChannel from timer by looking up in array
-// alternative would be to make use a dictionary for userInfo
-- (void) fadeFlashColor: (NSTimer *) theTimer;
-{
-	RNNetworkView *theView = [theTimer userInfo];
-	
-	Byte stimulusChannel;
-	unsigned int i;
-	
-	i = 1;
-	while (i<=[self numStimulusChannels]) {
-		if (theTimer == _flashTimerArray[i])
-			break;
-		i++;
-	}
-	//catch the case where we've checked all i, with no match
-	NSAssert( (i <= [self numStimulusChannels]), @"Did not find stimulus channel matching this timer");
-	stimulusChannel = i;
-	
-	[theView lockFocus];
-	[self drawStimulusChannel:stimulusChannel WithRadius: [theView drawRadius]];
-	[theView unlockFocus];
-	[theView setNeedsDisplay:TRUE];
-	
-	_flashIntensityArray[stimulusChannel] -= 0.2;
-	if (_flashIntensityArray[stimulusChannel] <= 0.0) {
-		_flashIntensityArray[stimulusChannel] = 0.0;
-		[_flashTimerArray[stimulusChannel] invalidate];
-		[_flashTimerArray[stimulusChannel] release];
-		_flashTimerArray[stimulusChannel] = nil;
-	}
-	
-}
 
 @end

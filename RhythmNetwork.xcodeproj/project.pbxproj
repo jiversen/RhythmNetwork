@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0B0E4F642D90C23900EF36AC /* RNCustomButton.m in Sources */ = {isa = PBXBuildFile; fileRef = 0B0E4F632D90C23900EF36AC /* RNCustomButton.m */; };
 		0B16BA6F0895BBF000188571 /* RNDataView.h in Headers */ = {isa = PBXBuildFile; fileRef = 0B16BA6D0895BBF000188571 /* RNDataView.h */; };
 		0B16BA700895BBF000188571 /* RNDataView.m in Sources */ = {isa = PBXBuildFile; fileRef = 0B16BA6E0895BBF000188571 /* RNDataView.m */; };
 		0B2F157706E0546600693117 /* MIDIIO.h in Headers */ = {isa = PBXBuildFile; fileRef = 0B2F157506E0546600693117 /* MIDIIO.h */; };
@@ -45,6 +46,7 @@
 		0B7D7809071A516900C19443 /* RNTapperNode.m in Sources */ = {isa = PBXBuildFile; fileRef = 0B7D7807071A516900C19443 /* RNTapperNode.m */; };
 		0B89D33F06FC10950024E7BC /* MIOCConnection.h in Headers */ = {isa = PBXBuildFile; fileRef = 0B89D33D06FC10950024E7BC /* MIOCConnection.h */; };
 		0B89D34006FC10950024E7BC /* MIOCConnection.m in Sources */ = {isa = PBXBuildFile; fileRef = 0B89D33E06FC10950024E7BC /* MIOCConnection.m */; };
+		0B95AAA22D8B1FC100003602 /* miditemp manual.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 0B95AAA12D8B1FC100003602 /* miditemp manual.pdf */; };
 		0BB7D18F0800FFF700246F8F /* MIOCVelocityProcessor.h in Headers */ = {isa = PBXBuildFile; fileRef = 0BB7D18D0800FFF700246F8F /* MIOCVelocityProcessor.h */; };
 		0BB7D1900800FFF700246F8F /* MIOCVelocityProcessor.m in Sources */ = {isa = PBXBuildFile; fileRef = 0BB7D18E0800FFF700246F8F /* MIOCVelocityProcessor.m */; };
 		0BCD60B9087B3EED00B1BEE1 /* MIOCProcessorProtocol.h in Headers */ = {isa = PBXBuildFile; fileRef = 0BCD60B7087B3EED00B1BEE1 /* MIOCProcessorProtocol.h */; };
@@ -53,6 +55,7 @@
 		0BDDBB6407A6D653001C11D6 /* CoreAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0BDDBB6307A6D653001C11D6 /* CoreAudio.framework */; };
 		0BEC11D207A2409C005066BB /* RNStimulus.h in Headers */ = {isa = PBXBuildFile; fileRef = 0BEC11D007A2409C005066BB /* RNStimulus.h */; };
 		0BEC11D307A2409C005066BB /* RNStimulus.m in Sources */ = {isa = PBXBuildFile; fileRef = 0BEC11D107A2409C005066BB /* RNStimulus.m */; };
+		0BF299302D8E4FF5004D1E88 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0BF2992F2D8E4FF5004D1E88 /* QuartzCore.framework */; };
 		0BF7826B06DF0F2C0091D317 /* CoreMIDI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0BF7826A06DF0F2C0091D317 /* CoreMIDI.framework */; };
 		8D1107280486CEB800E47090 /* RhythmNetwork_Prefix.pch in Headers */ = {isa = PBXBuildFile; fileRef = 32CA4F630368D1EE00C91783 /* RhythmNetwork_Prefix.pch */; };
 		8D11072A0486CEB800E47090 /* MainMenu.nib in Resources */ = {isa = PBXBuildFile; fileRef = 29B97318FDCFA39411CA2CEA /* MainMenu.nib */; };
@@ -63,6 +66,8 @@
 
 /* Begin PBXFileReference section */
 		089C165DFE840E0CC02AAC07 /* English */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = English; path = English.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		0B0E4F622D90C20B00EF36AC /* RNCustomButton.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RNCustomButton.h; sourceTree = "<group>"; };
+		0B0E4F632D90C23900EF36AC /* RNCustomButton.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = RNCustomButton.m; sourceTree = "<group>"; };
 		0B16BA6D0895BBF000188571 /* RNDataView.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = RNDataView.h; sourceTree = "<group>"; };
 		0B16BA6E0895BBF000188571 /* RNDataView.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = RNDataView.m; sourceTree = "<group>"; };
 		0B2F157506E0546600693117 /* MIDIIO.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = MIDIIO.h; sourceTree = "<group>"; };
@@ -101,6 +106,7 @@
 		0B7D7807071A516900C19443 /* RNTapperNode.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RNTapperNode.m; sourceTree = "<group>"; };
 		0B89D33D06FC10950024E7BC /* MIOCConnection.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MIOCConnection.h; sourceTree = "<group>"; };
 		0B89D33E06FC10950024E7BC /* MIOCConnection.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MIOCConnection.m; sourceTree = "<group>"; };
+		0B95AAA12D8B1FC100003602 /* miditemp manual.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "miditemp manual.pdf"; sourceTree = "<group>"; };
 		0BB7D18D0800FFF700246F8F /* MIOCVelocityProcessor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MIOCVelocityProcessor.h; sourceTree = "<group>"; };
 		0BB7D18E0800FFF700246F8F /* MIOCVelocityProcessor.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MIOCVelocityProcessor.m; sourceTree = "<group>"; };
 		0BCD60B7087B3EED00B1BEE1 /* MIOCProcessorProtocol.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MIOCProcessorProtocol.h; sourceTree = "<group>"; };
@@ -109,6 +115,7 @@
 		0BDDBB6307A6D653001C11D6 /* CoreAudio.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreAudio.framework; path = /System/Library/Frameworks/CoreAudio.framework; sourceTree = "<absolute>"; };
 		0BEC11D007A2409C005066BB /* RNStimulus.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RNStimulus.h; sourceTree = "<group>"; };
 		0BEC11D107A2409C005066BB /* RNStimulus.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RNStimulus.m; sourceTree = "<group>"; };
+		0BF2992F2D8E4FF5004D1E88 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		0BF7826A06DF0F2C0091D317 /* CoreMIDI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMIDI.framework; path = /System/Library/Frameworks/CoreMIDI.framework; sourceTree = "<absolute>"; };
 		1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = /System/Library/Frameworks/Cocoa.framework; sourceTree = "<absolute>"; };
 		29B97316FDCFA39411CA2CEA /* main.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
@@ -125,6 +132,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0BF299302D8E4FF5004D1E88 /* QuartzCore.framework in Frameworks */,
 				8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */,
 				0BF7826B06DF0F2C0091D317 /* CoreMIDI.framework in Frameworks */,
 				0BDDBB6407A6D653001C11D6 /* CoreAudio.framework in Frameworks */,
@@ -168,6 +176,8 @@
 				0B2F157606E0546600693117 /* MIDIIO.m */,
 				0B477B8006E7F5C600926C80 /* NSStringHexStringCategory.h */,
 				0B477B8106E7F5C600926C80 /* NSStringHexStringCategory.m */,
+				0B0E4F622D90C20B00EF36AC /* RNCustomButton.h */,
+				0B0E4F632D90C23900EF36AC /* RNCustomButton.m */,
 			);
 			name = Classes;
 			sourceTree = "<group>";
@@ -179,6 +189,7 @@
 				0B3695DB07A8BA2100FC1B4B /* MIOC MIDI specs.txt */,
 				0B36959707A85D0300FC1B4B /* experiment ideas.txt */,
 				0B77FFF60774B1630028C124 /* specifications.txt */,
+				0B95AAA12D8B1FC100003602 /* miditemp manual.pdf */,
 			);
 			name = Documentation;
 			sourceTree = "<group>";
@@ -264,6 +275,7 @@
 		29B97323FDCFA39411CA2CEA /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				0BF2992F2D8E4FF5004D1E88 /* QuartzCore.framework */,
 				1058C7A0FEA54F0111CA2CBB /* Linked Frameworks */,
 				1058C7A2FEA54F0111CA2CBB /* Other Frameworks */,
 			);
@@ -337,6 +349,7 @@
 			developmentRegion = English;
 			hasScannedForEncodings = 1;
 			knownRegions = (
+				English,
 				en,
 			);
 			mainGroup = 29B97314FDCFA39411CA2CEA /* RhythmNetwork */;
@@ -358,6 +371,7 @@
 				0B77FFF70774B1630028C124 /* specifications.txt in Resources */,
 				0B36959807A85D0300FC1B4B /* experiment ideas.txt in Resources */,
 				0B3695DC07A8BA2100FC1B4B /* MIOC MIDI specs.txt in Resources */,
+				0B95AAA22D8B1FC100003602 /* miditemp manual.pdf in Resources */,
 				0B5BAFE50898985D00460665 /* Alesis SR-16 Sysex.rtf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -381,6 +395,7 @@
 				0B38936D07826F0C00429A61 /* RNConnection.m in Sources */,
 				0B38951C07837E5500429A61 /* RNController.m in Sources */,
 				0BEC11D307A2409C005066BB /* RNStimulus.m in Sources */,
+				0B0E4F642D90C23900EF36AC /* RNCustomButton.m in Sources */,
 				0BDDB9EA07A5CEB9001C11D6 /* RNExperiment.m in Sources */,
 				0B36952E07A816F800FC1B4B /* RNExperimentPart.m in Sources */,
 				0B3A669F07C85944004591B6 /* RNBBNode.m in Sources */,
@@ -421,7 +436,7 @@
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 0.1;
+				CURRENT_PROJECT_VERSION = 0.2;
 				DEBUGGING_SYMBOLS = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				FRAMEWORK_SEARCH_PATHS = "";
@@ -438,7 +453,7 @@
 				INFOPLIST_FILE = Info.plist;
 				INSTALL_PATH = "$(HOME)/Applications";
 				LIBRARY_SEARCH_PATHS = "";
-				MACOSX_DEPLOYMENT_TARGET = 10.7;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				OPTIMIZATION_CFLAGS = "-O0";
 				OTHER_CFLAGS = "";
 				OTHER_LDFLAGS = "";
@@ -462,7 +477,7 @@
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
-				CURRENT_PROJECT_VERSION = 0.1;
+				CURRENT_PROJECT_VERSION = 0.2;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				FRAMEWORK_SEARCH_PATHS = "";
 				GCC_ENABLE_TRIGRAPHS = NO;
@@ -476,7 +491,7 @@
 				INFOPLIST_FILE = Info.plist;
 				INSTALL_PATH = "$(HOME)/Applications";
 				LIBRARY_SEARCH_PATHS = "";
-				MACOSX_DEPLOYMENT_TARGET = 10.7;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				OTHER_CFLAGS = "";
 				OTHER_LDFLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = org.johniversen.RhythmNetwork;
@@ -498,7 +513,7 @@
 			buildSettings = {
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 0.1;
+				CURRENT_PROJECT_VERSION = 0.2;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				FRAMEWORK_SEARCH_PATHS = "";
 				GCC_ENABLE_TRIGRAPHS = NO;
@@ -512,7 +527,7 @@
 				INFOPLIST_FILE = Info.plist;
 				INSTALL_PATH = "$(HOME)/Applications";
 				LIBRARY_SEARCH_PATHS = "";
-				MACOSX_DEPLOYMENT_TARGET = 10.7;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				OTHER_CFLAGS = "";
 				OTHER_LDFLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = org.johniversen.RhythmNetwork;
