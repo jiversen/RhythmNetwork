@@ -269,9 +269,14 @@ static RNNetworkView *_sharedNetworkView = nil;
 			//for bb, recover which subchannel this is based on the midi channel
 			if ( iNode == 0) {
 				Byte stimulusChannel = [nodeList[iNode] stimulusNumberForMIDIChannel:message->channel];
-				[nodeList[iNode] flashStimulusChannel:stimulusChannel];
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [nodeList[iNode] flashStimulusChannel:stimulusChannel];
+                });
+				
 			} else {
-                [nodeList[iNode] flashWithColor:[NSColor blueColor]];
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [nodeList[iNode] flashWithColor:[NSColor systemBlueColor]];
+                });
 				
                 //send event to appropriate histogramView
 				if (_doPlotData == YES) {
@@ -280,7 +285,7 @@ static RNNetworkView *_sharedNetworkView = nil;
 						[hview addEventAtTime:message->eventTime_ns];
 						//mine histogram view data to add to ITI plot
 						if (_dataView != nil) {
-							[_dataView addEventAtTime: [hview lastEventTime] withITI: [hview lastITI] forNode:iNode];
+                            [_dataView addEventAtTime: [hview lastEventTime] withITI: [hview lastITI] forNode:iNode];
 						}
 					}
 				}

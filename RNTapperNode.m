@@ -347,23 +347,32 @@ static NSArray *colorArray;
     if (_flashLayer == nil)
         return;
     
-    _flashLayer.fillColor = [[NSColor clearColor] CGColor];
-
+    if (![NSThread isMainThread]) {
+        NSLog(@"⚠️ Not on main thread!");
+    }
+    
+    //NSLog(@"flash %d", _sourceChan); //this is called reliably
+    
+    //_flashLayer.fillColor = [[NSColor clearColor] CGColor];
+    
     // Create a Flash animation
     CABasicAnimation *fadeAnimation = [CABasicAnimation animationWithKeyPath:@"fillColor"];
     fadeAnimation.fromValue = (__bridge id)[flashColor CGColor]; // Start with full color
     fadeAnimation.toValue = (__bridge id)[[NSColor whiteColor] CGColor]; // Fade to transparent
-    fadeAnimation.duration = 0.3;
-    fadeAnimation.removedOnCompletion = YES;
-    fadeAnimation.fillMode = kCAFillModeRemoved;
     
     CAKeyframeAnimation *scale = [CAKeyframeAnimation animationWithKeyPath:@"transform.scale"];
     scale.values = @[ @1.0, @1.5, @1.0 ];
     scale.keyTimes = @[ @0.0, @0.2, @1.0 ];
-    scale.duration = 0.3;
     scale.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseOut];
-    scale.removedOnCompletion = YES;
     
+    CAAnimationGroup *flashGroup = [CAAnimationGroup animation];
+        flashGroup.animations = @[fadeAnimation, scale];
+        flashGroup.duration = 0.3;
+        flashGroup.fillMode = kCAFillModeRemoved;
+        flashGroup.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseOut];
+        flashGroup.removedOnCompletion = YES;
+
+    [_flashLayer addAnimation:flashGroup forKey:@"flashEffect"];
 
     // Create a smoke ring animation
     CABasicAnimation *scaleRing = [CABasicAnimation animationWithKeyPath:@"transform.scale"];
@@ -371,32 +380,36 @@ static NSArray *colorArray;
     scaleRing.toValue = @2.0;
     scaleRing.duration = 0.5;
     scaleRing.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseOut];
-    scaleRing.removedOnCompletion = YES;
-    scaleRing.fillMode = kCAFillModeRemoved;
-
+    
     // Fade (opacity)
     CABasicAnimation *fadeRing = [CABasicAnimation animationWithKeyPath:@"opacity"];
     fadeRing.fromValue = @1.0;
     fadeRing.toValue = @0.0;
     fadeRing.duration = 0.5;
-    fadeRing.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseOut];
-    fadeRing.removedOnCompletion = YES;
-    fadeRing.fillMode = kCAFillModeRemoved;
+    
+    CAAnimationGroup *ringGroup = [CAAnimationGroup animation];
+    ringGroup.animations = @[scaleRing, fadeRing];
+    ringGroup.duration = 0.5;
+    ringGroup.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseOut];
+    ringGroup.fillMode = kCAFillModeRemoved;
+    ringGroup.removedOnCompletion = YES;
+    
+    [_ringLayer addAnimation:ringGroup forKey:@"ringEffect"];
     
     _ringLayer.strokeColor = [flashColor CGColor];
-
+    
     // Add animation to the flash and ring layers
-    [_flashLayer addAnimation:fadeAnimation forKey:@"flashFade"];
-    [_flashLayer addAnimation:scale forKey:@"flashScale"];
-    [_ringLayer addAnimation:scaleRing forKey:@"ringScale"];
-    [_ringLayer addAnimation:fadeRing forKey:@"ringFade"];
+    // NOTE: NONE OF THIS IS EVER DISPLAYED!
+    // [_flashLayer addAnimation:fadeAnimation forKey:@"flashFade"];
+    //[_flashLayer addAnimation:scale forKey:@"flashScale"];
+    //[_ringLayer addAnimation:scaleRing forKey:@"ringScale"];
+    //[_ringLayer addAnimation:fadeRing forKey:@"ringFade"];
     
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.6 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         _ringLayer.opacity = 0.0;
         _ringLayer.transform = CATransform3DIdentity;
     });
-    
-    
+}
 //    NSColor *popColor = [NSColor colorWithHue:0.25 saturation:0.3 brightness:1.0 alpha:1.0];
 //
 //    // try out something else fun
@@ -419,6 +432,5 @@ static NSArray *colorArray;
 ////    ];
 //    [_flashLayer addAnimation:pulse forKey:@"flashPulse"];
 //    [_flashLayer addAnimation:scale forKey:@"flashScale"];
-}
 
 @end
