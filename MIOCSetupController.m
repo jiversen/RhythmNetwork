@@ -24,25 +24,11 @@ enum connectFormIdx {
 
 - (void)awakeFromNib
 {
-	_deviceObject = [[MIOCModel alloc] init];
-	[self populatePopups];
-	//register to receive notifications of MIDI setup changes
-	[[NSNotificationCenter defaultCenter] addObserver:self 
-											 selector:@selector(handleMIDISetupChange:) 
-												 name:@"MIDIIOSetupChangeNotification" 
-											   object:nil];
-	//register us to receive sysex, too
-	[[_deviceObject MIDILink] registerSysexListener:self];
-	
-	//initialize UI
-	[_messageToSend setStringValue:@"f0 00 20 0d 00 20 00 45 f7"];
-	[_response setFont:[NSFont userFontOfSize:10.0]];
-	
-	//register to receive notifications of MIOC device status changes
-	[[NSNotificationCenter defaultCenter] addObserver:self 
-											 selector:@selector(handleMIOCChange:) 
-												 name:@"MIOCModelChangeNotification" 
-											   object:nil];
+    [super awakeFromNib];
+    
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self setupMIOCModel];
+    });
 		
 	//hack place--testing
 	
@@ -51,14 +37,14 @@ enum connectFormIdx {
 	//RNTapperNode *test = [[RNTapperNode alloc] initWithNodeNumber:6];
 	//test = [[RNTapperNode alloc] initWithNodeNumber:7];
 	
-	RNConnection *conn;
-	NSString *str;
+	//RNConnection *conn;
+	//NSString *str;
 	//conn = [[RNConnection alloc] initWithFromNode: 1 ToNode: 2];
 	//[conn autorelease];
 
-	str = @"{3, 4} 0.52, 23.5";
-	conn = [[RNConnection alloc] initWithString: str];
-	[conn autorelease];
+	//str = @"{3, 4} 0.52, 23.5";
+	//conn = [[RNConnection alloc] initWithString: str];
+	//[conn autorelease];
 
 	//str = @"{3, 4}";
 	//[conn autorelease];
@@ -97,6 +83,28 @@ enum connectFormIdx {
 - (MIOCModel *) deviceObject
 {
 	return _deviceObject;
+}
+
+- (void) setupMIOCModel {
+    _deviceObject = [[MIOCModel alloc] init];
+    [self populatePopups];
+    //register to receive notifications of MIDI setup changes
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(handleMIDISetupChange:)
+                                                 name:@"MIDIIOSetupChangeNotification"
+                                               object:nil];
+    //register us to receive sysex, too
+    [[_deviceObject MIDILink] registerSysexListener:self];
+    
+    //initialize UI
+    [_messageToSend setStringValue:@"f0 00 20 0d 00 20 00 45 f7"];
+    [_response setFont:[NSFont userFontOfSize:10.0]];
+    
+    //register to receive notifications of MIOC device status changes
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(handleMIOCChange:)
+                                                 name:@"MIOCModelChangeNotification"
+                                               object:nil];
 }
 
 // *********************************************

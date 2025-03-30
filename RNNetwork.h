@@ -45,7 +45,6 @@
 
 //- (void) addConnection: (RNConnection *) aConnection;
 //- (void) removeConnection: (RNConnection *) aConnection;
-
 - (void) drawWithRadius: (double) radius;
 
 @end

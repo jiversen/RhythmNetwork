@@ -18,11 +18,50 @@ static NSArray *colorArray;
 + (NSArray *) colorArray
 {
 	if (colorArray == nil) {
-		colorArray = [@[[NSColor greenColor], [NSColor blueColor], [NSColor orangeColor], \
+		//colorArray = [@[[NSColor greenColor], [NSColor blueColor], [NSColor orangeColor], \
 			[NSColor purpleColor], [NSColor brownColor], [NSColor blackColor]] retain];
+        colorArray = [@[[NSColor systemGreenColor], [NSColor systemBlueColor], [NSColor systemOrangeColor], \
+                        [NSColor systemPurpleColor], [NSColor systemBrownColor], [NSColor systemTealColor], \
+                        [NSColor systemYellowColor], [NSColor systemPinkColor], [NSColor systemIndigoColor]] retain];
 	}
 	return colorArray;
 }
+
+// create a flash layer for the node (init on first call to drawWithRadius:
++ (CAShapeLayer *)flashLayerForRect:(NSRect)rect
+{
+    NSRect insetRect = NSInsetRect(rect, 1.0, 1.0);
+    CGPathRef path = CGPathCreateWithEllipseInRect(insetRect, NULL);
+
+    CAShapeLayer *layer = [CAShapeLayer layer];
+    layer.path = path;
+    layer.bounds = insetRect;
+    layer.position = CGPointMake(NSMidX(insetRect), NSMidY(insetRect));
+    layer.fillColor = [[NSColor clearColor] CGColor];
+    layer.strokeColor = NULL;
+    layer.lineWidth = 0.0;
+
+    CGPathRelease(path);
+    return layer;
+}
+
++ (CAShapeLayer *)ringLayerForRect:(NSRect)rect
+{
+    CGPathRef path = CGPathCreateWithEllipseInRect(rect, NULL);
+
+    CAShapeLayer *layer = [CAShapeLayer layer];
+    layer.path = path;
+    layer.bounds = rect;
+    layer.position = CGPointMake(NSMidX(rect), NSMidY(rect));
+    layer.fillColor = NULL;
+    layer.strokeColor = [[NSColor clearColor] CGColor];
+    layer.lineWidth = 2.0;
+    layer.opacity = 0.0;
+
+    CGPathRelease(path);
+    return layer;
+}
+
 
 //designated initializer
 - (RNTapperNode *)initWithNodeNumber: (RNNodeNum_t) nodeNumber
@@ -82,8 +121,10 @@ static NSArray *colorArray;
 	_sourceVelocityProcessor = nil;
 	[_destVelocityProcessor release];
 	_destVelocityProcessor = nil;
+    
+    [_flashLayer removeFromSuperlayer];
+    [_ringLayer removeFromSuperlayer];
 	
-	//[colorArray release];  // !!!:jri:20050628 This is a class-wide value, not per instance. AND didn't set to nil, so was going to have multiple releases
 	[super dealloc];
 }
 
@@ -274,15 +315,9 @@ static NSArray *colorArray;
 		[loopPath stroke];
 	}
 	
-	if (_flashIntensity > 0) {
-		NSColor *tempColor = [[NSColor whiteColor] blendedColorWithFraction:_flashIntensity ofColor:_flashColor];
-		[tempColor setFill];
-	} else {
-		[[NSColor whiteColor] setFill];
-	}
-	
-	[aPath fill];
-	
+    [[NSColor whiteColor] setFill];
+    [aPath fill];
+    
 	//red: hears no stimulus
 	//color code according to which channel of BB is heard--defined by # induction sequences...
 	if ([self hearsBigBrother]) {
@@ -290,58 +325,112 @@ static NSArray *colorArray;
 	} else {
 		[[NSColor redColor] setStroke];
 	}
+
 	[aPath setLineWidth:2.0];
 	[aPath stroke];
+    
+    // init flash animation layer
+    if (_flashLayer == nil) {
+        _flashLayer = [RNTapperNode flashLayerForRect:aRect];
+        [[RNNetworkView sharedNetworkView].layer addSublayer: _flashLayer];
+    }
+    
+    if (_ringLayer == nil) {
+        _ringLayer = [RNTapperNode ringLayerForRect:aRect];
+        [[RNNetworkView sharedNetworkView].layer addSublayer: _ringLayer];
+    }
+    
 }
 
-- (void) flashWithColor: (NSColor *) flashColor inView: (NSView *) theView
+- (void) flashWithColor: (NSColor *) flashColor
 {
-	//set flash color, redraw, and set fadeout timer
-	[_flashColor autorelease];		// !!!:jri:20050819 TODO: create separate setter for color
-	_flashColor = [flashColor retain];
-	_flashIntensity = 1;
-	
-	// !!!:jri:20050819 TODO: use single class-wide timer, start it up if it's paused
-	
-	if (_flashTimer != nil) {
-		[_flashTimer invalidate];
-		[_flashTimer release];
-		_flashTimer = nil;
-	}
-	
-	_flashTimer = [[NSTimer scheduledTimerWithTimeInterval:0.05
-													target:self
-												  selector:@selector(fadeFlashColor:)
-												  userInfo:theView
-												   repeats:YES] retain];
+    if (_flashLayer == nil)
+        return;
+    
+    if (![NSThread isMainThread]) {
+        NSLog(@"⚠️ Not on main thread!");
+    }
+    
+    //NSLog(@"flash %d", _sourceChan); //this is called reliably
+    
+    //_flashLayer.fillColor = [[NSColor clearColor] CGColor];
+    
+    // Create a Flash animation
+    CABasicAnimation *fadeAnimation = [CABasicAnimation animationWithKeyPath:@"fillColor"];
+    fadeAnimation.fromValue = (__bridge id)[flashColor CGColor]; // Start with full color
+    fadeAnimation.toValue = (__bridge id)[[NSColor whiteColor] CGColor]; // Fade to transparent
+    
+    CAKeyframeAnimation *scale = [CAKeyframeAnimation animationWithKeyPath:@"transform.scale"];
+    scale.values = @[ @1.0, @1.5, @1.0 ];
+    scale.keyTimes = @[ @0.0, @0.2, @1.0 ];
+    scale.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseOut];
+    
+    CAAnimationGroup *flashGroup = [CAAnimationGroup animation];
+        flashGroup.animations = @[fadeAnimation, scale];
+        flashGroup.duration = 0.3;
+        flashGroup.fillMode = kCAFillModeRemoved;
+        flashGroup.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseOut];
+        flashGroup.removedOnCompletion = YES;
+
+    [_flashLayer addAnimation:flashGroup forKey:@"flashEffect"];
+
+    // Create a smoke ring animation
+    CABasicAnimation *scaleRing = [CABasicAnimation animationWithKeyPath:@"transform.scale"];
+    scaleRing.fromValue = @1.0;
+    scaleRing.toValue = @2.0;
+    scaleRing.duration = 0.5;
+    scaleRing.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseOut];
+    
+    // Fade (opacity)
+    CABasicAnimation *fadeRing = [CABasicAnimation animationWithKeyPath:@"opacity"];
+    fadeRing.fromValue = @1.0;
+    fadeRing.toValue = @0.0;
+    fadeRing.duration = 0.5;
+    
+    CAAnimationGroup *ringGroup = [CAAnimationGroup animation];
+    ringGroup.animations = @[scaleRing, fadeRing];
+    ringGroup.duration = 0.5;
+    ringGroup.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseOut];
+    ringGroup.fillMode = kCAFillModeRemoved;
+    ringGroup.removedOnCompletion = YES;
+    
+    [_ringLayer addAnimation:ringGroup forKey:@"ringEffect"];
+    
+    _ringLayer.strokeColor = [flashColor CGColor];
+    
+    // Add animation to the flash and ring layers
+    // NOTE: NONE OF THIS IS EVER DISPLAYED!
+    // [_flashLayer addAnimation:fadeAnimation forKey:@"flashFade"];
+    //[_flashLayer addAnimation:scale forKey:@"flashScale"];
+    //[_ringLayer addAnimation:scaleRing forKey:@"ringScale"];
+    //[_ringLayer addAnimation:fadeRing forKey:@"ringFade"];
+    
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.6 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        _ringLayer.opacity = 0.0;
+        _ringLayer.transform = CATransform3DIdentity;
+    });
 }
-
-// !!!:jri:20050819 TODO: replace w/ method operating on class-wide timer, loop thru all
-//	members...uh, that won't work, need to do this at the network level (who calls the flashes anyway...net view)
-//	since we need all the nodes. Sounds like a job for network view? How inefficient is it to dig into nodes each
-//  iteration thru the timer. Would maintaning a simple array of flashIntensities in the view, rather than tapper
-//  nodes themselves be better? We'll still call on each node to draw itself
-
-
-- (void) fadeFlashColor: (NSTimer *) theTimer;
-{
-	RNNetworkView *theView = [_flashTimer userInfo];
-	
-	[theView lockFocus];
-	[self drawWithRadius: [theView drawRadius]];
-	[theView unlockFocus];
-	[theView setNeedsDisplay:TRUE];
-	
-	_flashIntensity -= 0.25;
-	if (_flashIntensity <= 0) {
-		_flashIntensity = 0;
-		[_flashTimer invalidate];
-		[_flashTimer release];
-		_flashTimer = nil;
-	}
-	
-}
-
-
+//    NSColor *popColor = [NSColor colorWithHue:0.25 saturation:0.3 brightness:1.0 alpha:1.0];
+//
+//    // try out something else fun
+//    CAKeyframeAnimation *pulse = [CAKeyframeAnimation animationWithKeyPath:@"fillColor"];
+//    pulse.values = @[
+//        (__bridge id)[flashColor CGColor],                        // Flash on
+//        (__bridge id)[popColor CGColor], // Slight decay
+//        (__bridge id)[[NSColor clearColor] CGColor]          // Fade to clear
+//    ];
+//    pulse.keyTimes = @[ @0.0, @0.2, @1.0 ];                  // Bright, drop, fade
+//    pulse.duration = 0.3;
+//    pulse.removedOnCompletion = YES;
+//    pulse.fillMode = kCAFillModeRemoved;
+//    pulse.beginTime = CACurrentMediaTime() + 2.0;
+//    
+//    // Optional: smooth interpolation
+////    pulse.timingFunctions = @[
+////        [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseOut],
+////        [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseIn]
+////    ];
+//    [_flashLayer addAnimation:pulse forKey:@"flashPulse"];
+//    [_flashLayer addAnimation:scale forKey:@"flashScale"];
 
 @end

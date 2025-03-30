@@ -32,6 +32,7 @@
 }
 
 - (void) awakeFromNib;
+- (void) applyUIScale:(CGFloat)scale;
 - (void) dealloc;
 
 - (MIOCSetupController *) MIOCController;

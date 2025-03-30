@@ -9,6 +9,7 @@
 // this adds functionality for multiple stimulus channels
 
 #import <Cocoa/Cocoa.h>
+#import <QuartzCore/QuartzCore.h>
 
 #import "RNTapperNode.h"
 
@@ -18,11 +19,11 @@
 
 @class RNStimulus;
 
+// kind of weird: a single node object that can be displayed as multiple shapes on screen, one for each stimulus
 @interface RNBBNode : RNTapperNode {
 	Byte			_numStimulusChannels;
-	RNStimulus *	_stimulusArray[17];	//1-based arrays, max possible stimulus channels: 16
-	double			_flashIntensityArray[17];  //1 then fades to 0
-	NSTimer	*		_flashTimerArray[17];
+	RNStimulus   *_stimulusArray[17];	//1-based arrays, max possible stimulus channels: 16
+    CAShapeLayer *_flashLayerArray[17];
 }
 
 - (RNBBNode *) initWithNumStimulusChannels: (Byte) numStimulusChannels;
@@ -42,6 +43,5 @@
 
 - (void) drawWithRadius: (double) radius;
 - (void) drawStimulusChannel: (Byte) stimulusChannel WithRadius: (double) radius;
-- (void) flashStimulusChannel: (Byte) stimulusChannel WithColor: (NSColor *) flashColor inView: (NSView *) theView;
-- (void) fadeFlashColor: (NSTimer *)theTimer;
+- (void) flashStimulusChannel: (Byte) stimulusChannel;
 @end

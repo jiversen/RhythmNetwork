@@ -330,6 +330,9 @@
 	NSBezierPath *tempPath = [NSBezierPath bezierPath];
 	NSAffineTransform *arrowRotation, *arrowTranslation, *arrowTransform;
 	double angle;
+    
+    [[NSColor labelColor] setFill];
+    [[NSColor labelColor] setStroke];
 	
 	while (thisConn = [theEnumerator nextObject]) {
 		if ([thisConn fromNode] > 0 && [thisConn fromNode] != [thisConn toNode]) {
@@ -377,8 +380,6 @@
 			[tempPath lineToPoint:toPt];
 			[tempPath lineToPoint:larrowPt];
 			
-			[[NSColor blackColor] setFill];
-			[[NSColor blackColor] setStroke];
 			if (TRUE) {//to fill the arrows
 				[tempPath closePath];
 				[tempPath fill];

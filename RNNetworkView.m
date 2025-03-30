@@ -10,11 +10,20 @@
 
 #define kRadiusScale 0.75
 
+static RNNetworkView *_sharedNetworkView = nil;
+
 @implementation RNNetworkView
+
++ (instancetype)sharedNetworkView {
+    return _sharedNetworkView;
+}
 
 - (id)initWithFrame:(NSRect)frameRect
 {
 	if ((self = [super initWithFrame:frameRect]) != nil) {
+        if (!_sharedNetworkView)
+            _sharedNetworkView = self;
+        self.wantsLayer = YES;
 		_network = nil;
 		_doShowMIDIActivity = YES;
 		//calculate radius from frameRect size
@@ -24,9 +33,21 @@
 									 -NSWidth([self bounds])/2.0,
 									 -NSHeight([self bounds])/2.0)];
 	}
-	
+
 	[self setNeedsDisplay: YES];
 	return self;
+}
+
+// workaround for manually scaling up the UI in RNController awakeFromNib
+- (void)updateDrawingMetricsForScale:(CGFloat) scale {
+    NSRect frameRect = self.frame;
+    _drawRadius = fmax(NSHeight(frameRect), NSWidth(frameRect)) / 2.0 * kRadiusScale;
+
+    // Recenter the coordinate system
+    CGFloat shiftRatio = (scale - 1.0) / (2.0 * scale);
+    [self setBounds:NSOffsetRect([self bounds],
+                                 -NSWidth([self bounds]) * shiftRatio,
+                                 -NSHeight([self bounds]) * shiftRatio)];
 }
 
 - (void) dealloc
@@ -197,15 +218,38 @@
 	//stroke around edges
 	NSBezierPath *aPath = [NSBezierPath bezierPathWithRect:[self bounds]];
 	//[[NSColor windowBackgroundColor] setFill];
-    [[NSColor whiteColor] setFill];
+    [[NSColor whiteColor] setFill]; // Not Dark-mode friendly, but I don't like windowBackgroundColor look so keep it
 	[aPath fill];
-	[[NSColor blackColor] setStroke];
+    [[NSColor blackColor] setStroke];
 	[aPath stroke];
 	
 	if (_network != nil) {
 		[_network drawWithRadius: _drawRadius];
 	}	
 }
+
+// TEST CODE
+// test flashing with key 1-6
+- (void)keyDown:(NSEvent *)event {
+    NSString *chars = [event charactersIgnoringModifiers];
+    unichar c = [chars characterAtIndex:0];
+    
+    NSArray *nodeList = [_network nodeList];
+    
+    if (c >= '1' && c <= '6') {
+        NSInteger index = c - '0';
+        [nodeList[index] flashWithColor:[NSColor systemBlueColor]];
+    }
+}
+
+- (BOOL)acceptsFirstResponder {
+    return YES;
+}
+
+- (void) viewDidMoveToWindow {
+    [self.window makeFirstResponder:self];
+}
+// TEST CODE END
 
 // this is merely for display purposes: to flash nodes when input has arrived
 // need to do it here, as network itself doesn't know the view it's drawn in
@@ -225,20 +269,23 @@
 			//for bb, recover which subchannel this is based on the midi channel
 			if ( iNode == 0) {
 				Byte stimulusChannel = [nodeList[iNode] stimulusNumberForMIDIChannel:message->channel];
-				[nodeList[iNode] flashStimulusChannel:stimulusChannel
-														   WithColor:[NSColor greenColor]
-															  inView:self];
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [nodeList[iNode] flashStimulusChannel:stimulusChannel];
+                });
+				
 			} else {
-				NSColor *color = [RNTapperNode colorArray][iNode-1];
-				[nodeList[iNode] flashWithColor:color inView:self];
-				//send event to appropriate histogramView
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [nodeList[iNode] flashWithColor:[NSColor systemBlueColor]];
+                });
+				
+                //send event to appropriate histogramView
 				if (_doPlotData == YES) {
 					if (_nodeHistogramViews != nil) {
 						RNNodeHistogramView *hview = _nodeHistogramViews[(iNode-1)]; //**note indexing
 						[hview addEventAtTime:message->eventTime_ns];
 						//mine histogram view data to add to ITI plot
 						if (_dataView != nil) {
-							[_dataView addEventAtTime: [hview lastEventTime] withITI: [hview lastITI] forNode:iNode];
+                            [_dataView addEventAtTime: [hview lastEventTime] withITI: [hview lastITI] forNode:iNode];
 						}
 					}
 				}

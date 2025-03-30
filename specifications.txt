@@ -448,6 +448,7 @@ scan time: 1.0
 retrig cancel: 1
 mask time: 64
 xtalk cancel: off
+LATER: reduced threshold to 0 (min) and boosted sensitivity to 14.
 
 First tests
 Realized event histograms were collecting all the time, not only when experiment running. Plus, they did not reset

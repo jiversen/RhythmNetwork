@@ -13,7 +13,7 @@
 #import <CoreMIDI/MIDIServices.h>
 
 #define kNoteDuration_ms 100 
-#define kNoteVelocity	100
+#define kNoteVelocity	127
 
 @implementation RNStimulus
 
