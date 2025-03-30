@@ -491,7 +491,7 @@
 	[_saveButton setEnabled:YES];
 	[_startButton setTitle:@"Start Experiment"];
 	[_startButton setAction:@selector(startExperiment:)];
-	[_startButton setKeyEquivalent:@""];
+	//[_startButton setKeyEquivalent:@""];
 	[_loadButton setEnabled:YES];
 	[_testPartButton setEnabled:YES];
 	

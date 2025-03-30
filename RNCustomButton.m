@@ -61,6 +61,18 @@
     [self setNeedsDisplay:YES];
 }
 
+- (void)setTitle:(NSString *)title {
+    if (_title != title) {
+        [title release];
+        _title = [title retain];
+    }
+    [self setNeedsDisplay:YES];
+}
+
+- (void)setAction:(SEL)action {
+    _action = action;
+}
+
 - (void)setTarget:(id)target action:(SEL)action {
     _target = target;
     _action = action;

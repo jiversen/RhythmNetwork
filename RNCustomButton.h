@@ -24,8 +24,11 @@
 // Set title font
 - (void)setFont:(NSFont *)font;
 
+- (void)setTitle:(NSString *)title;
+
 // Target-action interface
 - (void)setTarget:(id)target action:(SEL)action;
+- (void)setAction:(SEL)action;
 
 // Standard enable/disable support
 - (void)setEnabled:(BOOL)enabled;
