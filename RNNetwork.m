@@ -53,11 +53,15 @@
 	//	See specifications.txt for rationale 9/8/05
 	_isWeighted = NO;	// default
 	NSNumber *isWeightedNum = [theDict valueForKey:@"isWeighted"];
-
-	if (isWeightedNum != nil) {
-		_isWeighted = (BOOL)[isWeightedNum boolValue];
-	}
-
+	if (isWeightedNum != nil)
+		_isWeighted = (BOOL) [isWeightedNum boolValue];
+    
+    //Does network contain delays? If so, we need some additional special routing and the use of a second MIDIIO.
+    _isDelay = NO; //default
+    NSNumber *isDelayNum = [theDict valueForKey:@"isDelay"];
+    if (isDelayNum != nil)
+        _isDelay = (BOOL) [isDelayNum boolValue];
+	
 	// *********************************************
 	//  Construct nodeList (creating the nodes), include as 0 'bigBrother' node, this computer
 	//
@@ -154,14 +158,23 @@
 	RNConnection	*thisConn;
 
 	while (thisConn = [theEnumerator nextObject]) {
-		if ([thisConn fromNode] == 0) {	// source is BB, take into account stimulus channels
-			sourcePort	= [_nodeList[[thisConn fromNode]] sourcePort];
-			sourceChan	= [_nodeList[[thisConn fromNode]] MIDIChannelForStimulusNumber:[thisConn fromSubChannel]];
-			destPort	= [_nodeList[[thisConn toNode]] destPort];
-			destChan	= [_nodeList[[thisConn toNode]] destChan];	// always kMIOCOutChannelSameAsInput
-		} else {													// source is a tapper node
-			sourcePort	= [_nodeList[[thisConn fromNode]] sourcePort];
-			sourceChan	= [_nodeList[[thisConn fromNode]] sourceChan];
+		
+		if ([thisConn fromNode] == 0) { //source is BB, take into account stimulus channels
+			sourcePort = [ _nodeList[[thisConn fromNode]] sourcePort];
+			sourceChan = [ _nodeList[[thisConn fromNode]] MIDIChannelForStimulusNumber:[thisConn fromSubChannel] ];
+			destPort = [ _nodeList[[thisConn toNode]] destPort];
+			destChan = [ _nodeList[[thisConn toNode]] destChan]; //always kMIOCOutChannelSameAsInput
+			
+		} else { //source is a tapper node
+			sourcePort = [ _nodeList[[thisConn fromNode]] sourcePort];
+			sourceChan = [ _nodeList[[thisConn fromNode]] sourceChan];
+			
+			//destination depends on if network is weighted
+            // TODO: this needs to be revised to only treat specific connections with weight != 1.0 as weighted.
+                //I don't quite get this, however, as where are the velocity processors made?
+			if (_isWeighted == NO) { //not weighted, direct to destination
+				destPort = [ _nodeList[[thisConn toNode]] destPort];
+				destChan = [ _nodeList[[thisConn toNode]] destChan];
 
 			// destination depends on if network is weighted
 			if (_isWeighted == NO) {// not weighted, direct to destination

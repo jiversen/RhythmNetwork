@@ -7,8 +7,9 @@
 #import <os/log.h>
 // #import "TPCircularBuffer.h"
 
-#define kSendMIDISuccess	TRUE
-#define kSendMIDIFailure	FALSE
+#define kSendMIDISuccess		TRUE
+#define kSendMIDIFailure		FALSE
+#define kMIDIInvalidRef ((MIDIObjectRef)0)
 
 typedef struct _NoteOnMessage {
 	UInt64	eventTime_ns;
@@ -28,21 +29,23 @@ typedef struct _ProgramChangeMessage {
 
 @interface MIDIIO : NSObject
 {
-	MIDIClientRef			_MIDIClient;
-	MIDIPortRef			_inPort;
-	MIDIPortRef			_outPort;
-	MIDIEndpointRef		_MIDISource;// only one source & destination
-	MIDIEndpointRef		_MIDIDest;
-	NSMutableArray		*_sysexListenerArray;
-	NSMutableArray		*_MIDIListenerArray;
-	dispatch_queue_t		_midiLoggingQueue;
-	NSMutableData			*_sysexData;
-	BOOL					_isReceivingSysex;
+	MIDIClientRef	    _MIDIClient;
+	MIDIPortRef	    _inPort;
+	MIDIPortRef	   _outPort;
+	MIDIEndpointRef   _MIDISource;	//only one source & destination
+	MIDIEndpointRef  _MIDIDest;
+	NSMutableArray   *_sysexListenerArray;
+	NSMutableArray   *_MIDIListenerArray;
+    dispatch_queue_t _midiLoggingQueue;
+    NSMutableData    *_sysexData;
+    BOOL            _isReceivingSysex;
+    MIDIIO          *_leaderMIDIIO; //if we are a follower, we'll have a leader
 }
 
-- (MIDIIO *)init;
+- (MIDIIO*)init;
+- (MIDIIO*)initFollowerWithLeader:(MIDIIO *)leaderMIDIIO;
 - (void)dealloc;
-- (void)setupMIDI;
+- (void)setupMIDIWithSourceName:(NSString *)sourceName destinationName:(NSString *)destinationName;
 
 - (MIDIReadProc)defaultReadProc;
 - (void)setDefaultReadProc;

@@ -26,6 +26,7 @@
 	unsigned int		_numTapperNodes;
 	unsigned int		_numStimulusChannels;	// max number of independent Big Brother stimulus channels needed
 	BOOL				_isWeighted;
+    BOOL                _isDelay;
 }
 
 - (RNNetwork *)initFromDictionary:(NSDictionary *)theDict;

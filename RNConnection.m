@@ -32,7 +32,7 @@
 //  e.g. "{2, 2}1.0"  (connection from node 2 to self, weight 1)
 // if from node is 0, can optionally  have two digit decimal to indicate which subchannel
 //	e.g. "{0.01, 2}1.0" refers to subchannel 1 (range: 1 to 16, i.e. 0.01 to 0.16)
-//	// :jri:20050916 add delay (in ms) to specification: "{2, 2}1.0, 23.2"
+//	// :jri:20050916 add delay (in ms) to specification: "{2,2}1.0,23.2"
 
 - (RNConnection *)initWithString:(NSString *)coordString
 {
