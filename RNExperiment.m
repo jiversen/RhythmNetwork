@@ -54,9 +54,9 @@
 
 - (void) initializeExperimentPartsWithArray: (NSArray *) partArray NetworkSizeDict: (NSDictionary *) sizeDict
 {
-	NSMutableDictionary *aDict;
-	RNExperimentPart *part;
-	NSArray *subPartArray;
+	NSMutableDictionary 	*aDict;
+	RNExperimentPart		*part;
+	NSArray				*subPartArray;
 		
 	NSEnumerator *partEnumerator = [partArray objectEnumerator];
 	_experimentParts = [[NSMutableArray arrayWithCapacity:[partArray count]] retain];

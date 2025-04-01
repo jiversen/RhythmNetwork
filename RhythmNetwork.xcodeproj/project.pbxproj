@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		0B0E4F642D90C23900EF36AC /* RNCustomButton.m in Sources */ = {isa = PBXBuildFile; fileRef = 0B0E4F632D90C23900EF36AC /* RNCustomButton.m */; };
+		0B1496A42D9C806400FF22F0 /* MacroSummary.md in Resources */ = {isa = PBXBuildFile; fileRef = 0B1496A32D9C806400FF22F0 /* MacroSummary.md */; };
 		0B16BA6F0895BBF000188571 /* RNDataView.h in Headers */ = {isa = PBXBuildFile; fileRef = 0B16BA6D0895BBF000188571 /* RNDataView.h */; };
 		0B16BA700895BBF000188571 /* RNDataView.m in Sources */ = {isa = PBXBuildFile; fileRef = 0B16BA6E0895BBF000188571 /* RNDataView.m */; };
 		0B2F157706E0546600693117 /* MIDIIO.h in Headers */ = {isa = PBXBuildFile; fileRef = 0B2F157506E0546600693117 /* MIDIIO.h */; };
@@ -17,7 +18,7 @@
 		0B36952D07A816F800FC1B4B /* RNExperimentPart.h in Headers */ = {isa = PBXBuildFile; fileRef = 0B36952B07A816F800FC1B4B /* RNExperimentPart.h */; };
 		0B36952E07A816F800FC1B4B /* RNExperimentPart.m in Sources */ = {isa = PBXBuildFile; fileRef = 0B36952C07A816F800FC1B4B /* RNExperimentPart.m */; };
 		0B36959807A85D0300FC1B4B /* experiment ideas.txt in Resources */ = {isa = PBXBuildFile; fileRef = 0B36959707A85D0300FC1B4B /* experiment ideas.txt */; };
-		0B3695DC07A8BA2100FC1B4B /* MIOC MIDI specs.txt in Resources */ = {isa = PBXBuildFile; fileRef = 0B3695DB07A8BA2100FC1B4B /* MIOC MIDI specs.txt */; };
+		0B3695DC07A8BA2100FC1B4B /* MIOC MIDI SYSEX specs.txt in Resources */ = {isa = PBXBuildFile; fileRef = 0B3695DB07A8BA2100FC1B4B /* MIOC MIDI SYSEX specs.txt */; };
 		0B37B95407CF0AA400FADE24 /* RNNodeHistogramView.h in Headers */ = {isa = PBXBuildFile; fileRef = 0B37B95207CF0AA400FADE24 /* RNNodeHistogramView.h */; };
 		0B37B95507CF0AA400FADE24 /* RNNodeHistogramView.m in Sources */ = {isa = PBXBuildFile; fileRef = 0B37B95307CF0AA400FADE24 /* RNNodeHistogramView.m */; };
 		0B38936C07826F0C00429A61 /* RNConnection.h in Headers */ = {isa = PBXBuildFile; fileRef = 0B38936A07826F0C00429A61 /* RNConnection.h */; };
@@ -68,6 +69,7 @@
 		089C165DFE840E0CC02AAC07 /* English */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = English; path = English.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		0B0E4F622D90C20B00EF36AC /* RNCustomButton.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RNCustomButton.h; sourceTree = "<group>"; };
 		0B0E4F632D90C23900EF36AC /* RNCustomButton.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = RNCustomButton.m; sourceTree = "<group>"; };
+		0B1496A32D9C806400FF22F0 /* MacroSummary.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = MacroSummary.md; sourceTree = "<group>"; };
 		0B16BA6D0895BBF000188571 /* RNDataView.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = RNDataView.h; sourceTree = "<group>"; };
 		0B16BA6E0895BBF000188571 /* RNDataView.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = RNDataView.m; sourceTree = "<group>"; };
 		0B2F157506E0546600693117 /* MIDIIO.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = MIDIIO.h; sourceTree = "<group>"; };
@@ -77,7 +79,7 @@
 		0B36952B07A816F800FC1B4B /* RNExperimentPart.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RNExperimentPart.h; sourceTree = "<group>"; };
 		0B36952C07A816F800FC1B4B /* RNExperimentPart.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RNExperimentPart.m; sourceTree = "<group>"; };
 		0B36959707A85D0300FC1B4B /* experiment ideas.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "experiment ideas.txt"; sourceTree = "<group>"; };
-		0B3695DB07A8BA2100FC1B4B /* MIOC MIDI specs.txt */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = "MIOC MIDI specs.txt"; sourceTree = "<group>"; };
+		0B3695DB07A8BA2100FC1B4B /* MIOC MIDI SYSEX specs.txt */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = "MIOC MIDI SYSEX specs.txt"; sourceTree = "<group>"; };
 		0B37B95207CF0AA400FADE24 /* RNNodeHistogramView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RNNodeHistogramView.h; sourceTree = "<group>"; };
 		0B37B95307CF0AA400FADE24 /* RNNodeHistogramView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RNNodeHistogramView.m; sourceTree = "<group>"; };
 		0B38936A07826F0C00429A61 /* RNConnection.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RNConnection.h; sourceTree = "<group>"; };
@@ -186,10 +188,11 @@
 			isa = PBXGroup;
 			children = (
 				0B5BAFE40898985D00460665 /* Alesis SR-16 Sysex.rtf */,
-				0B3695DB07A8BA2100FC1B4B /* MIOC MIDI specs.txt */,
+				0B3695DB07A8BA2100FC1B4B /* MIOC MIDI SYSEX specs.txt */,
 				0B36959707A85D0300FC1B4B /* experiment ideas.txt */,
 				0B77FFF60774B1630028C124 /* specifications.txt */,
 				0B95AAA12D8B1FC100003602 /* miditemp manual.pdf */,
+				0B1496A32D9C806400FF22F0 /* MacroSummary.md */,
 			);
 			name = Documentation;
 			sourceTree = "<group>";
@@ -252,6 +255,7 @@
 			comments = "1/25/04 tried disabling ZeroLink to see if launch time better in development";
 			name = RhythmNetwork;
 			sourceTree = "<group>";
+			usesTabs = 1;
 		};
 		29B97315FDCFA39411CA2CEA /* Other Sources */ = {
 			isa = PBXGroup;
@@ -370,8 +374,9 @@
 				8D11072B0486CEB800E47090 /* InfoPlist.strings in Resources */,
 				0B77FFF70774B1630028C124 /* specifications.txt in Resources */,
 				0B36959807A85D0300FC1B4B /* experiment ideas.txt in Resources */,
-				0B3695DC07A8BA2100FC1B4B /* MIOC MIDI specs.txt in Resources */,
+				0B3695DC07A8BA2100FC1B4B /* MIOC MIDI SYSEX specs.txt in Resources */,
 				0B95AAA22D8B1FC100003602 /* miditemp manual.pdf in Resources */,
+				0B1496A42D9C806400FF22F0 /* MacroSummary.md in Resources */,
 				0B5BAFE50898985D00460665 /* Alesis SR-16 Sysex.rtf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

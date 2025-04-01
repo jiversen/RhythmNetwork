@@ -10,23 +10,23 @@
 
 @class MIOCVelocityProcessor;
 
-@interface RNGlobalConnectionStrength : NSObject {
-
-	NSString				*_type; // 'weight' or 'constant' or 'inputConstant'
+@interface RNGlobalConnectionStrength : NSObject
+{
+	NSString				*_type;			// 'weight' or 'constant' or 'inputConstant'
 	MIOCVelocityProcessor	*_processor;
-	double					_param; //weight if 'weight', midi velocity if 'constant'
+	double				_param;			// weight if 'weight', midi velocity if 'constant'
 }
 
-//wierd factory: generate an array of dictionaries from a dictionary defining the ramp
-+ (NSArray *) globalConnectionStrengthDictionaryArrayFromRampDictionary:(NSDictionary *)aDict;
+// wierd factory: generate an array of dictionaries from a dictionary defining the ramp
++ (NSArray *)globalConnectionStrengthDictionaryArrayFromRampDictionary:(NSDictionary *)aDict;
 
-- (RNGlobalConnectionStrength *) initFromDictionary:(NSDictionary *)aDict;
+- (RNGlobalConnectionStrength *)initFromDictionary:(NSDictionary *)aDict;
 
-- (RNGlobalConnectionStrength *) initWithType:(NSString *)type value:(double)param;
+- (RNGlobalConnectionStrength *)initWithType:(NSString *)type value:(double)param;
 
-- (MIOCVelocityProcessor *) processor;
-- (NSString *) type;
+- (MIOCVelocityProcessor *)processor;
+- (NSString *)type;
 
-//- (NSString *) description;
+// - (NSString *) description;
 
 @end

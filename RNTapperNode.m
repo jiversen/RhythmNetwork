@@ -30,33 +30,32 @@ static NSArray *colorArray;
 // create a flash layer for the node (init on first call to drawWithRadius:
 + (CAShapeLayer *)flashLayerForRect:(NSRect)rect
 {
-    NSRect insetRect = NSInsetRect(rect, 1.0, 1.0);
-    CGPathRef path = CGPathCreateWithEllipseInRect(insetRect, NULL);
+	NSRect		insetRect	= NSInsetRect(rect, 1.0, 1.0);
+	CGPathRef	path		= CGPathCreateWithEllipseInRect(insetRect, NULL);
+	
+	CAShapeLayer *layer = [CAShapeLayer layer];
+	layer.path			= path;
+	layer.bounds			= insetRect;
+	layer.position		= CGPointMake(NSMidX(insetRect), NSMidY(insetRect));
+	layer.fillColor		= [[NSColor clearColor] CGColor];
+	layer.strokeColor		= NULL;
+	layer.lineWidth		= 0.0;
 
-    CAShapeLayer *layer = [CAShapeLayer layer];
-    layer.path = path;
-    layer.bounds = insetRect;
-    layer.position = CGPointMake(NSMidX(insetRect), NSMidY(insetRect));
-    layer.fillColor = [[NSColor clearColor] CGColor];
-    layer.strokeColor = NULL;
-    layer.lineWidth = 0.0;
-
-    CGPathRelease(path);
-    return layer;
+	CGPathRelease(path);
+	return layer;
 }
-
 + (CAShapeLayer *)ringLayerForRect:(NSRect)rect
 {
     CGPathRef path = CGPathCreateWithEllipseInRect(rect, NULL);
 
-    CAShapeLayer *layer = [CAShapeLayer layer];
-    layer.path = path;
-    layer.bounds = rect;
-    layer.position = CGPointMake(NSMidX(rect), NSMidY(rect));
-    layer.fillColor = NULL;
-    layer.strokeColor = [[NSColor clearColor] CGColor];
-    layer.lineWidth = 2.0;
-    layer.opacity = 0.0;
+	CAShapeLayer *layer = [CAShapeLayer layer];
+	layer.path			= path;
+	layer.bounds			= rect;
+	layer.position		= CGPointMake(NSMidX(rect), NSMidY(rect));
+	layer.fillColor		= NULL;
+	layer.strokeColor		= [[NSColor clearColor] CGColor];
+	layer.lineWidth		= 2.0;
+	layer.opacity		= 0.0;
 
     CGPathRelease(path);
     return layer;
@@ -86,8 +85,7 @@ static NSArray *colorArray;
 		//note = (concentratorNo - 1) * kNumInputsPerConcentrator + 
 		//	(nodeNumber-1) % kNumInputsPerConcentrator + kBaseNote + 1;
 		//note = kBaseNote + concentratorNo;
-		NSAssert3( (concentratorNo <= kNumConcentrators), @"nodeNumber exceeds the number of inputs available (%d > %d; %d concentrator(s))", 
-				   nodeNumber, (kNumConcentrators * kNumInputsPerConcentrator), kNumConcentrators);	
+		NSAssert3( (concentratorNo <= kNumConcentrators), @"nodeNumber exceeds the number of inputs available (%d > %d; %d concentrator(s))", nodeNumber, (kNumConcentrators * kNumInputsPerConcentrator), kNumConcentrators);
 		[self setSourcePort: (Byte) concentratorNo 
 				 SourceChan: (Byte) relativeNodeNumber 
 				 SourceNote: (Byte) note];
@@ -351,86 +349,54 @@ static NSArray *colorArray;
         NSLog(@"⚠️ Not on main thread!");
     }
     
-    //NSLog(@"flash %d", _sourceChan); //this is called reliably
-    
     //_flashLayer.fillColor = [[NSColor clearColor] CGColor];
     
     // Create a Flash animation
-    CABasicAnimation *fadeAnimation = [CABasicAnimation animationWithKeyPath:@"fillColor"];
-    fadeAnimation.fromValue = (__bridge id)[flashColor CGColor]; // Start with full color
-    fadeAnimation.toValue = (__bridge id)[[NSColor whiteColor] CGColor]; // Fade to transparent
-    
-    CAKeyframeAnimation *scale = [CAKeyframeAnimation animationWithKeyPath:@"transform.scale"];
-    scale.values = @[ @1.0, @1.5, @1.0 ];
-    scale.keyTimes = @[ @0.0, @0.2, @1.0 ];
-    scale.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseOut];
-    
-    CAAnimationGroup *flashGroup = [CAAnimationGroup animation];
-        flashGroup.animations = @[fadeAnimation, scale];
-        flashGroup.duration = 0.3;
-        flashGroup.fillMode = kCAFillModeRemoved;
-        flashGroup.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseOut];
-        flashGroup.removedOnCompletion = YES;
+	CABasicAnimation *fadeAnimation = [CABasicAnimation animationWithKeyPath:@"fillColor"];
+	fadeAnimation.fromValue 	= (__bridge id)[flashColor CGColor];		// Start with full color
+	fadeAnimation.toValue	= (__bridge id)[[NSColor whiteColor] CGColor];// Fade to transparent
 
-    [_flashLayer addAnimation:flashGroup forKey:@"flashEffect"];
+	CAKeyframeAnimation *scale = [CAKeyframeAnimation animationWithKeyPath:@"transform.scale"];
+	scale.values				= @[@1.0, @1.5, @1.0];
+	scale.keyTimes			= @[@0.0, @0.2, @1.0];
+	scale.timingFunction		= [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseOut];
 
-    // Create a smoke ring animation
-    CABasicAnimation *scaleRing = [CABasicAnimation animationWithKeyPath:@"transform.scale"];
-    scaleRing.fromValue = @1.0;
-    scaleRing.toValue = @2.0;
-    scaleRing.duration = 0.5;
-    scaleRing.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseOut];
-    
-    // Fade (opacity)
-    CABasicAnimation *fadeRing = [CABasicAnimation animationWithKeyPath:@"opacity"];
-    fadeRing.fromValue = @1.0;
-    fadeRing.toValue = @0.0;
-    fadeRing.duration = 0.5;
-    
-    CAAnimationGroup *ringGroup = [CAAnimationGroup animation];
-    ringGroup.animations = @[scaleRing, fadeRing];
-    ringGroup.duration = 0.5;
-    ringGroup.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseOut];
-    ringGroup.fillMode = kCAFillModeRemoved;
-    ringGroup.removedOnCompletion = YES;
-    
+	CAAnimationGroup *flashGroup = [CAAnimationGroup animation];
+	flashGroup.animations			= @[fadeAnimation, scale];
+	flashGroup.duration				= 0.3;
+	flashGroup.fillMode				= kCAFillModeRemoved;
+	flashGroup.timingFunction			= [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseOut];
+	flashGroup.removedOnCompletion	= YES;
+
+	[_flashLayer addAnimation:flashGroup forKey:@"flashEffect"];
+
+	// Create a smoke ring animation
+	CABasicAnimation *scaleRing = [CABasicAnimation animationWithKeyPath:@"transform.scale"];
+	scaleRing.fromValue			= @1.0;
+	scaleRing.toValue			= @2.0;
+	scaleRing.duration			= 0.5;
+	scaleRing.timingFunction		= [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseOut];
+
+	// Fade (opacity)
+	CABasicAnimation *fadeRing = [CABasicAnimation animationWithKeyPath:@"opacity"];
+	fadeRing.fromValue	= @1.0;
+	fadeRing.toValue		= @0.0;
+	fadeRing.duration	= 0.5;
+
+	CAAnimationGroup *ringGroup = [CAAnimationGroup animation];
+	ringGroup.animations			= @[scaleRing, fadeRing];
+	ringGroup.duration			= 0.5;
+	ringGroup.timingFunction		= [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseOut];
+	ringGroup.fillMode			= kCAFillModeRemoved;
+	ringGroup.removedOnCompletion	= YES;
     [_ringLayer addAnimation:ringGroup forKey:@"ringEffect"];
     
     _ringLayer.strokeColor = [flashColor CGColor];
     
-    // Add animation to the flash and ring layers
-    // NOTE: NONE OF THIS IS EVER DISPLAYED!
-    // [_flashLayer addAnimation:fadeAnimation forKey:@"flashFade"];
-    //[_flashLayer addAnimation:scale forKey:@"flashScale"];
-    //[_ringLayer addAnimation:scaleRing forKey:@"ringScale"];
-    //[_ringLayer addAnimation:fadeRing forKey:@"ringFade"];
-    
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.6 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        _ringLayer.opacity = 0.0;
-        _ringLayer.transform = CATransform3DIdentity;
+        _ringLayer.opacity 	= 0.0;
+        _ringLayer.transform 	= CATransform3DIdentity;
     });
 }
-//    NSColor *popColor = [NSColor colorWithHue:0.25 saturation:0.3 brightness:1.0 alpha:1.0];
-//
-//    // try out something else fun
-//    CAKeyframeAnimation *pulse = [CAKeyframeAnimation animationWithKeyPath:@"fillColor"];
-//    pulse.values = @[
-//        (__bridge id)[flashColor CGColor],                        // Flash on
-//        (__bridge id)[popColor CGColor], // Slight decay
-//        (__bridge id)[[NSColor clearColor] CGColor]          // Fade to clear
-//    ];
-//    pulse.keyTimes = @[ @0.0, @0.2, @1.0 ];                  // Bright, drop, fade
-//    pulse.duration = 0.3;
-//    pulse.removedOnCompletion = YES;
-//    pulse.fillMode = kCAFillModeRemoved;
-//    pulse.beginTime = CACurrentMediaTime() + 2.0;
-//    
-//    // Optional: smooth interpolation
-////    pulse.timingFunctions = @[
-////        [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseOut],
-////        [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseIn]
-////    ];
-//    [_flashLayer addAnimation:pulse forKey:@"flashPulse"];
-//    [_flashLayer addAnimation:scale forKey:@"flashScale"];
 
 @end

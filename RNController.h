@@ -2,47 +2,47 @@
 
 #import <Cocoa/Cocoa.h>
 
-//conversion factor
-#define kNStoS	1000000000
+// conversion factor
+#define kNStoS 1000000000
 
-@class RNNetworkView;
-@class RNDataView;
-@class MIOCSetupController;
-@class RNExperiment;
-@class RNNetwork;
+@class	RNNetworkView;
+@class	RNDataView;
+@class	MIOCSetupController;
+@class	RNExperiment;
+@class	RNNetwork;
 
 @interface RNController : NSWindowController
 {
-	RNExperiment *_experiment;
-    IBOutlet RNNetworkView *_networkView;
-	IBOutlet RNDataView	*_dataView;
-	IBOutlet MIOCSetupController *_MIOCController;
-	IBOutlet NSTextField *_titleText; //we are these fields' delegate
-	IBOutlet NSTextView *_notesText;
-	IBOutlet NSButton *_loadButton;
-	IBOutlet NSButton *_saveButton;
-	IBOutlet NSButton *_startButton;
-	IBOutlet NSTableView *_experimentPartsTable;
-	IBOutlet NSArrayController *_experimentPartsController;
-	IBOutlet NSButton *_testPartButton;
-	IBOutlet NSButton *_testStopButton;
-	IBOutlet NSTextField *_experimentTimer;
-	NSTimer *_experimentTimerTimer;
-	IBOutlet NSTextField	*_drumSetNumber;
+	RNExperiment					*_experiment;
+	IBOutlet RNNetworkView		*_networkView;
+	IBOutlet RNDataView			*_dataView;
+	IBOutlet MIOCSetupController	*_MIOCController;
+	IBOutlet NSTextField			*_titleText;// we are these fields' delegate
+	IBOutlet NSTextView			*_notesText;
+	IBOutlet NSButton				*_loadButton;
+	IBOutlet NSButton				*_saveButton;
+	IBOutlet NSButton				*_startButton;
+	IBOutlet NSTableView			*_experimentPartsTable;
+	IBOutlet NSArrayController		*_experimentPartsController;
+	IBOutlet NSButton				*_testPartButton;
+	IBOutlet NSButton				*_testStopButton;
+	IBOutlet NSTextField			*_experimentTimer;
+	NSTimer						*_experimentTimerTimer;
+	IBOutlet NSTextField			*_drumSetNumber;
 }
 
-- (void) awakeFromNib;
-- (void) applyUIScale:(CGFloat)scale;
-- (void) dealloc;
+- (void)awakeFromNib;
+- (void)applyUIScale:(CGFloat)scale;
+- (void)dealloc;
 
-- (MIOCSetupController *) MIOCController;
+- (MIOCSetupController *)MIOCController;
 
-- (void) programMIOCWithNetwork:(RNNetwork *)newNet;
+- (void)programMIOCWithNetwork:(RNNetwork *)newNet;
 
-- (void) newStimulusNotificationHandler: (NSNotification *) notification;
-- (void) newNetworkNotificationHandler: (NSNotification *) notification;
+- (void)newStimulusNotificationHandler:(NSNotification *)notification;
+- (void)newNetworkNotificationHandler:(NSNotification *)notification;
 
-- (void) synchronizePartsListSelection;
+- (void)synchronizePartsListSelection;
 
 - (void)loadSaveAlertDidEnd:(NSAlert *)alert returnCode:(int)returnCode contextInfo:(void *)contextInfo;
 - (void)startSaveAlertDidEnd:(NSAlert *)alert returnCode:(int)returnCode contextInfo:(void *)contextInfo;
@@ -56,9 +56,8 @@
 
 - (IBAction)setDrumSetAction:(id)sender;
 
-- (void) updateExperimentTimer: (NSTimer *) timer;
-- (void) experimentOvertimeNotificationHandler: (NSNotification *) notification;
-- (void) experimentEndNotificationHandler: (NSNotification *) notification;
-
+- (void)updateExperimentTimer:(NSTimer *)timer;
+- (void)experimentOvertimeNotificationHandler:(NSNotification *)notification;
+- (void)experimentEndNotificationHandler:(NSNotification *)notification;
 
 @end

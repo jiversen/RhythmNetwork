@@ -169,12 +169,12 @@
     _flashLayerArray[stimulusChannel].fillColor = [[NSColor clearColor] CGColor];
 
     // Create a fade-out animation
-    CABasicAnimation *fadeAnimation = [CABasicAnimation animationWithKeyPath:@"fillColor"];
-    fadeAnimation.fromValue = (__bridge id)[flashColor CGColor]; // Start with full color
-    fadeAnimation.toValue = (__bridge id)[[NSColor clearColor] CGColor]; // Fade to transparent
-    fadeAnimation.duration = 0.3;
-    fadeAnimation.removedOnCompletion = YES;
-    fadeAnimation.fillMode = kCAFillModeRemoved;
+	CABasicAnimation *fadeAnimation = [CABasicAnimation animationWithKeyPath:@"fillColor"];
+	fadeAnimation.fromValue				= (__bridge id)[flashColor CGColor];		// Start with full color
+	fadeAnimation.toValue				= (__bridge id)[[NSColor clearColor] CGColor];// Fade to transparent
+	fadeAnimation.duration				= 0.3;
+	fadeAnimation.removedOnCompletion		= YES;
+	fadeAnimation.fillMode				= kCAFillModeRemoved;
     
     // Add animation to the flash layer
     [_flashLayerArray[stimulusChannel] addAnimation:fadeAnimation forKey:@"flashFade"];

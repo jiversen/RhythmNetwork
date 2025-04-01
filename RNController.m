@@ -23,22 +23,22 @@
 - (void) awakeFromNib
 {
     
-    // Scale up the UI by 150%
-    CGFloat scaleFactor = 2.0;
-    [self applyUIScale:scaleFactor];
-    
-    // origial buttons do not do well with scaling
-    _loadButton = (NSButton *)[self replaceOldButton:_loadButton];
-    _saveButton = (NSButton *)[self replaceOldButton:_saveButton];
-    _startButton = (NSButton *)[self replaceOldButton:_startButton];
-    _testPartButton = (NSButton *)[self replaceOldButton:_testPartButton];
-    _testStopButton = (NSButton *)[self replaceOldButton:_testStopButton];
+	// Scale up the UI by 150%
+	CGFloat scaleFactor = 2.0;
+	[self applyUIScale:scaleFactor];
 
-    //set up the UI to reflect no-experiment open
-    //e.g. disable start-experiment, save-experiment, text fields
+	// origial buttons do not do well with scaling
+	_loadButton		= (NSButton *)[self replaceOldButton:_loadButton];
+	_saveButton		= (NSButton *)[self replaceOldButton:_saveButton];
+	_startButton		= (NSButton *)[self replaceOldButton:_startButton];
+	_testPartButton 	= (NSButton *)[self replaceOldButton:_testPartButton];
+	_testStopButton 	= (NSButton *)[self replaceOldButton:_testStopButton];
+
+	// set up the UI to reflect no-experiment open
+	// e.g. disable start-experiment, save-experiment, text fields
 	[_titleText setEnabled:NO];
 	[_notesText setEditable:NO];
-    [_loadButton setEnabled:YES];
+	[_loadButton setEnabled:YES];
 	[_saveButton setEnabled:NO];
 	[_startButton setEnabled:NO];
 	[_testPartButton setEnabled:NO];
@@ -64,16 +64,16 @@
 		
 	[_experimentTimer setFont:[NSFont fontWithName:@"Helvetica" size:16]];
 	[_experimentTimer setStringValue:@"  -:--"];
-	
-	//show network view where data view is
-	[_networkView setDataView: _dataView];
+
+	// show network view where data view is
+	[_networkView setDataView:_dataView];
 	[_networkView setPlotData:NO];
-	
+
 	[_drumSetNumber setStringValue:@"--"];
-    
-    //a few fixes for dark mose
-    [_experimentPartsTable setBackgroundColor:[NSColor controlBackgroundColor]];
-    [_titleText setDrawsBackground:NO];
+
+	// a few fixes for dark mose
+	[_experimentPartsTable setBackgroundColor:[NSColor controlBackgroundColor]];
+	[_titleText setDrawsBackground:NO];
 	
 }
 

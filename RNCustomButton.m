@@ -11,14 +11,16 @@
 @implementation RNCustomButton
 
 - (instancetype)initWithFrame:(NSRect)frameRect title:(NSString *)title {
-    self = [super initWithFrame:frameRect];
-    if (self) {
-        _title = [title copy];
-        _font = [NSFont systemFontOfSize:13];
-        _enabled = YES;
-        self.wantsLayer = YES;
-    }
-    return self;
+	self = [super initWithFrame:frameRect];
+
+	if (self) {
+		_title			= [title copy];
+		_font			= [NSFont systemFontOfSize:13];
+		_enabled			= YES;
+		self.wantsLayer 	= YES;
+	}
+
+	return self;
 }
 
 - (void)dealloc {
@@ -166,34 +168,34 @@
         NSFontAttributeName: _font,
         NSForegroundColorAttributeName: textColor
     };
-    NSSize textSize = [_title sizeWithAttributes:attrs];
-    NSPoint textPoint = NSMakePoint((NSWidth(self.bounds) - textSize.width) / 2,
-                                    (NSHeight(self.bounds) - textSize.height) / 2);
-    [_title drawAtPoint:textPoint withAttributes:attrs];
+	NSSize	textSize	= [_title sizeWithAttributes:attrs];
+	NSPoint textPoint	= NSMakePoint((NSWidth(self.bounds) - textSize.width) / 2,
+									  (NSHeight(self.bounds) - textSize.height) / 2);
+	[_title drawAtPoint:textPoint withAttributes:attrs];
 }
 
 - (void)updateGlow {
-    if (_isHovered && _enabled) {
-        self.layer.shadowColor = [[NSColor systemBlueColor] colorWithAlphaComponent:0.7].CGColor;
-        self.layer.shadowOpacity = 0.4;
-        self.layer.shadowRadius = 6.0;
-        self.layer.shadowOffset = CGSizeZero;
-    } else {
-        self.layer.shadowOpacity = 0.0;
-    }
+	if (_isHovered && _enabled) {
+		self.layer.shadowColor		= [[NSColor systemBlueColor] colorWithAlphaComponent:0.7].CGColor;
+		self.layer.shadowOpacity		= 0.4;
+		self.layer.shadowRadius		= 6.0;
+		self.layer.shadowOffset		= CGSizeZero;
+	} else {
+		self.layer.shadowOpacity 		= 0.0;
+	}
 }
 
 - (void)animatePulse {
-    self.wantsLayer = YES;
+	self.wantsLayer = YES;
 
-    CABasicAnimation *pulse = [CABasicAnimation animationWithKeyPath:@"opacity"];
-    pulse.fromValue = @(1.0);
-    pulse.toValue = @(0.3);
-    pulse.duration = 0.15;
-    pulse.autoreverses = YES;
-    pulse.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseOut];
+	CABasicAnimation *pulse = [CABasicAnimation animationWithKeyPath:@"opacity"];
+	pulse.fromValue			= @(1.0);
+	pulse.toValue			= @(0.3);
+	pulse.duration			= 0.15;
+	pulse.autoreverses		= YES;
+	pulse.timingFunction		= [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseOut];
 
-    [self.layer addAnimation:pulse forKey:@"pulseAnimation"];
+	[self.layer addAnimation:pulse forKey:@"pulseAnimation"];
 }
 
 @end

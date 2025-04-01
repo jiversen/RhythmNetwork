@@ -21,15 +21,15 @@
 - (RNStimulus *) initWithStimulusNumber: (Byte) stimChannel MIDIChannel: (Byte) MIDIChannel Note: (Byte) note StartTime: (double) startTime IOI: (double) IOI StartPhase: (double) startPhase Count: (int) nEvents
 {
 	self = [super init];
-	_stimulusChannel = stimChannel;
-	_MIDIChannel	 = MIDIChannel;
-	_note			 = note;
-	_noteDuration_ms = kNoteDuration_ms;
-	_relativeStartTime_ms	= startTime; 
-	_IOI_ms			 = IOI;
-	_startPhase_ms	 = startPhase;
-	_nEvents		 = nEvents;
-	_jitter_ms		 = 0;
+	_stimulusChannel		= stimChannel;
+	_MIDIChannel			= MIDIChannel;
+	_note				= note;
+	_noteDuration_ms		= kNoteDuration_ms;
+	_relativeStartTime_ms	= startTime;
+	_IOI_ms				= IOI;
+	_startPhase_ms		= startPhase;
+	_nEvents				= nEvents;
+	_jitter_ms			= 0;
 	
 	return self;
 }

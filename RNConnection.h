@@ -10,35 +10,36 @@
 
 #import "RNTapperNode.h"
 
-@interface RNConnection : NSObject {
-	RNNodeNum_t _fromNode;
-	RNNodeNum_t _toNode;
-	double _weight;
-	double _delay_ms;
-	unsigned int	_fromSubChannel; //node 0 can have several separately addressable outputs
+@interface RNConnection : NSObject
+{
+	RNNodeNum_t		_fromNode;
+	RNNodeNum_t		_toNode;
+	double			_weight;
+	double			_delay_ms;
+	unsigned int		_fromSubChannel;// node 0 can have several separately addressable outputs
 }
 
 // *********************************************
-// Init, accessors 
+// Init, accessors
 
-- (RNConnection *) init;
-- (RNConnection *) initWithFromNode: (RNNodeNum_t) fromNode ToNode: (RNNodeNum_t) toNode; //designated
-- (RNConnection *) initWithString: (NSString *) coordString;
+- (RNConnection *)init;
+- (RNConnection *)initWithFromNode:(RNNodeNum_t)fromNode ToNode:(RNNodeNum_t)toNode;		// designated
+- (RNConnection *)initWithString:(NSString *)coordString;
 
-- (NSString *) description;
+- (NSString *)description;
 
-- (RNNodeNum_t) fromNode;
-- (RNNodeNum_t) toNode;
-- (void) setFromNode: (RNNodeNum_t) newFromNode ToNode: (RNNodeNum_t) newToNode;
+- (RNNodeNum_t)fromNode;
+- (RNNodeNum_t)toNode;
+- (void)setFromNode:(RNNodeNum_t)newFromNode ToNode:(RNNodeNum_t)newToNode;
 
-- (double) weight;
-- (void) setWeight: (double) newWeight;
+- (double)weight;
+- (void)setWeight:(double)newWeight;
 
-- (double) delay;
-- (void) setDelay: (double) newDelay;
+- (double)delay;
+- (void)setDelay:(double)newDelay;
 
-- (unsigned int) fromSubChannel;
-- (void) setFromSubChannel: (unsigned int) newFromSubChannel;
+- (unsigned int)fromSubChannel;
+- (void)setFromSubChannel:(unsigned int)newFromSubChannel;
 
 // *********************************************
 //  Display--taken care of in RNNetwork--since needs access to node objects

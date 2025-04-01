@@ -21,20 +21,22 @@ static RNNetworkView *_sharedNetworkView = nil;
 - (id)initWithFrame:(NSRect)frameRect
 {
 	if ((self = [super initWithFrame:frameRect]) != nil) {
-        if (!_sharedNetworkView)
-            _sharedNetworkView = self;
-        self.wantsLayer = YES;
-		_network = nil;
+		if (!_sharedNetworkView) {
+			_sharedNetworkView = self;
+		}
+
+		self.wantsLayer		= YES;
+		_network				= nil;
 		_doShowMIDIActivity = YES;
-		//calculate radius from frameRect size
+		// calculate radius from frameRect size
 		_drawRadius = fmax(NSHeight(frameRect), NSWidth(frameRect)) / 2.0 * kRadiusScale;
-		//change bounds so origin is at center
+		// change bounds so origin is at center
 		[self setBounds:NSOffsetRect([self bounds],
-									 -NSWidth([self bounds])/2.0,
-									 -NSHeight([self bounds])/2.0)];
+									 -NSWidth([self bounds]) / 2.0,
+									 -NSHeight([self bounds]) / 2.0)];
 	}
 
-	[self setNeedsDisplay: YES];
+	[self setNeedsDisplay:YES];
 	return self;
 }
 
@@ -134,16 +136,16 @@ static RNNetworkView *_sharedNetworkView = nil;
 	while (node = [nodeEnumerator nextObject]) {
 		nodeNumber = [node nodeNumber];
 		if (nodeNumber != 0) {
-			//locate it on view. round to get more uniform drawing (we're using thin lines)
-			nodeLocation = [node plotLocation];
-			x = round( (nodeLocation.x + 0.1) * _drawRadius );
-			y = round( (nodeLocation.y + 0.1) * _drawRadius );
-			width = round( 0.2 * _drawRadius );
-			height = round( 0.2 * _drawRadius );
-			frameRect = NSMakeRect(x,y,width,height);
-			histView = [[[RNNodeHistogramView alloc] initWithFrame:frameRect] autorelease];
-			[self addSubview:histView]; //this retains, balance with [histView removeFromSuperview]
-			[_nodeHistogramViews addObject:histView]; //this also retains, release in dealloc
+			// locate it on view. round to get more uniform drawing (we're using thin lines)
+			nodeLocation	= [node plotLocation];
+			x				= round((nodeLocation.x + 0.1) * _drawRadius);
+			y				= round((nodeLocation.y + 0.1) * _drawRadius);
+			width			= round(0.2 * _drawRadius);
+			height			= round(0.2 * _drawRadius);
+			frameRect		= NSMakeRect(x, y, width, height);
+			histView		= [[[RNNodeHistogramView alloc] initWithFrame:frameRect] autorelease];
+			[self addSubview:histView];					// this retains, balance with [histView removeFromSuperview]
+			[_nodeHistogramViews addObject:histView];	// this also retains, release in dealloc
 		}
 	}
 }

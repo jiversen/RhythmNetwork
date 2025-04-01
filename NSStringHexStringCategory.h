@@ -13,10 +13,9 @@
 
 #import <Cocoa/Cocoa.h>
 
+@interface NSString (HexStringCategory)
 
-@interface NSString ( HexStringCategory )
-
-- (NSString *)initHexStringWithData:(NSData *) data;
+- (NSString *)initHexStringWithData:(NSData *)data;
 
 - (NSData *)convertHexStringToData;
 

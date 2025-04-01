@@ -9,5 +9,7 @@
 #import <Cocoa/Cocoa.h>
 
 @protocol MIOCProcessor
-	- (NSData *) MIDIBytes; //convert to MIDI bytestream
+
+- (NSData *)MIDIBytes;		// convert to MIDI bytestream
+
 @end

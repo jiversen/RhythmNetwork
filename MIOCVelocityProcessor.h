@@ -9,34 +9,35 @@
 #import <Cocoa/Cocoa.h>
 #import "MIOCProcessorProtocol.h"
 
-#define kMIOCInputVelocityProcessorOpcode 0x24
-#define kMIOCOutputVelocityProcessorOpcode 0x25
+#define kMIOCInputVelocityProcessorOpcode	0x24
+#define kMIOCOutputVelocityProcessorOpcode	0x25
 
-@interface MIOCVelocityProcessor : NSObject <MIOCProcessor, NSCopying> {
-	Byte _port;
-	Byte _channel;
-	Byte _IOOpcode;
-	Byte _position;
-	Byte _threshold;
-	SInt8 _gradientBelowThreshold;
-	SInt8 _gradientAboveThreshold;
-	SInt8 _offset;
+@interface MIOCVelocityProcessor : NSObject <MIOCProcessor, NSCopying>
+{
+	Byte		_port;
+	Byte		_channel;
+	Byte		_IOOpcode;
+	Byte		_position;
+	Byte		_threshold;
+	SInt8	_gradientBelowThreshold;
+	SInt8	_gradientAboveThreshold;
+	SInt8	_offset;
 }
 
-- (MIOCVelocityProcessor *) initWithPort:(Byte)port Channel:(Byte)channel OnInput:(BOOL)isInput;
-- (void) setPort:(Byte)port;
-- (void) setChannel:(Byte)channel;
-- (void) setOnInput:(BOOL)isInput;
-- (void) setVelocityMapThreshold:(Byte)threshold GradientAbove:(double)gradientAbove GradientBelow:(double)gradientBelow Offset:(Byte)offset;
-- (void) setWeight:(double)weight;
-- (void) setConstantVelocity:(Byte)velocity;
-- (void) setPosition:(Byte)position;
+- (MIOCVelocityProcessor *)initWithPort:(Byte)port Channel:(Byte)channel OnInput:(BOOL)isInput;
+- (void)setPort:(Byte)port;
+- (void)setChannel:(Byte)channel;
+- (void)setOnInput:(BOOL)isInput;
+- (void)setVelocityMapThreshold:(Byte)threshold GradientAbove:(double)gradientAbove GradientBelow:(double)gradientBelow Offset:(Byte)offset;
+- (void)setWeight:(double)weight;
+- (void)setConstantVelocity:(Byte)velocity;
+- (void)setPosition:(Byte)position;
 
-- (NSString *) description;
-- (BOOL) isEqual: (id) anObject; //used for uniqueness testing in NSArray
+- (NSString *)description;
+- (BOOL)isEqual:(id)anObject;	// used for uniqueness testing in NSArray
 
-//- (NSData *) MIDIBytes; //convert to MIDI bytestream
-//- (id)copyWithZone:(NSZone *)zone
+// - (NSData *) MIDIBytes; //convert to MIDI bytestream
+// - (id)copyWithZone:(NSZone *)zone
 
 @end
 

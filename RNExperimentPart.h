@@ -10,48 +10,48 @@
 
 #import <CoreMIDI/MIDIServices.h>
 
-@class RNController;
-@class MIOCModel;
+@class	RNController;
+@class	MIOCModel;
 
-@interface RNExperimentPart : NSObject {
+@interface RNExperimentPart : NSObject
+{
 	id				_experimentPart;
-	NSString		*_description;
+	NSString			*_description;
 	NSTimeInterval	_startTime_s;
-	NSTimeInterval  _actualStartTime_s;
-	NSTimeInterval  _startTimeUncertainty_s;
-	NSString		*_subEventTimes;
+	NSTimeInterval	_actualStartTime_s;
+	NSTimeInterval	_startTimeUncertainty_s;
+	NSString			*_subEventTimes;
 	NSTimer			*_startTimer;
 }
 
-+ (RNExperimentPart *) experimentPartFromDictionary: (NSDictionary *) aDict;
-+ (NSArray *) experimentPartArrayFromDictionary: (NSDictionary *) aDict;
++ (RNExperimentPart *)experimentPartFromDictionary:(NSDictionary *)aDict;
++ (NSArray *)experimentPartArrayFromDictionary:(NSDictionary *)aDict;
 
-- (RNExperimentPart *) initWithObject: (id) anObject RelativeStartTime: (NSTimeInterval) startTime_s Description: (NSString *) description;
-- (void) dealloc;
+- (RNExperimentPart *)initWithObject:(id)anObject RelativeStartTime:(NSTimeInterval)startTime_s Description:(NSString *)description;
+- (void)dealloc;
 
-//Accessors
-- (NSString *) partType;
-- (id) experimentPart;
-- (NSString *) shortDescription;
-- (NSTimeInterval) startTime;
-- (NSTimeInterval) actualStartTime;
-- (void) setActualStartTime: (NSTimeInterval) time;
-- (NSTimeInterval) startTimeUncertainty;
-- (void) setStartTimeUncertainty: (NSTimeInterval) time;
-- (NSString *) subEventTimes;
-- (void) setSubEventTimes: (NSString *) timesStr;
+// Accessors
+- (NSString *)partType;
+- (id)experimentPart;
+- (NSString *)shortDescription;
+- (NSTimeInterval)startTime;
+- (NSTimeInterval)actualStartTime;
+- (void)setActualStartTime:(NSTimeInterval)time;
+- (NSTimeInterval)startTimeUncertainty;
+- (void)setStartTimeUncertainty:(NSTimeInterval)time;
+- (NSString *)subEventTimes;
+- (void)setSubEventTimes:(NSString *)timesStr;
 
+- (NSTimer *)startTimer;
+- (void)setStartTimer:(NSTimer *)theTimer;
 
-- (NSTimer *) startTimer;
-- (void) setStartTimer: (NSTimer *) theTimer;
+- (BOOL)containsObject:(id)aPart;
 
-- (BOOL) containsObject:(id)aPart;
-
-//Actions
-- (void) postNewStimulusNotification: (NSTimer *) timer;
-- (void) postNewNetworkNotification: (NSTimer *) timer;
-- (void) postNewGlobalConnectionStrengthNotification: (NSTimer *) timer;
-- (void) scheduleForExperimentStartTime: (NSDate *) time Timestamp: (MIDITimeStamp) timestamp;
-- (void) unschedule;
+// Actions
+- (void)postNewStimulusNotification:(NSTimer *)timer;
+- (void)postNewNetworkNotification:(NSTimer *)timer;
+- (void)postNewGlobalConnectionStrengthNotification:(NSTimer *)timer;
+- (void)scheduleForExperimentStartTime:(NSDate *)time Timestamp:(MIDITimeStamp)timestamp;
+- (void)unschedule;
 
 @end

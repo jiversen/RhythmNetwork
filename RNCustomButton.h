@@ -7,15 +7,16 @@
 
 #import <Cocoa/Cocoa.h>
 
-@interface RNCustomButton : NSView {
-    NSString *_title;
-    NSFont *_font;
-    BOOL _isHighlighted;
-    BOOL _isHovered;
-    BOOL _enabled;
-    id _target;
-    SEL _action;
-    NSTrackingArea *_trackingArea;
+@interface RNCustomButton : NSView
+{
+	NSString			*_title;
+	NSFont			*_font;
+	BOOL				_isHighlighted;
+	BOOL				_isHovered;
+	BOOL				_enabled;
+	id				_target;
+	SEL				_action;
+	NSTrackingArea	*_trackingArea;
 }
 
 // Initialize from an existing NSButton
