@@ -12,6 +12,26 @@ static void mySysexCompletionProc(MIDISysexSendRequest *request);
 static void myMIDINotifyProc(const MIDINotification *message, void * refCon);
 static void logMIDIPacketList(const MIDIPacketList *packetList, long pktlistLengthconst, MIDIIO *selfMIDIO);
 
+NSString *CMIDIErrorDescription(OSStatus status) {
+	switch (status) {
+		case kMIDIInvalidClient: return @"Invalid MIDI client";
+		case kMIDIInvalidPort: return @"Invalid MIDI port";
+		case kMIDIWrongEndpointType: return @"Wrong endpoint type";
+		case kMIDINoConnection: return @"No connection";
+		case kMIDIUnknownEndpoint: return @"Unknown endpoint";
+		case kMIDIUnknownProperty: return @"Unknown property";
+		case kMIDIWrongPropertyType: return @"Wrong property type";
+		case kMIDINoCurrentSetup: return @"No current setup";
+		case kMIDIMessageSendErr: return @"Error sending message";
+		case kMIDIServerStartErr: return @"Could not start MIDI server";
+		case kMIDISetupFormatErr: return @"Bad setup format";
+		case kMIDIWrongThread: return @"Wrong thread";
+		case kMIDIObjectNotFound: return @"Object not found";
+		case kMIDIIDNotUnique: return @"ID not unique";
+		default: return [NSString stringWithFormat:@"Unknown error (%d)", (int)status];
+	}
+}
+
 @implementation MIDIIO
 
 // *********************************************
@@ -21,48 +41,48 @@ static void logMIDIPacketList(const MIDIPacketList *packetList, long pktlistLeng
 
 - (MIDIIO *)init
 {
-	self				= [super init];
+	self					= [super init];
 	_MIDIClient			= kMIDIInvalidRef;
 	_inPort				= kMIDIInvalidRef;
-	_outPort			    = kMIDIInvalidRef;
+	_outPort				= kMIDIInvalidRef;
 	_MIDISource			= kMIDIInvalidRef;
 	_MIDIDest			= kMIDIInvalidRef;
-	_sysexListenerArray = [[NSMutableArray arrayWithCapacity:0] retain];
+	_sysexListenerArray 	= [[NSMutableArray arrayWithCapacity:0] retain];
 	_MIDIListenerArray	= [[NSMutableArray arrayWithCapacity:0] retain];
 
-    [self setupMIDIWithSourceName:nil destinationName:nil];
+	_midiLoggingQueue 	= dispatch_queue_create("org.johniversen.midiLogging", DISPATCH_QUEUE_SERIAL);
+	
+	_sysexData 			= [[NSMutableData alloc] initWithCapacity:1024];
+	_isReceivingSysex 	= NO;
+	
+	// setup sidecar MIDIIO for sending delayed messages
+	if (MIDIGetNumberOfDestinations() >= 2) {
+		_delayMIDIIO = [[MIDIIO alloc] initFollower];
+	} else {
+		NSLog(@"Warning: Only one MIDI output available. Delayed output functionality will be disabled.");
+		_delayMIDIIO = nil;
+	}
+	
+	_isLeader = YES;
+	
+	[self setupMIDI];
+	
     return self;
 }
 
-- (MIDIIO*)initFollowerWithLeader:(MIDIIO *)leaderMIDIIO
+// Simplified init for follower MIDIIO
+- (MIDIIO*)initFollower
 {
-    self                = [super init];
-    _MIDIClient         = kMIDIInvalidRef;
-    _inPort             = kMIDIInvalidRef;
-    _outPort            = kMIDIInvalidRef;
-    _MIDISource         = kMIDIInvalidRef;
-    _MIDIDest            = kMIDIInvalidRef;
-    _sysexListenerArray = [[NSMutableArray arrayWithCapacity:0] retain];
-    _MIDIListenerArray  = [[NSMutableArray arrayWithCapacity:0] retain];
-    
-    _midiLoggingQueue = dispatch_queue_create("org.johniversen.midiLogging", DISPATCH_QUEUE_SERIAL);
-    
-    _sysexData = [[NSMutableData alloc] initWithCapacity:1024];
-    _isReceivingSysex = NO;
-    
-    // as a follower, base our source and destination on the leader's
-    _leaderMIDIIO       = leaderMIDIIO;
-    if ([_leaderMIDIIO sourceIsConnected] && [_leaderMIDIIO destinationIsConnected]) {
-        [self setupMIDIWithSourceName:NextPortName([_leaderMIDIIO sourceName])
-                      destinationName:NextPortName([_leaderMIDIIO destinationName])];
-    } else {
-        NSAssert([self sourceIsConnected], @"leaderMIDIIO source is not connected, so cannot setup MIDI for follower.");
-        NSAssert([self destinationIsConnected], @"leaderMIDIIO destination is not connected, so cannot setup MIDI for follower.");
-    }
-
+	self				= [super init];
+	_MIDIClient		= kMIDIInvalidRef;
+	_inPort			= kMIDIInvalidRef;
+	_outPort			= kMIDIInvalidRef;
+	_MIDISource		= kMIDIInvalidRef;
+	_MIDIDest		= kMIDIInvalidRef;
+	_isLeader		= NO;
+    	
     return self;
 }
-
 
 // *********************************************
 //
@@ -72,77 +92,63 @@ static void logMIDIPacketList(const MIDIPacketList *packetList, long pktlistLeng
 	[_sysexListenerArray release];
 	[_MIDIListenerArray  release];
 	[_sysexData release];
+	[_delayMIDIIO release];
 	[super dealloc];
 }
 
 // *********************************************
 //     
 //Setup a midi client, create its input and output ports, connect ports to outside world
-//- (void)setupMIDI
-//{
-//	OSStatus status;
-//    
-//    //create this client
-//    status = MIDIClientCreate(CFSTR("MIDIIO"), myMIDINotifyProc, (void*)self, &_MIDIClient);
-//	
-//	//create an input port
-//    status = MIDIInputPortCreate(_MIDIClient, CFSTR("MIDIIO Input Port"), myReadProc, (void*)self, &_inPort);
-//	
-//	//create an output port
-//	status = MIDIOutputPortCreate(_MIDIClient, CFSTR("MIDIIO Output Port"), &_outPort);
-//	
-//	//set source and destination (take user default, otherwise first--after initial entry, which will be "(not connected)")
-//	NSArray *sourceList = [self getSourceList];
-//	//try to use default
-//	if ([self useSourceNamed:[self defaultSourceName]] == NO) {
-//		//set to no connection
-//		[self useSourceNamed:sourceList[0]]; //during init, list will always have (not connected) as first
-//	}
-//	
-//	NSArray *destinationList = [self getDestinationList];
-//	if ([self useDestinationNamed:[self defaultDestinationName]] == NO) {
-//		[self useDestinationNamed:destinationList[0]];
-//	}
-//}
-
-- (void)setupMIDIWithSourceName:(NSString *)sourceName destinationName:(NSString *)destinationName
+- (void)setupMIDI
 {
-    OSStatus status;
+	OSStatus status;
     
+	// set up main MIDI
     //create this client
     status = MIDIClientCreate(CFSTR("MIDIIO"), myMIDINotifyProc, (void*)self, &_MIDIClient);
-    
-    //create an input port
-    status = MIDIInputPortCreate(_MIDIClient, CFSTR("MIDIIO Input Port"), myReadProc, (void*)self, &_inPort);
-    
-    //create an output port
-    status = MIDIOutputPortCreate(_MIDIClient, CFSTR("MIDIIO Output Port"), &_outPort);
-    
-    //source name specified explicitly or pulled from GUI if not
-    if (sourceName) {
-        [self useSourceNamed:sourceName];
-    } else {
-        NSArray *sourceList = [self getSourceList];
-        //try to use default
-        if ([self useSourceNamed:[self defaultSourceName]] == NO) {
-            //set to no connection
-            [self useSourceNamed:sourceList[0]]; //during init, list will always have (not connected) as first
-        }
-    }
-    
-    //destination name
-    if (destinationName) {
-        [self useDestinationNamed:sourceName];
-    } else {
-        NSArray *destinationList = [self getDestinationList];
-        //try to use default
-        if ([self useDestinationNamed:[self defaultDestinationName]] == NO) {
-            //set to no connection
-            [self useDestinationNamed:destinationList[0]];
-        }
-    }
-}
+	CHECK_OSSTATUS(status, "MIDIClientCreate");
 
+	//create an input port
+    status = MIDIInputPortCreate(_MIDIClient, CFSTR("MIDIIO Input Port"), myReadProc, (void*)self, &_inPort);
+	CHECK_OSSTATUS(status, "MIDIInputPortCreate");
+
+	//create an output port
+	status = MIDIOutputPortCreate(_MIDIClient, CFSTR("MIDIIO Output Port"), &_outPort);
+	CHECK_OSSTATUS(status, "MIDIOutputPortCreate");
+	
+	// setup a secondary (follower) transmit-only client on the next port from the leader client.
+	// this totally requires that the MIDI interface has at least two ports, which we checked in init
+	if (_isLeader && _delayMIDIIO) {
+		status = MIDIClientCreate(CFSTR("MIDIIO_Delay"), NULL, (void*)self, &_delayMIDIIO->_MIDIClient); //config notifications will come from leader MIDIIO
+		CHECK_OSSTATUS(status, "MIDIClientCreate_Follower");
+		
+		//delay MIDI doesn't have an input port
+		_delayMIDIIO->_inPort = kMIDIInvalidRef;
+		
+		//create an output port
+		status = MIDIOutputPortCreate(_MIDIClient, CFSTR("MIDIIO_Delay Output Port"), &_delayMIDIIO->_outPort);
+		CHECK_OSSTATUS(status, "MIDIOutputPortCreate_Follower");
+	}
+	
+	//set source and destination (take user default, otherwise first--after initial entry, which will be "(not connected)")
+	NSArray *sourceList = [self getSourceList];
+	//try to use default
+	if ([self useSourceNamed:[self defaultSourceName]] == NO) {
+		//set to no connection
+		[self useSourceNamed:sourceList[0]]; //during init, list will always have (not connected) as first
+	}
+	
+	NSArray *destinationList = [self getDestinationList];
+	if ([self useDestinationNamed:[self defaultDestinationName]] == NO) { //this will update _delayMIDIIO as well
+		//set to no connection
+		[self useDestinationNamed:destinationList[0]];
+	}
+	return;
+	
+bail:
+	NSLog(@"MIDI Setup Failed");
+	
+}
 
 // *********************************************
 //    external readProc support
@@ -190,17 +196,13 @@ static void logMIDIPacketList(const MIDIPacketList *packetList, long pktlistLeng
 
 - (NSArray *)getSourceList
 {
-	int				n, i;
+	NSUInteger		n, i;
 	CFStringRef		name;
 	NSMutableArray	*list		= [NSMutableArray arrayWithCapacity:0];
-	NSMutableString *uniqueName = [NSMutableString stringWithCapacity:10];
+	NSMutableString 	*uniqueName = [NSMutableString stringWithCapacity:10];
 	
 	if (_MIDISource == kMIDIInvalidRef)
 		[list addObject:@"(not connected)"]; //add a placeholder if we're not connected
-
-	if (_MIDISource == NULL) {
-		[list addObject:@"(not connected)"];// add a placeholder if we're not connected
-	}
 
 	n = MIDIGetNumberOfSources();
 
@@ -228,28 +230,27 @@ static void logMIDIPacketList(const MIDIPacketList *packetList, long pktlistLeng
 
 - (NSArray *)getDestinationList
 {
-    int n,i;
-	CFStringRef name;
-	NSMutableArray *list = [NSMutableArray arrayWithCapacity:0];
+	NSUInteger 		n,i;
+	CFStringRef 		name;
+	NSMutableArray 	*list = [NSMutableArray arrayWithCapacity:0];
 	
 	if (_MIDIDest == kMIDIInvalidRef)
 		[list addObject:@"(not connected)"];
-	}
-
+	
 	n = MIDIGetNumberOfDestinations();
-
+	
 	for (i = 0; i < n; i++) {
 		MIDIEndpointRef dest = MIDIGetDestination(i);
 		MIDIObjectGetStringProperty(dest, kMIDIPropertyName, &name);
 		[list addObject:(NSString *)name];
 		CFRelease(name);
 	}
-
+	
 	if ([list count] == 0) {
 		[list addObject:@"(not connected)"];
 	}
 
-	return [NSArray arrayWithArray:list];	// returns immutable version
+return [NSArray arrayWithArray:list];	// returns immutable version
 }
 
 - (BOOL)useSourceNamed:(NSString *)sourceName
@@ -258,6 +259,8 @@ static void logMIDIPacketList(const MIDIPacketList *packetList, long pktlistLeng
     NSUInteger n,i;
 	CFStringRef name;
 	BOOL		didConnect = FALSE;
+	
+	NSAssert(self != _delayMIDIIO, @"useSourceNamed: should not be called on _delayMIDIIO directly!");
 
 	// iterate thru sources, finding first match to sourceName
 	n = MIDIGetNumberOfSources();
@@ -265,19 +268,22 @@ static void logMIDIPacketList(const MIDIPacketList *packetList, long pktlistLeng
 	for (i = 0; i < n; i++) {
 		MIDIEndpointRef src = MIDIGetSource(i);
 		MIDIObjectGetStringProperty(src, kMIDIPropertyName, &name);
-
+		
 		if ([sourceName isEqualToString:(NSString *)name]) {
 			if (_MIDISource != kMIDIInvalidRef)
 				MIDIPortDisconnectSource(_inPort,_MIDISource);
 			_MIDISource = src;
 			status		= MIDIPortConnectSource(_inPort, _MIDISource, (void *)i);
-			NSLog(@"connecting to source %@", sourceName);
-			didConnect = TRUE;
-            if (_leaderMIDIIO==nil) {
-                [self setDefaultSourceName:sourceName]; // only update default for the leader
-            }
+			if (status == noErr) {
+				NSLog(@"connecting to source %@", sourceName);
+				didConnect = TRUE;
+				if (_isLeader) {
+					[self setDefaultSourceName:sourceName]; // only update default for the leader
+				}
+			} else {
+				didConnect = FALSE;
+			}
 		}
-
 		CFRelease(name);
 	}
 
@@ -292,14 +298,15 @@ static void logMIDIPacketList(const MIDIPacketList *packetList, long pktlistLeng
 
 - (BOOL)useDestinationNamed:(NSString *)destinationName
 {
-    NSUInteger n,i;
 	CFStringRef name;
 	BOOL		didConnect = FALSE;
+	
+	NSAssert(self != _delayMIDIIO, @"useDestinationNamed: should not be called on _delayMIDIIO directly!");
 
 	// iterate thru sources, finding first match to sourceName
-	n = MIDIGetNumberOfDestinations();
+	ItemCount n = MIDIGetNumberOfDestinations();
 
-	for (i = 0; i < n; i++) {
+	for (int i = 0; i < n; i++) {
 		MIDIEndpointRef dest = MIDIGetDestination(i);
 		MIDIObjectGetStringProperty(dest, kMIDIPropertyName, &name);
 
@@ -307,25 +314,35 @@ static void logMIDIPacketList(const MIDIPacketList *packetList, long pktlistLeng
 			_MIDIDest = dest;
 			NSLog(@"connecting to destination %@", destinationName);
 			didConnect = TRUE;
-            if (_leaderMIDIIO==nil) {
+            if (_isLeader) {
                 [self setDefaultDestinationName:destinationName];
             }
 		}
-
 		CFRelease(name);
 	}
 
 	if (!didConnect) {
 		NSLog(@"Could not connect: destination %@ does not exist", destinationName);
 		_MIDIDest = kMIDIInvalidRef;
+		if (_delayMIDIIO) {
+			_delayMIDIIO->_MIDIDest = kMIDIInvalidRef;
+		}
+		return NO;
 	}
 	
-	//publish our new destination
-    if (_leaderMIDIIO==nil) {
+	// now update follower, output only
+	if (_isLeader && _delayMIDIIO) {
+		if ([self destinationIsConnected]) {
+			[_delayMIDIIO useDestinationNamed:NextPortName([self destinationName])];
+		}
+	}
+	
+	//publish our new destination (only MIDICore listens...what is this for?)
+	if (_isLeader) {
         [[NSNotificationCenter defaultCenter] postNotificationName:@"MIDIIO_newDestinationNotification" object:self];
     }
     
-	return didConnect;
+	return YES;
 }
 
 - (NSString *)sourceName
@@ -397,6 +414,7 @@ static void logMIDIPacketList(const MIDIPacketList *packetList, long pktlistLeng
 	[[NSUserDefaults standardUserDefaults] synchronize];
 }
 
+// function to find the next port name in sequence for use with follower MIDIIO
 NSString *NextPortName(NSString *currentPortName) {
     NSRegularExpression *regex = [NSRegularExpression regularExpressionWithPattern:@"^(.*?)(\\d+|[A-Za-z])$" options:0 error:nil];
     NSTextCheckingResult *match = [regex firstMatchInString:currentPortName options:0 range:NSMakeRange(0, currentPortName.length)];
@@ -419,6 +437,7 @@ NSString *NextPortName(NSString *currentPortName) {
         return [NSString stringWithFormat:@"%@%c", prefix, c + 1];
     }
 
+	//fallthrough
     NSCAssert(NO, @"NextPortName: Unable to increment suffix %@", suffix);
     return nil;
 }
@@ -426,6 +445,7 @@ NSString *NextPortName(NSString *currentPortName) {
 // *********************************************
 //  Handle changes in the midi setup--
 //		this executes on our main thread, but still follows pattern of calling object method to handle things
+//
 static void myMIDINotifyProc(const MIDINotification *message, void *refCon)
 {
 	MIDIIO *me = (MIDIIO *)refCon;
@@ -439,7 +459,6 @@ static void myMIDINotifyProc(const MIDINotification *message, void *refCon)
 
 - (void)handleMIDISetupChange
 {
-	int		n, i;
 	BOOL	found = FALSE;
 	
 	//if we're still unconnected, check if default has appeared
@@ -448,9 +467,9 @@ static void myMIDINotifyProc(const MIDINotification *message, void *refCon)
 	} else {
 		// is our current source still in the list?
 		// if not, clear our _MIDISource
-		n = MIDIGetNumberOfSources();
+		ItemCount n = MIDIGetNumberOfSources();
 
-		for (i = 0; i < n; i++) {
+		for (int i = 0; i < n; i++) {
 			MIDIEndpointRef src = MIDIGetSource(i);
 
 			if (_MIDISource == src) {
@@ -465,9 +484,9 @@ static void myMIDINotifyProc(const MIDINotification *message, void *refCon)
 	if (_MIDIDest == kMIDIInvalidRef) {
 		[self useDestinationNamed:[self defaultDestinationName]]; //if this fails, dest = NULL
 	} else {
-		n = MIDIGetNumberOfDestinations();
+		ItemCount n = MIDIGetNumberOfDestinations();
 
-		for (i = 0; i < n; i++) {
+		for (int i = 0; i < n; i++) {
 			MIDIEndpointRef dest = MIDIGetDestination(i);
 
 			if (_MIDIDest == dest) {
@@ -476,7 +495,13 @@ static void myMIDINotifyProc(const MIDINotification *message, void *refCon)
 		}
 		if (!found)
             _MIDIDest = kMIDIInvalidRef;
-			_MIDIDest = kMIDIInvalidRef;
+	}
+	
+	// now update follower, output only
+	if (_isLeader && _delayMIDIIO) {
+		if ([self destinationIsConnected]) {
+			[_delayMIDIIO useDestinationNamed:NextPortName([self destinationName])];
+		}
 	}
 
 	// once we're sorted out, let everyone else know

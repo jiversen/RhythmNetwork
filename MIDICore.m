@@ -33,8 +33,8 @@ static void MIDICoreReadProc(const MIDIPacketList *pktlist, void *refCon, void *
 
 	// register to be notified when destination changes (the only relevant change)
 	[[NSNotificationCenter defaultCenter] addObserver:self
-	selector:@selector(newDestinationHandler:)
-	name	:@"MIDIIO_newDestinationNotification" object:nil];
+											 selector:@selector(newDestinationHandler:)
+												name	:@"MIDIIO_newDestinationNotification" object:nil];
 	return self;
 }
 

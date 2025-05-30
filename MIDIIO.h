@@ -5,11 +5,23 @@
 #import <Cocoa/Cocoa.h>
 #import <CoreMIDI/MIDIServices.h>
 #import <os/log.h>
-// #import "TPCircularBuffer.h"
+#import "TPCircularBuffer.h"
+#import "TimingUtils.h"
+
 
 #define kSendMIDISuccess		TRUE
 #define kSendMIDIFailure		FALSE
 #define kMIDIInvalidRef ((MIDIObjectRef)0)
+
+// Error Handling (CGPT)
+#define CHECK_OSSTATUS(s, msg) do { \
+	if ((s) != noErr) { \
+		NSLog(@"%s failed: %@ (%d)", msg, (NSString *)CMIDIErrorDescription(s), (int)(s)); \
+		goto bail; \
+	} \
+} while (0)
+
+NSString *CMIDIErrorDescription(OSStatus status);
 
 typedef struct _NoteOnMessage {
 	UInt64	eventTime_ns;
@@ -29,23 +41,24 @@ typedef struct _ProgramChangeMessage {
 
 @interface MIDIIO : NSObject
 {
-	MIDIClientRef	    _MIDIClient;
-	MIDIPortRef	    _inPort;
-	MIDIPortRef	   _outPort;
-	MIDIEndpointRef   _MIDISource;	//only one source & destination
-	MIDIEndpointRef  _MIDIDest;
-	NSMutableArray   *_sysexListenerArray;
-	NSMutableArray   *_MIDIListenerArray;
-    dispatch_queue_t _midiLoggingQueue;
-    NSMutableData    *_sysexData;
-    BOOL            _isReceivingSysex;
-    MIDIIO          *_leaderMIDIIO; //if we are a follower, we'll have a leader
+	MIDIClientRef			_MIDIClient;
+	MIDIPortRef			_inPort;
+	MIDIPortRef			_outPort;
+	MIDIEndpointRef		_MIDISource;	// only one source & destination
+	MIDIEndpointRef		_MIDIDest;
+	NSMutableArray		*_sysexListenerArray;
+	NSMutableArray		*_MIDIListenerArray;
+	dispatch_queue_t		_midiLoggingQueue;
+	NSMutableData			*_sysexData;
+	BOOL					_isReceivingSysex;
+	MIDIIO				*_delayMIDIIO;	// our sub-interface for delay outputs
+	BOOL					_isLeader;	 	// are we the owner of a sub-interface, or the sub-interface
 }
 
 - (MIDIIO*)init;
-- (MIDIIO*)initFollowerWithLeader:(MIDIIO *)leaderMIDIIO;
+- (MIDIIO*)initFollower;
 - (void)dealloc;
-- (void)setupMIDIWithSourceName:(NSString *)sourceName destinationName:(NSString *)destinationName;
+- (void)setupMIDI;
 
 - (MIDIReadProc)defaultReadProc;
 - (void)setDefaultReadProc;
@@ -55,19 +68,19 @@ typedef struct _ProgramChangeMessage {
 
 - (NSArray *)getSourceList;
 - (NSArray *)getDestinationList;
-- (BOOL)useSourceNamed:(NSString *)sourceName;
 - (BOOL)useDestinationNamed:(NSString *)destinationName;
 - (NSString *)sourceName;
 - (NSString *)destinationName;
 - (BOOL)sourceIsConnected;
 - (BOOL)destinationIsConnected;
+
 // user defaults--any time source/dest is set, save to defaults. When starting, use default if it exists
 - (NSString *)defaultSourceName;
 - (NSString *)defaultDestinationName;
 - (void)setDefaultSourceName:(NSString *)sourceName;
 - (void)setDefaultDestinationName:(NSString *)destinationName;
 
-- (void)handleMIDISetupChange;
+- (void)handleMIDISetupChange; // change in MIDI system configuration
 
 - (void)handleMIDIInput:(NSData *)wrappedPktlist;
 
