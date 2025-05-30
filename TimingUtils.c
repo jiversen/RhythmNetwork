@@ -153,7 +153,11 @@ int initFX3(void) {
 		return r;
 	}
 	
-	setup_usb_transfer();
+	r = setup_usb_transfer();
+	if (r < 0) {
+		fprintf(stderr, "libusb_init: %s\n", libusb_error_name(r));
+		return r;
+	}
 	
 	
 	return EXIT_SUCCESS;
@@ -232,13 +236,12 @@ int setup_usb_transfer(void) {
 	
 	handle = libusb_open_device_with_vid_pid(ctx, VENDOR_ID, PRODUCT_ID);
 	if (!handle) {
-		fprintf(stderr, "Device not found.\n");
-		libusb_exit(ctx);
-		return -1;
+		fprintf(stderr, "Device not found. Plug in and try again.\n");
+		return LIBUSB_ERROR_NO_DEVICE;
 	}
 	
 	if (libusb_kernel_driver_active(handle, INTERFACE_NUM)) {
-		r=libusb_detach_kernel_driver(handle, INTERFACE_NUM);
+		r = libusb_detach_kernel_driver(handle, INTERFACE_NUM);
 		fprintf(stderr, "Kernel driver active. Detach result (%d): %s\n", r, libusb_error_name(r));
 		if (r) {
 			libusb_close(handle);
@@ -248,7 +251,7 @@ int setup_usb_transfer(void) {
 	}
 	
 	r = libusb_claim_interface(handle, INTERFACE_NUM);
-	if (r < 0) {
+	if (r) {
 		fprintf(stderr, "Cannot claim interface: %s\n", libusb_error_name(r));
 		libusb_close(handle);
 		libusb_exit(ctx);
@@ -279,7 +282,7 @@ int setup_usb_transfer(void) {
 		printf("Device has %d interfaces\n", config->bNumInterfaces);
 		for (int i = 0; i < config->bNumInterfaces; i++) {
 			const struct libusb_interface_descriptor *intf = &config->interface[i].altsetting[0];
-			printf("Interface %d: class=0x%02x, numEndpoints=%d\n",
+			printf("  Interface %d: class=0x%02x, numEndpoints=%d\n",
 				   intf->bInterfaceNumber, intf->bInterfaceClass, intf->bNumEndpoints);
 		}
 		libusb_free_config_descriptor(config);

@@ -49,7 +49,7 @@ int initFT232H(void);
 extern unsigned char *fx3_buffer;
 extern struct libusb_transfer *fx3_transfer;
 extern bool fx3_device_connected;
-extern bool fx3_ready; //for now, we reuse a transfer, so until we've received ack in callback, we can't use again
+extern bool fx3_ready; //for now, we reuse a transfer, so until we've received completion callback, we can't use again
 
 // Initialize connection to FX3 running usGPIO firmware
 int initFX3(void);
@@ -119,12 +119,12 @@ static inline MIDITimeStamp emitFX3Pulse(uint8_t bitmask, int length) {
 	memset(fx3_buffer, bitmask, length);
 	fx3_transfer->length = length;
 	MIDITimeStamp now = AudioGetCurrentHostTime();
+	fx3_ready = false;
 	int r = libusb_submit_transfer(fx3_transfer);
 	if (r != 0) {
 		fprintf(stderr, "emitFX3Pulse: Data submit error: %s\n", libusb_error_name(r));
 		return -1;
 	}
-	fx3_ready = false;
 
 	fprintf(stderr,"emitFX3Pulse: Triggered %02X, length %d at host time: %llu\n", bitmask, length, now); //TODO: Remove Debug
 	return now;
