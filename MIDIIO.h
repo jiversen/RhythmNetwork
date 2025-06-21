@@ -7,6 +7,7 @@
 #import <os/log.h>
 #import "TPCircularBuffer.h"
 #import "TimingUtils.h"
+#import "MIDIListenerProtocols.h"
 
 
 #define kSendMIDISuccess		TRUE
@@ -46,9 +47,13 @@ typedef struct _ProgramChangeMessage {
 	MIDIPortRef			_outPort;
 	MIDIEndpointRef		_MIDISource;	// only one source & destination
 	MIDIEndpointRef		_MIDIDest;
-	NSMutableArray		*_sysexListenerArray;
-	NSMutableArray		*_MIDIListenerArray;
-	dispatch_queue_t		_midiLoggingQueue;
+	NSMutableArray<id<SysexDataReceiver>>		*_sysexListenerArray;
+	NSMutableArray<id<MIDIDataReceiver>>		*_MIDIListenerArray;
+	TPCircularBuffer		*_packetBuffer;
+	dispatch_semaphore_t 	_dataAvailableSemaphore;
+	BOOL					_isRunning; // true with it's possible to receive MIDI
+	dispatch_queue_t		_processingQueue;
+	dispatch_queue_t		_listenerQueue;
 	NSMutableData			*_sysexData;
 	BOOL					_isReceivingSysex;
 	MIDIIO				*_delayMIDIIO;	// our sub-interface for delay outputs
@@ -58,6 +63,7 @@ typedef struct _ProgramChangeMessage {
 - (MIDIIO*)init;
 - (MIDIIO*)initFollower;
 - (void)dealloc;
+- (void)startMIDIProcessingThread;
 - (void)setupMIDI;
 
 - (MIDIReadProc)defaultReadProc;
@@ -68,6 +74,7 @@ typedef struct _ProgramChangeMessage {
 
 - (NSArray *)getSourceList;
 - (NSArray *)getDestinationList;
+- (BOOL)useSourceNamed:(NSString *)sourceName;
 - (BOOL)useDestinationNamed:(NSString *)destinationName;
 - (NSString *)sourceName;
 - (NSString *)destinationName;
@@ -83,11 +90,12 @@ typedef struct _ProgramChangeMessage {
 - (void)handleMIDISetupChange; // change in MIDI system configuration
 
 - (void)handleMIDIInput:(NSData *)wrappedPktlist;
+- (void)handleMIDIPktlist:(const MIDIPacketList *)pktlist;
 
-- (void)registerSysexListener:(id)object;
-- (void)removeSysexListener:(id)object;
-- (void)registerMIDIListener:(id)object;
-- (void)removeMIDIListener:(id)object;
+- (void)registerSysexListener:(id<SysexDataReceiver>)object;
+- (void)removeSysexListener:  (id<SysexDataReceiver>)object;
+- (void)registerMIDIListener: (id<MIDIDataReceiver>)object;
+- (void)removeMIDIListener:   (id<MIDIDataReceiver>)object;
 
 - (BOOL)sendMIDI:(NSData *)data;
 - (BOOL)sendMIDIPacketList:(NSData *)wrappedPacketList;

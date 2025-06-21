@@ -6,7 +6,7 @@
 
 @class MIOCModel;
 
-@interface MIOCSetupController : NSObject
+@interface MIOCSetupController<SysexDataReceiver> : NSObject
 {
 	IBOutlet NSDrawer			*_myDrawer;
 	IBOutlet MIOCModel		*_deviceObject;

@@ -17,7 +17,7 @@
 @class	RNExperimentPart;
 @class	RNGlobalConnectionStrength;
 
-@interface RNExperiment : NSObject
+@interface RNExperiment<MIDIDataReceiver> : NSObject
 {
 	// the structure of the experiment
 	NSString					*_definitionFilePath;

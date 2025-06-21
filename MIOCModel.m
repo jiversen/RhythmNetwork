@@ -548,12 +548,10 @@ static Byte removeProcessorFlag[1]		= {0x00};
 //     Process incoming sysex data (if we're expecting it)
 - (void)receiveSysexData:(NSData *)data
 {
-	MIOCMessage *reply;
-
 	if (_awaitingReply == YES) {
 		NSString *hexStr = [[NSString alloc] initHexStringWithData:data];
 		NSLog(@"MIOCModel Received Expected Sysex (%lu bytes): %@\n", (unsigned long)[data length], hexStr);
-		reply = (MIOCMessage *)[data bytes];
+		MIOCMessage *reply = (MIOCMessage *)[data bytes];
 
 		// add logic here to parse info messages and fill in instance values
 		// also potentially to verify connections made
@@ -564,6 +562,7 @@ static Byte removeProcessorFlag[1]		= {0x00};
 			// post notification for UI to resync
 			[[NSNotificationCenter defaultCenter] postNotificationName:@"MIOCModelChangeNotification"
 			object:self];
+			
 			// we use this reply as a means to check MIOC is online--
 		} else if (reply->opcode == 0x38) {	// what ports are we connected to?
 			_awaitingReply	= NO;
@@ -583,6 +582,8 @@ static Byte removeProcessorFlag[1]		= {0x00};
 		} else {
 			NSLog(@"Unhandled Sysex Message, opcode = %x", reply->opcode);
 		}
+	} else {
+		NSLog(@"MIOCModel Received Sysex data when not expecting it");
 	}
 }
 

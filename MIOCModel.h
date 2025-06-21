@@ -34,7 +34,7 @@ typedef struct _MIOCMessage {
 
 @class MIDIIO, MIOCConnection, MIOCVelocityProcessor, MIDICore;
 
-@interface MIOCModel : NSObject
+@interface MIOCModel<SysexDataReceiver> : NSObject
 {
 	Byte				_deviceID;					// Fornet address
 	Byte				_deviceType;				// Miditemp defined device types

@@ -223,20 +223,21 @@ enum connectFormIdx {
 
 - (void)receiveSysexData:(NSData *)data
 {
-	NSString *hexStr = [[[NSString alloc] initHexStringWithData:data] autorelease];
-	// NSLog(@"MIOCSetupController Received Sysex (%d bytes): %@\n",[data length], hexStr);
-	// append to outgoing data that is in view
-	NSMutableString *outStr = [NSMutableString stringWithString:[_response string]];
-
-	[outStr appendString:@" -> "];
-	[outStr appendString:hexStr];
-
-	// also, decode it
-	NSData *decoded = [_deviceObject decodeMessage:data];
-	hexStr = [[[NSString alloc] initHexStringWithData:decoded] autorelease];
-	[outStr appendFormat:@"\n[ %@ ]", hexStr];
-
-	[_response setString:outStr];
+	dispatch_async(dispatch_get_main_queue(), ^{
+		NSString *hexStr = [[[NSString alloc] initHexStringWithData:data] autorelease];
+		// NSLog(@"MIOCSetupController Received Sysex (%d bytes): %@\n",[data length], hexStr);
+		// append to outgoing data that is in view
+		NSMutableString *outStr = [NSMutableString stringWithString:[_response string]];
+		
+		[outStr appendString:@" -> "];
+		[outStr appendString:hexStr];
+		
+		// also, decode it
+		NSData *decoded = [_deviceObject decodeMessage:data];
+		hexStr = [[[NSString alloc] initHexStringWithData:decoded] autorelease];
+		[outStr appendFormat:@"\n[ %@ ]", hexStr];
+		[_response setString:outStr];
+	});
 }
 
 @end

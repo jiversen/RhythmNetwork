@@ -48,9 +48,15 @@
 		0B89D33F06FC10950024E7BC /* MIOCConnection.h in Headers */ = {isa = PBXBuildFile; fileRef = 0B89D33D06FC10950024E7BC /* MIOCConnection.h */; };
 		0B89D34006FC10950024E7BC /* MIOCConnection.m in Sources */ = {isa = PBXBuildFile; fileRef = 0B89D33E06FC10950024E7BC /* MIOCConnection.m */; };
 		0B95AAA22D8B1FC100003602 /* miditemp manual.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 0B95AAA12D8B1FC100003602 /* miditemp manual.pdf */; };
+		0BA7B1252DA8239000D6ABD3 /* TimingUtils.h in Headers */ = {isa = PBXBuildFile; fileRef = 0BA7B1242DA8239000D6ABD3 /* TimingUtils.h */; };
+		0BA7B1272DA823C900D6ABD3 /* TimingUtils.c in Sources */ = {isa = PBXBuildFile; fileRef = 0BA7B1262DA823C900D6ABD3 /* TimingUtils.c */; };
 		0BB7D18F0800FFF700246F8F /* MIOCVelocityProcessor.h in Headers */ = {isa = PBXBuildFile; fileRef = 0BB7D18D0800FFF700246F8F /* MIOCVelocityProcessor.h */; };
 		0BB7D1900800FFF700246F8F /* MIOCVelocityProcessor.m in Sources */ = {isa = PBXBuildFile; fileRef = 0BB7D18E0800FFF700246F8F /* MIOCVelocityProcessor.m */; };
 		0BCD60B9087B3EED00B1BEE1 /* MIOCProcessorProtocol.h in Headers */ = {isa = PBXBuildFile; fileRef = 0BCD60B7087B3EED00B1BEE1 /* MIOCProcessorProtocol.h */; };
+		0BCD94E02DEC3D1A00D60AA0 /* MIDIListenerProtocols.h in Headers */ = {isa = PBXBuildFile; fileRef = 0BCD94DF2DEC3D1200D60AA0 /* MIDIListenerProtocols.h */; };
+		0BDA307C2DE93FB0009D04D6 /* TPCircularBuffer.h in Headers */ = {isa = PBXBuildFile; fileRef = 0BDA307A2DE93FB0009D04D6 /* TPCircularBuffer.h */; };
+		0BDA307D2DE93FB0009D04D6 /* TPCircularBuffer.c in Sources */ = {isa = PBXBuildFile; fileRef = 0BDA307B2DE93FB0009D04D6 /* TPCircularBuffer.c */; };
+		0BDA307F2DE93FF8009D04D6 /* optimization_claude.txt in Resources */ = {isa = PBXBuildFile; fileRef = 0BDA307E2DE93FF8009D04D6 /* optimization_claude.txt */; };
 		0BDDB9E907A5CEB9001C11D6 /* RNExperiment.h in Headers */ = {isa = PBXBuildFile; fileRef = 0BDDB9E707A5CEB9001C11D6 /* RNExperiment.h */; };
 		0BDDB9EA07A5CEB9001C11D6 /* RNExperiment.m in Sources */ = {isa = PBXBuildFile; fileRef = 0BDDB9E807A5CEB9001C11D6 /* RNExperiment.m */; };
 		0BDDBB6407A6D653001C11D6 /* CoreAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0BDDBB6307A6D653001C11D6 /* CoreAudio.framework */; };
@@ -109,9 +115,15 @@
 		0B89D33D06FC10950024E7BC /* MIOCConnection.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MIOCConnection.h; sourceTree = "<group>"; };
 		0B89D33E06FC10950024E7BC /* MIOCConnection.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MIOCConnection.m; sourceTree = "<group>"; };
 		0B95AAA12D8B1FC100003602 /* miditemp manual.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "miditemp manual.pdf"; sourceTree = "<group>"; };
+		0BA7B1242DA8239000D6ABD3 /* TimingUtils.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TimingUtils.h; sourceTree = "<group>"; };
+		0BA7B1262DA823C900D6ABD3 /* TimingUtils.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = TimingUtils.c; sourceTree = "<group>"; };
 		0BB7D18D0800FFF700246F8F /* MIOCVelocityProcessor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MIOCVelocityProcessor.h; sourceTree = "<group>"; };
 		0BB7D18E0800FFF700246F8F /* MIOCVelocityProcessor.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MIOCVelocityProcessor.m; sourceTree = "<group>"; };
 		0BCD60B7087B3EED00B1BEE1 /* MIOCProcessorProtocol.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MIOCProcessorProtocol.h; sourceTree = "<group>"; };
+		0BCD94DF2DEC3D1200D60AA0 /* MIDIListenerProtocols.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MIDIListenerProtocols.h; sourceTree = "<group>"; };
+		0BDA307A2DE93FB0009D04D6 /* TPCircularBuffer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TPCircularBuffer.h; sourceTree = "<group>"; };
+		0BDA307B2DE93FB0009D04D6 /* TPCircularBuffer.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = TPCircularBuffer.c; sourceTree = "<group>"; };
+		0BDA307E2DE93FF8009D04D6 /* optimization_claude.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = optimization_claude.txt; sourceTree = "<group>"; };
 		0BDDB9E707A5CEB9001C11D6 /* RNExperiment.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RNExperiment.h; sourceTree = "<group>"; };
 		0BDDB9E807A5CEB9001C11D6 /* RNExperiment.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RNExperiment.m; sourceTree = "<group>"; };
 		0BDDBB6307A6D653001C11D6 /* CoreAudio.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreAudio.framework; path = /System/Library/Frameworks/CoreAudio.framework; sourceTree = "<absolute>"; };
@@ -147,6 +159,7 @@
 		080E96DDFE201D6D7F000001 /* Classes */ = {
 			isa = PBXGroup;
 			children = (
+				0BCD94DF2DEC3D1200D60AA0 /* MIDIListenerProtocols.h */,
 				0B47C56708CE7A170022F637 /* RNGlobalConnectionStrength.h */,
 				0B47C56808CE7A170022F637 /* RNGlobalConnectionStrength.m */,
 				0B38951907837E5500429A61 /* RNController.h */,
@@ -173,9 +186,9 @@
 				0B16BA6E0895BBF000188571 /* RNDataView.m */,
 				0B3B3A1106EAFCF9007B30B3 /* MIOC */,
 				0B2F157506E0546600693117 /* MIDIIO.h */,
+				0B2F157606E0546600693117 /* MIDIIO.m */,
 				0B399E3816EFA8CC006683E5 /* MIDICore.h */,
 				0B399E3916EFA8CC006683E5 /* MIDICore.m */,
-				0B2F157606E0546600693117 /* MIDIIO.m */,
 				0B477B8006E7F5C600926C80 /* NSStringHexStringCategory.h */,
 				0B477B8106E7F5C600926C80 /* NSStringHexStringCategory.m */,
 				0B0E4F622D90C20B00EF36AC /* RNCustomButton.h */,
@@ -193,6 +206,7 @@
 				0B77FFF60774B1630028C124 /* specifications.txt */,
 				0B95AAA12D8B1FC100003602 /* miditemp manual.pdf */,
 				0B1496A32D9C806400FF22F0 /* MacroSummary.md */,
+				0BDA307E2DE93FF8009D04D6 /* optimization_claude.txt */,
 			);
 			name = Documentation;
 			sourceTree = "<group>";
@@ -245,6 +259,10 @@
 		29B97314FDCFA39411CA2CEA /* RhythmNetwork */ = {
 			isa = PBXGroup;
 			children = (
+				0BDA307A2DE93FB0009D04D6 /* TPCircularBuffer.h */,
+				0BDA307B2DE93FB0009D04D6 /* TPCircularBuffer.c */,
+				0BA7B1242DA8239000D6ABD3 /* TimingUtils.h */,
+				0BA7B1262DA823C900D6ABD3 /* TimingUtils.c */,
 				080E96DDFE201D6D7F000001 /* Classes */,
 				29B97315FDCFA39411CA2CEA /* Other Sources */,
 				29B97317FDCFA39411CA2CEA /* Resources */,
@@ -296,6 +314,7 @@
 				8D1107280486CEB800E47090 /* RhythmNetwork_Prefix.pch in Headers */,
 				0B2F157706E0546600693117 /* MIDIIO.h in Headers */,
 				0B2F157B06E0547600693117 /* MIOCModel.h in Headers */,
+				0BA7B1252DA8239000D6ABD3 /* TimingUtils.h in Headers */,
 				0B477B8206E7F5C600926C80 /* NSStringHexStringCategory.h in Headers */,
 				0B89D33F06FC10950024E7BC /* MIOCConnection.h in Headers */,
 				0B668976052F9BA50081A5C8 /* MIOCSetupController.h in Headers */,
@@ -303,6 +322,7 @@
 				0B7D7802071A514300C19443 /* RNNetwork.h in Headers */,
 				0B7D7808071A516900C19443 /* RNTapperNode.h in Headers */,
 				0B38936C07826F0C00429A61 /* RNConnection.h in Headers */,
+				0BCD94E02DEC3D1A00D60AA0 /* MIDIListenerProtocols.h in Headers */,
 				0B38951B07837E5500429A61 /* RNController.h in Headers */,
 				0BEC11D207A2409C005066BB /* RNStimulus.h in Headers */,
 				0BDDB9E907A5CEB9001C11D6 /* RNExperiment.h in Headers */,
@@ -311,6 +331,7 @@
 				0B37B95407CF0AA400FADE24 /* RNNodeHistogramView.h in Headers */,
 				0BB7D18F0800FFF700246F8F /* MIOCVelocityProcessor.h in Headers */,
 				0BCD60B9087B3EED00B1BEE1 /* MIOCProcessorProtocol.h in Headers */,
+				0BDA307C2DE93FB0009D04D6 /* TPCircularBuffer.h in Headers */,
 				0B5BEECC088F1DC9006DE5C8 /* MIOCFilterProcessor.h in Headers */,
 				0B16BA6F0895BBF000188571 /* RNDataView.h in Headers */,
 				0B47C56908CE7A170022F637 /* RNGlobalConnectionStrength.h in Headers */,
@@ -375,6 +396,7 @@
 				0B77FFF70774B1630028C124 /* specifications.txt in Resources */,
 				0B36959807A85D0300FC1B4B /* experiment ideas.txt in Resources */,
 				0B3695DC07A8BA2100FC1B4B /* MIOC MIDI SYSEX specs.txt in Resources */,
+				0BDA307F2DE93FF8009D04D6 /* optimization_claude.txt in Resources */,
 				0B95AAA22D8B1FC100003602 /* miditemp manual.pdf in Resources */,
 				0B1496A42D9C806400FF22F0 /* MacroSummary.md in Resources */,
 				0B5BAFE50898985D00460665 /* Alesis SR-16 Sysex.rtf in Resources */,
@@ -389,10 +411,12 @@
 			buildActionMask = 2147483647;
 			files = (
 				8D11072D0486CEB800E47090 /* main.m in Sources */,
+				0BA7B1272DA823C900D6ABD3 /* TimingUtils.c in Sources */,
 				0B2F157806E0546600693117 /* MIDIIO.m in Sources */,
 				0B2F157C06E0547600693117 /* MIOCModel.m in Sources */,
 				0B477B8306E7F5C600926C80 /* NSStringHexStringCategory.m in Sources */,
 				0B89D34006FC10950024E7BC /* MIOCConnection.m in Sources */,
+				0BDA307D2DE93FB0009D04D6 /* TPCircularBuffer.c in Sources */,
 				0B668977052F9BA50081A5C8 /* MIOCSetupController.m in Sources */,
 				0B7D77F9071A50B300C19443 /* RNNetworkView.m in Sources */,
 				0B7D7803071A514300C19443 /* RNNetwork.m in Sources */,
@@ -435,6 +459,84 @@
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
+		0BCD94DD2DEBE99500D60AA0 /* Profile */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				ONLY_ACTIVE_ARCH = YES;
+			};
+			name = Profile;
+		};
+		0BCD94DE2DEBE99500D60AA0 /* Profile */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				COMBINE_HIDPI_IMAGES = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 0.2;
+				DEBUGGING_SYMBOLS = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				FRAMEWORK_SEARCH_PATHS = "";
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_TRIGRAPHS = NO;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_OPTIMIZATION_LEVEL = 3;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = RhythmNetwork_Prefix.pch;
+				GCC_WARN_ABOUT_MISSING_PROTOTYPES = NO;
+				GCC_WARN_FOUR_CHARACTER_CONSTANTS = NO;
+				GCC_WARN_UNKNOWN_PRAGMAS = NO;
+				HEADER_SEARCH_PATHS = /opt/homebrew/include;
+				INFOPLIST_FILE = Info.plist;
+				INSTALL_PATH = "$(HOME)/Applications";
+				LIBRARY_SEARCH_PATHS = /opt/homebrew/lib;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				OPTIMIZATION_CFLAGS = "";
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = (
+					"-lftdi1",
+					"-lusb-1.0",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = org.johniversen.RhythmNetwork;
+				PRODUCT_NAME = RhythmNetwork;
+				SECTORDER_FLAGS = "";
+				VERSIONING_SYSTEM = "";
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+				WRAPPER_EXTENSION = app;
+				ZERO_LINK = NO;
+			};
+			name = Profile;
+		};
 		D77DCA9A0989409700D2416B /* Development */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -454,14 +556,17 @@
 				GCC_WARN_ABOUT_MISSING_PROTOTYPES = NO;
 				GCC_WARN_FOUR_CHARACTER_CONSTANTS = NO;
 				GCC_WARN_UNKNOWN_PRAGMAS = NO;
-				HEADER_SEARCH_PATHS = "";
+				HEADER_SEARCH_PATHS = /opt/homebrew/include;
 				INFOPLIST_FILE = Info.plist;
 				INSTALL_PATH = "$(HOME)/Applications";
-				LIBRARY_SEARCH_PATHS = "";
+				LIBRARY_SEARCH_PATHS = /opt/homebrew/lib;
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
-				OPTIMIZATION_CFLAGS = "-O0";
+				OPTIMIZATION_CFLAGS = "";
 				OTHER_CFLAGS = "";
-				OTHER_LDFLAGS = "";
+				OTHER_LDFLAGS = (
+					"-lftdi1",
+					"-lusb-1.0",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = org.johniversen.RhythmNetwork;
 				PRODUCT_NAME = RhythmNetwork;
 				SECTORDER_FLAGS = "";
@@ -487,18 +592,22 @@
 				FRAMEWORK_SEARCH_PATHS = "";
 				GCC_ENABLE_TRIGRAPHS = NO;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_OPTIMIZATION_LEVEL = 3;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = RhythmNetwork_Prefix.pch;
 				GCC_WARN_ABOUT_MISSING_PROTOTYPES = NO;
 				GCC_WARN_FOUR_CHARACTER_CONSTANTS = NO;
 				GCC_WARN_UNKNOWN_PRAGMAS = NO;
-				HEADER_SEARCH_PATHS = "";
+				HEADER_SEARCH_PATHS = /opt/homebrew/include;
 				INFOPLIST_FILE = Info.plist;
 				INSTALL_PATH = "$(HOME)/Applications";
-				LIBRARY_SEARCH_PATHS = "";
+				LIBRARY_SEARCH_PATHS = /opt/homebrew/lib;
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				OTHER_CFLAGS = "";
-				OTHER_LDFLAGS = "";
+				OTHER_LDFLAGS = (
+					"-lftdi1",
+					"-lusb-1.0",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = org.johniversen.RhythmNetwork;
 				PRODUCT_NAME = RhythmNetwork;
 				SECTORDER_FLAGS = "";
@@ -523,18 +632,22 @@
 				FRAMEWORK_SEARCH_PATHS = "";
 				GCC_ENABLE_TRIGRAPHS = NO;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_OPTIMIZATION_LEVEL = 3;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = RhythmNetwork_Prefix.pch;
 				GCC_WARN_ABOUT_MISSING_PROTOTYPES = NO;
 				GCC_WARN_FOUR_CHARACTER_CONSTANTS = NO;
 				GCC_WARN_UNKNOWN_PRAGMAS = NO;
-				HEADER_SEARCH_PATHS = "";
+				HEADER_SEARCH_PATHS = /opt/homebrew/include;
 				INFOPLIST_FILE = Info.plist;
 				INSTALL_PATH = "$(HOME)/Applications";
-				LIBRARY_SEARCH_PATHS = "";
+				LIBRARY_SEARCH_PATHS = /opt/homebrew/lib;
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				OTHER_CFLAGS = "";
-				OTHER_LDFLAGS = "";
+				OTHER_LDFLAGS = (
+					"-lftdi1",
+					"-lusb-1.0",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = org.johniversen.RhythmNetwork;
 				PRODUCT_NAME = RhythmNetwork;
 				SECTORDER_FLAGS = "";
@@ -653,6 +766,7 @@
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				D77DCA9A0989409700D2416B /* Development */,
+				0BCD94DE2DEBE99500D60AA0 /* Profile */,
 				D77DCA9B0989409700D2416B /* Deployment */,
 				D77DCA9C0989409700D2416B /* Default */,
 			);
@@ -663,6 +777,7 @@
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				D77DCA9E0989409700D2416B /* Development */,
+				0BCD94DD2DEBE99500D60AA0 /* Profile */,
 				D77DCA9F0989409700D2416B /* Deployment */,
 				D77DCAA00989409700D2416B /* Default */,
 			);

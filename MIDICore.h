@@ -28,6 +28,7 @@ typedef struct _MIDICoreProcess {
 
 @class MIDIIO, MIOCConnection, MIOCVelocityProcessor;
 
+// TODO: seems this would make more sense as a subclass of MIDIIO--it would swap in a new handleMIDI (and could even pass it along to [super handleMIDI..]? But why bother for now...!
 @interface MIDICore : NSObject
 {
 	MIDIIO			*_MIDILink;				// our bridge to MIDI

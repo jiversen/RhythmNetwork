@@ -6,7 +6,7 @@
 @class	RNNodeHistogramView;
 @class	RNDataView;
 
-@interface RNNetworkView : NSView
+@interface RNNetworkView<MIDIDataReceiver> : NSView
 {
 	RNNetwork		*_network;				// network this view will display
 	double			_drawRadius;			// radius of network (assume circular)
