@@ -6,7 +6,7 @@
 //  Copyright 2005 John Iversen (iversen@nsi.edu). All rights reserved.
 //
 
-#import <Cocoa/Cocoa.h>
+#import <Foundation/Foundation.h>
 
 @class MIOCVelocityProcessor;
 

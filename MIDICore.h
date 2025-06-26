@@ -8,7 +8,7 @@
 
 //  a class encapsulating an efficient MIDI processor for matrix, velocity and delay (for now)
 
-#import <Cocoa/Cocoa.h>
+#import <Foundation/Foundation.h>
 
 #import <CoreMIDI/MIDIServices.h>
 #import <CoreAudio/HostTime.h>

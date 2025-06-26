@@ -3,7 +3,7 @@
 // and higher level message composition and display for communication w/ MIDITEMP MIOC
 // Maintains a model of MIOC state
 
-#import <Cocoa/Cocoa.h>
+#import <Foundation/Foundation.h>
 
 #import "MIOCProcessorProtocol.h"
 

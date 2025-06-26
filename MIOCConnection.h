@@ -10,7 +10,7 @@
 // :jri:20050917 expanded on the formalism: weight, delay not directly found in MIOC, but
 // would be in the ideal processor.
 
-#import <Cocoa/Cocoa.h>
+#import <Foundation/Foundation.h>
 #import "MIOCProcessorProtocol.h"
 
 @class MIOCVelocityProcessor;

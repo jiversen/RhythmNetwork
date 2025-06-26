@@ -2,7 +2,7 @@
 
 // a minimal MIDI interface
 
-#import <Cocoa/Cocoa.h>
+#import <Foundation/Foundation.h>
 #import <CoreMIDI/MIDIServices.h>
 #import <os/log.h>
 #import "TPCircularBuffer.h"

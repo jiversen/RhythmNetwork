@@ -6,7 +6,7 @@
 //  Copyright 2005 John Iversen. All rights reserved.
 //
 
-#import <Cocoa/Cocoa.h>
+#import <Foundation/Foundation.h>
 #import "MIOCProcessorProtocol.h"
 
 // define opcodes we plan to use

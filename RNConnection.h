@@ -6,7 +6,7 @@
 //  Copyright 2004 John Iversen. All rights reserved.
 //
 
-#import <Cocoa/Cocoa.h>
+#import <Foundation/Foundation.h>
 
 #import "RNTapperNode.h"
 
