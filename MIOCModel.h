@@ -6,6 +6,7 @@
 #import <Foundation/Foundation.h>
 
 #import "MIOCProcessorProtocol.h"
+#import "MIDIListenerProtocols.h"
 
 #define kMIDITEMPID			0x00200d
 #define kSendSysexSuccess	TRUE
@@ -34,7 +35,7 @@ typedef struct _MIOCMessage {
 
 @class MIDIIO, MIOCConnection, MIOCVelocityProcessor, MIDICore;
 
-@interface MIOCModel<SysexDataReceiver> : NSObject
+@interface MIOCModel : NSObject <SysexDataReceiver> {
 {
 	Byte				_deviceID;					// Fornet address
 	Byte				_deviceType;				// Miditemp defined device types

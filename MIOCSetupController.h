@@ -3,10 +3,11 @@
 // manage setup drawer for MIOC device
 
 #import <Cocoa/Cocoa.h>
+#import "MIDIListenerProtocols.h"
 
 @class MIOCModel;
 
-@interface MIOCSetupController<SysexDataReceiver> : NSObject
+@interface MIOCSetupController : NSObject <SysexDataReceiver> {
 {
 	IBOutlet NSDrawer			*_myDrawer;
 	IBOutlet MIOCModel		*_deviceObject;

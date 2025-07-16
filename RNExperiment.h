@@ -9,6 +9,7 @@
 #import <Foundation/Foundation.h>
 
 #import <CoreMidi/MidiServices.h>
+#import "MIDIListenerProtocols.h"
 
 @class	RNNetwork;
 @class	MIDIIO;
@@ -17,7 +18,7 @@
 @class	RNExperimentPart;
 @class	RNGlobalConnectionStrength;
 
-@interface RNExperiment<MIDIDataReceiver> : NSObject
+@interface RNExperiment : NSObject <MIDIDataReceiver>
 {
 	// the structure of the experiment
 	NSString					*_definitionFilePath;
