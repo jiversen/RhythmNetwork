@@ -12,10 +12,7 @@
 #import <QuartzCore/QuartzCore.h>
 
 #import "RNTapperNode.h"
-
-#define kBigBrotherPort			8
-#define kBigBrotherChannel			16
-#define kBigBrotherControlChannel	1
+#import "RNArchitectureDefines.h"
 
 @class RNStimulus;
 

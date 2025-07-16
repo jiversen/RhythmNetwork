@@ -11,9 +11,7 @@
 #import "RNTapperNode.h"
 #import <CoreAudio/HostTime.h>
 #import <CoreMIDI/MIDIServices.h>
-
-#define kNoteDuration_ms 100 
-#define kNoteVelocity	127
+#import "RNArchitectureDefines.h"
 
 @implementation RNStimulus
 
@@ -24,7 +22,7 @@
 	_stimulusChannel		= stimChannel;
 	_MIDIChannel			= MIDIChannel;
 	_note				= note;
-	_noteDuration_ms		= kNoteDuration_ms;
+	_noteDuration_ms		= kNoteOffDelay_ms;
 	_relativeStartTime_ms	= startTime;
 	_IOI_ms				= IOI;
 	_startPhase_ms		= startPhase;
@@ -151,7 +149,7 @@
 	//note on and off MIDI messages
 	onMessage[0] = 0x90 + (_MIDIChannel - 1); //NB convert to MIDI 0-based index
 	onMessage[1] = _note;
-	onMessage[2] = kNoteVelocity;
+	onMessage[2] = kStimulusNoteVelocity;
 	
 	offMessage[0] = onMessage[0];
 	offMessage[1] = onMessage[1];

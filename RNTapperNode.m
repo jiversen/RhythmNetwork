@@ -10,6 +10,7 @@
 #import "MIOCConnection.h"
 #import "RNNetworkView.h"
 #import "MIOCVelocityProcessor.h"
+#import "RNArchitectureDefines.h"
 
 static NSArray *colorArray;
 
@@ -65,43 +66,35 @@ static NSArray *colorArray;
 //designated initializer
 - (RNTapperNode *)initWithNodeNumber: (RNNodeNum_t) nodeNumber
 {
-	Byte concentratorNo, note;
-	NSAssert1( (nodeNumber < 255), @"For now nodeNumber must be < 255 (%d passed)", nodeNumber);
+	NSAssert( (nodeNumber < kMaxNodes), @"nodeNumber must be < %d (%d passed)", kMaxNodes, nodeNumber);
 	
 	self = [super init];
 	_nodeNumber = nodeNumber;
 	
-	if (nodeNumber==0) { //bigBrother, do nothing
+	if (nodeNumber==0) { //bigBrother, do nothing--subclass initializer will do the init
 
 		
-	} else { //actual tapper
-		//calculate concentrator assignment based on nodeNumber
-		concentratorNo = floor( ((double)nodeNumber-1) / kNumInputsPerConcentrator ) + 1;
-		//two alternatives: notes w/in concentrator increase sequentially (as does channel)
-		// or constant note w/in concentrator
-		RNNodeNum_t relativeNodeNumber = nodeNumber - (concentratorNo - 1)*kNumInputsPerConcentrator;
-		note = kBaseNote + relativeNodeNumber;
-		//old way:
-		//note = (concentratorNo - 1) * kNumInputsPerConcentrator + 
-		//	(nodeNumber-1) % kNumInputsPerConcentrator + kBaseNote + 1;
-		//note = kBaseNote + concentratorNo;
+	} else { // tapper
+		//calculate concentrator assignment based on nodeNumber (RNArchitectureDefines.h)
+		Byte concentratorNo = portForNode(nodeNumber); //same as MIOC port
+		Byte chan = channelForNode(nodeNumber);
+		Byte note = noteForNode(nodeNumber);
 		NSAssert3( (concentratorNo <= kNumConcentrators), @"nodeNumber exceeds the number of inputs available (%d > %d; %d concentrator(s))", nodeNumber, (kNumConcentrators * kNumInputsPerConcentrator), kNumConcentrators);
 		[self setSourcePort: (Byte) concentratorNo 
-				 SourceChan: (Byte) relativeNodeNumber 
+				 SourceChan: (Byte) chan
 				 SourceNote: (Byte) note];
 		[self setDestPort: (Byte) concentratorNo
-				 DestChan: (Byte) relativeNodeNumber 
+				 DestChan: (Byte) chan
 				 DestNote: (Byte) note];
 		
 		//Remainder of initialization happens in RNNetwork -initFromDictionary:
 		// plotting locations, stimulus channels and the like,
 		// as only the network object knows connections and how many nodes there are
 		
-		//details of addressing (input, output are same): tappers 1 to kNumInputsPerConcentrator are
-		//	  port: 1
-		// channel: tapper#
-		//    note: constant per concentrator (why?)
-		// does destNote make any sense?
+		// UPDATE: July 25 - for greater simplicity use 1:1 mapping between node and channel/note. This limits us to 15 tapper nodes, but practically
+		// that is a reasonable compromise--for larger groups I won't be useing MIOC most likely. An alternative is to make channel = port and have the
+		// notes uniquely encode the tapper. But MIOC only routes on port/channel
+		
 	}
 	
 	return self;

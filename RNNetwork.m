@@ -14,6 +14,7 @@
 #import "RNStimulus.h"
 #import "MIOCConnection.h"
 #import "RNGlobalConnectionStrength.h"
+#import "RNArchitectureDefines.h"
 
 @implementation RNNetwork
 
@@ -203,32 +204,22 @@
 		[_MIOCConnectionList addObject:newMIOCConn];
 	}
 
-	// *********************************************
-	// generate input channel,note -> node number lookup table
-	// to translate midi input (to BB) from tappers into corresponding node #
-	// just for display purposes--to flash the node
-	//
-	Byte chan, note;
+				double weight = [thisConn weight];
+				double delay = [thisConn delay];
+				(*weightMatrix)[sourceChan][destChan] = weight;
+				(*delayMatrix)[sourceChan][destChan] = delay;
+			}
 
-	// first, fill it with bogus values
-	for (chan = 0; chan < kNumMIDIChans; chan++) {
-		for (note = 0; note < kNumMIDINotes; note++) {
-			_nodeLookup[chan][note] = (RNNodeNum_t)0xFFFF;
+
 		}
-	}
-
-	// add BB entries (possibly multiple stimulus channels
-	for (iStim = 1; iStim <= _numStimulusChannels; iStim++) {
-		chan	= [_nodeList[0] MIDIChannelForStimulusNumber:iStim];
-		note	= [_nodeList[0] MIDINoteForStimulusNumber:iStim];
-		_nodeLookup[chan][note] = 0;
-	}
-
-	// add tapper nodes
-	for (iNode = 1; iNode <= nNodes; iNode++) {
-		chan	= [_nodeList[iNode] sourceChan];
-		note	= [_nodeList[iNode] sourceNote];
-		_nodeLookup[chan][note] = iNode;	// NB chan index is 1-based
+	} // while enumerate over connection list
+	
+	// Oh, crap. We can't commit the routing matrices yet as we've only just created the network, not made it 'live'. No,
+	// wait, we own the RNMIDIRouting, so yes we absolutely can and then when we go live we just pass OUR routing
+	// table pointer to MIDIIO for use. Phew. This can be done on RNController's programMIOCWithNetwork!
+	if (_isDelay) {
+		[_MIDIRouting setWeightMatrix:weightMatrix];
+		[_MIDIRouting setDelayMatrix:delayMatrix];
 	}
 
 	return self;

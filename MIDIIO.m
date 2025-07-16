@@ -3,6 +3,7 @@
 #import <CoreMIDI/MIDIServices.h>
 #import <CoreAudio/HostTime.h>
 #import "NSStringHexStringCategory.h"
+#import "RNArchitectureDefines.h"
 
 // wrapper for simple midi io
 

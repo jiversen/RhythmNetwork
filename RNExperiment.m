@@ -16,6 +16,7 @@
 #import "MIDIIO.h"
 #import "MIOCModel.h"
 #import <CoreAudio/HostTime.h>
+#import "BuildFingerprint.h"
 
 #define kInitialEventCapacity 10000 
 
@@ -350,9 +351,9 @@
 	temp[@"experimentStartDate"] = _experimentStartDate;
 	NSNumber *endTime = @(_experimentActualStopTime_s);
 	temp[@"experimentStopTime"] = endTime;
-	temp[@"recordedEvents"] = [self recordedEventsString];
 	temp[@"experimentDescription"] = _experimentDescription;
 	temp[@"experimentNotes"] = _experimentNotes;
+	temp[@"BuildParameters"] = [NSString stringWithUTF8String:BuildFingerprint];
 	//save data on part scheduling times (note: only meaningful for network, but include all)
 	NSEnumerator *partEnumerator = [_experimentParts objectEnumerator];
 	RNExperimentPart *part;
@@ -370,6 +371,7 @@
 		[partTimingArray addObject:dict];
 	}
 	temp[@"partTiming"] = partTimingArray;
+	temp[@"recordedEvents"] = [self recordedEventsString];
 	
 	return [NSDictionary dictionaryWithDictionary:temp];
 }

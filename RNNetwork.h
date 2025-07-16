@@ -9,9 +9,8 @@
 #import <Cocoa/Cocoa.h>
 
 #import "RNTapperNode.h"
-
-#define kNumMIDIChans	16
-#define kNumMIDINotes	128
+#import "RNArchitectureDefines.h"
+#import "RNMIDIRouting.h"
 
 @class	RNStimulus;
 @class	RNGlobalConnectionStrength;
@@ -22,7 +21,7 @@
 	NSMutableArray	*_connectionList;	// will contain RNConnection s
 	NSMutableArray	*_MIOCConnectionList; // translation of RNConnections to MIOCConnections
 	NSString			*_description;
-	RNNodeNum_t		_nodeLookup[kNumMIDIChans][kNumMIDINotes];	// takes channel,note to node (0-based indexing)
+	RNMIDIRouting  *_MIDIRouting;         // real-time routing table; TODO: how to inform MIDIIO?
 	unsigned int		_numTapperNodes;
 	unsigned int		_numStimulusChannels;	// max number of independent Big Brother stimulus channels needed
 	BOOL				_isWeighted;
@@ -34,7 +33,7 @@
 - (NSArray *)nodeList;
 - (NSArray *)MIOCConnectionList;
 - (NSArray *)MIOCVelocityProcessorList;
-- (RNNodeNum_t)nodeIndexForChannel:(Byte)channel Note:(Byte)note;
+- (RNMIDIRouting *)MIDIRouting;
 
 - (NSString *)description;
 

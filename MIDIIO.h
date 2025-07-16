@@ -5,6 +5,7 @@
 #import <Foundation/Foundation.h>
 #import <CoreMIDI/MIDIServices.h>
 #import <os/log.h>
+#import "RNArchitectureDefines.h"
 #import "TPCircularBuffer.h"
 #import "TimingUtils.h"
 #import "MIDIListenerProtocols.h"

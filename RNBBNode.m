@@ -11,6 +11,7 @@
 #import "MIOCConnection.h"
 #import "RNNetworkView.h"
 #import "RNStimulus.h"
+#import "RNArchitectureDefines.h"
 
 @implementation RNBBNode
 
@@ -45,6 +46,8 @@
 	[super dealloc];
 }
 
+// TODO: this needs rethinking. We currently map stimuli into descending channel from 16--complication is not really needed
+// as long as we use NOTE to dismbiguate stimuli from tappers
 - (Byte) stimulusNumberForMIDIChannel: (Byte) midiChannel
 {
 	Byte stimulusChannel;
@@ -60,6 +63,7 @@
 	return channel;	
 }
 
+// TODO: what is this used for? Aah, for programming the drum machines--Suggest we make _this_ channel 16 (1-based)
 - (Byte) controlMIDIChannel
 {
 	return kBigBrotherControlChannel;

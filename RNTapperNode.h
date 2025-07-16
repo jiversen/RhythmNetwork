@@ -9,12 +9,7 @@
 #import <Cocoa/Cocoa.h>
 #import <QuartzCore/QuartzCore.h>
 
-#define kNumConcentrators			4
-#define kNumInputsPerConcentrator	6
-#define kPatchThruPort				7
-#define kBigBrotherPort				8
-#define kBigBrotherChannel			16
-#define kBaseNote					64
+#import "RNArchitectureDefines.h"
 
 #define kNodeScale					0.075
 
