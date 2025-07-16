@@ -268,6 +268,18 @@
 		[_experiment setExperimentNotes:[_notesText string] ];
 }
 
+// new more general programming routine that covers both MIOC and MIDIRouting
+- (void) programMIDIRoutingWithNetwork:(RNNetwork *)newNet {
+	if (newNet != nil) {
+		[self programMIOCWithNetwork:newNet];
+		
+		if ([newNet MIDIRouting]) {
+			MIDIIO *io = [[_MIOCController deviceObject] MIDILink];
+			[io setMIDIRoutingTable:[[newNet MIDIRouting] routingTable]];
+		}
+	}
+}
+
 //
 - (void) programMIOCWithNetwork:(RNNetwork *)newNet
 {

@@ -184,10 +184,12 @@
 		eventTimeStamp = AudioConvertNanosToHostTime(eventOnTime_ns);
 		curPkt = MIDIPacketListAdd(packetList,packetListLength,curPkt,eventTimeStamp,3,onMessage);
 		
-		//noteOff
-		eventOffTime_ns = eventOnTime_ns + noteDuration_ns;
-		eventTimeStamp = AudioConvertNanosToHostTime(eventOffTime_ns);
-		curPkt = MIDIPacketListAdd(packetList,packetListLength,curPkt,eventTimeStamp,3,offMessage);
+		if (kDoEmitNoteOff) {
+			//noteOff
+			eventOffTime_ns = eventOnTime_ns + noteDuration_ns;
+			eventTimeStamp = AudioConvertNanosToHostTime(eventOffTime_ns);
+			curPkt = MIDIPacketListAdd(packetList,packetListLength,curPkt,eventTimeStamp,3,offMessage);
+		}
 		
 		NSAssert2( (curPkt != NULL), @"Packet List overflow (after %d events of %d)", iEvent, _nEvents);
 		

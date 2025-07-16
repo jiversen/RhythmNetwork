@@ -25,8 +25,8 @@ static RNNetworkView *_sharedNetworkView = nil;
 			_sharedNetworkView = self;
 		}
 
-		self.wantsLayer		= YES;
-		_network				= nil;
+		self.wantsLayer     = YES;
+		_network            = nil;
 		_doShowMIDIActivity = YES;
 		// calculate radius from frameRect size
 		_drawRadius = fmax(NSHeight(frameRect), NSWidth(frameRect)) / 2.0 * kRadiusScale;
@@ -263,7 +263,8 @@ static RNNetworkView *_sharedNetworkView = nil;
 	if (_doShowMIDIActivity) {
 		//from channel, note figure out which node this is from
 		NoteOnMessage *message = (NoteOnMessage *) [MIDIData bytes];
-		RNNodeNum_t iNode = [_network nodeIndexForChannel:message->channel Note: message->note];
+		RNNodeNum_t iNode = nodeForChannel(message->channel);
+
 		NSArray *nodeList = [_network nodeList];
 		
 		// it's a valid node

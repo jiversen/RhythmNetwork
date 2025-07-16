@@ -4,26 +4,18 @@
 
 #import <Foundation/Foundation.h>
 #import <CoreMIDI/MIDIServices.h>
-#import <os/log.h>
+//#import <os/log.h>
+#import <stdatomic.h>
 #import "RNArchitectureDefines.h"
 #import "TPCircularBuffer.h"
 #import "TimingUtils.h"
 #import "MIDIListenerProtocols.h"
+#import "RNMIDIRouting.h"
 
 
 #define kSendMIDISuccess		TRUE
 #define kSendMIDIFailure		FALSE
 #define kMIDIInvalidRef ((MIDIObjectRef)0)
-
-// Error Handling (CGPT)
-#define CHECK_OSSTATUS(s, msg) do { \
-	if ((s) != noErr) { \
-		NSLog(@"%s failed: %@ (%d)", msg, (NSString *)CMIDIErrorDescription(s), (int)(s)); \
-		goto bail; \
-	} \
-} while (0)
-
-NSString *CMIDIErrorDescription(OSStatus status);
 
 typedef struct _NoteOnMessage {
 	UInt64	eventTime_ns;
@@ -41,24 +33,29 @@ typedef struct _ProgramChangeMessage {
 	Byte		spare2;
 } ProgramChangeMessage;
 
-@interface MIDIIO : NSObject
-{
-	MIDIClientRef			_MIDIClient;
-	MIDIPortRef			_inPort;
-	MIDIPortRef			_outPort;
-	MIDIEndpointRef		_MIDISource;	// only one source & destination
-	MIDIEndpointRef		_MIDIDest;
-	NSMutableArray<id<SysexDataReceiver>>		*_sysexListenerArray;
-	NSMutableArray<id<MIDIDataReceiver>>		*_MIDIListenerArray;
-	TPCircularBuffer		*_packetBuffer;
-	dispatch_semaphore_t 	_dataAvailableSemaphore;
-	BOOL					_isRunning; // true with it's possible to receive MIDI
-	dispatch_queue_t		_processingQueue;
-	dispatch_queue_t		_listenerQueue;
-	NSMutableData			*_sysexData;
-	BOOL					_isReceivingSysex;
-	MIDIIO				*_delayMIDIIO;	// our sub-interface for delay outputs
-	BOOL					_isLeader;	 	// are we the owner of a sub-interface, or the sub-interface
+@interface MIDIIO : NSObject {
+	MIDIClientRef                          _MIDIClient;
+	MIDIPortRef                            _inPort;
+	MIDIPortRef                            _outPort;
+	MIDIEndpointRef                        _MIDISource; // only one source & destination
+	MIDIEndpointRef                        _MIDIDest;
+	NSMutableArray<id<SysexDataReceiver>> *_sysexListenerArray;
+	NSMutableArray<id<MIDIDataReceiver>>  *_MIDIListenerArray;
+	TPCircularBuffer                       _packetBuffer;
+	atomic_bool                            _MIDIConsumerReady;
+	dispatch_semaphore_t                   _dataAvailableSemaphore;
+	BOOL                                   _isRunning; // true with it's possible to receive MIDI
+	dispatch_queue_t                       _processingQueue;
+	dispatch_queue_t                       _listenerQueue;
+	NSMutableData                         *_sysexData;
+	BOOL                                   _isReceivingSysex;
+	BOOL                                   _isLeader;     // are we the owner of a sub-interface, or the sub-interface
+	MIDIIO                                *_delayMIDIIO;  // our sub-interface for delay outputs
+	RNRealtimeRoutingTable                *_routingTable; // used in midi reception to calculate and output delayed packets
+	Byte                                   _onMessage[3];
+	Byte                                   _offMessage[3];
+	MIDIPacket                             _delayPacket;
+	MIDIPacketList                        *_delayPacketList;
 }
 
 - (MIDIIO*)init;
@@ -66,6 +63,7 @@ typedef struct _ProgramChangeMessage {
 - (void)dealloc;
 - (void)startMIDIProcessingThread;
 - (void)setupMIDI;
+- (void)setMIDIRoutingTable:(RNRealtimeRoutingTable *)routingTable;
 
 - (MIDIReadProc)defaultReadProc;
 - (void)setDefaultReadProc;
@@ -90,8 +88,8 @@ typedef struct _ProgramChangeMessage {
 
 - (void)handleMIDISetupChange; // change in MIDI system configuration
 
-- (void)handleMIDIInput:(NSData *)wrappedPktlist;
-- (void)handleMIDIPktlist:(const MIDIPacketList *)pktlist;
+- (void)emitDelayedNotes:(const MIDIPacketList*)pktlist availableBytes:(uint32_t)availableBytes;
+- (void)handleMIDIPktlist:(const MIDIPacketList *)pktlist availableBytes:(uint32_t)availableBytes;
 
 - (void)registerSysexListener:(id<SysexDataReceiver>)object;
 - (void)removeSysexListener:  (id<SysexDataReceiver>)object;

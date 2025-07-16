@@ -56,12 +56,12 @@
 	NSNumber *isWeightedNum = [theDict valueForKey:@"isWeighted"];
 	if (isWeightedNum != nil)
 		_isWeighted = (BOOL) [isWeightedNum boolValue];
-    
-    //Does network contain delays? If so, we need some additional special routing and the use of a second MIDIIO.
-    _isDelay = NO; //default
-    NSNumber *isDelayNum = [theDict valueForKey:@"isDelay"];
-    if (isDelayNum != nil)
-        _isDelay = (BOOL) [isDelayNum boolValue];
+	
+	//Does network contain delays? If so, we need some additional special routing and the use of a second MIDIIO.
+	_isDelay = NO; //default
+	NSNumber *isDelayNum = [theDict valueForKey:@"isDelay"];
+	if (isDelayNum != nil)
+		_isDelay = (BOOL) [isDelayNum boolValue];
 	
 	// *********************************************
 	//  Construct nodeList (creating the nodes), include as 0 'bigBrother' node, this computer
@@ -94,15 +94,16 @@
 	// *********************************************
 	//  Construct connectionList -- logical connections, doesn't reflect physical path, which might go via another node
 	//
-	unsigned iConn, nConnections = [connectionsArray count];
+	NSUInteger iConn, nConnections = [connectionsArray count];
 	_connectionList = [[NSMutableArray arrayWithCapacity:nConnections] retain];
 	RNConnection	*tempConn;
 	NSString		*connString;
 
 	for (iConn = 0; iConn < nConnections; iConn++) {
 		connString	= connectionsArray[iConn];
-		tempConn	= [[RNConnection alloc] initWithString:connString];
-		[_connectionList addObject:[tempConn autorelease]];
+		tempConn	= [[[RNConnection alloc] initWithString:connString] autorelease];
+		[_connectionList addObject:tempConn];
+		
 		// now, test to see if this connection is from bb or self
 		// update to node's properties accordingly
 		RNNodeNum_t from	= [tempConn fromNode];
@@ -128,6 +129,9 @@
 	//		c) tapper to other tapper
 	//			**new 20050908: if isWeighted = YES, route via a patchthru node and apply velocity processing
 	//  grab port/channel from nodes
+	//		    **new 20250704: if isDelay = YES, construct RNMIDIRouting tables and associated MIOC Connections
+	//			And, if timing is performant enough, could do all weighting internally rather than in MIOC
+	//			TODO: compare MIOC route to MIDIIO internal route timing
 
 	_MIOCConnectionList = [[NSMutableArray arrayWithCapacity:(nConnections + nNodes)] retain];
 	MIOCConnection	*newMIOCConn;
@@ -157,60 +161,75 @@
 	// 2) network
 	NSEnumerator	*theEnumerator = [_connectionList objectEnumerator];
 	RNConnection	*thisConn;
-
-	while (thisConn = [theEnumerator nextObject]) {
-		
-		if ([thisConn fromNode] == 0) { //source is BB, take into account stimulus channels
-			sourcePort = [ _nodeList[[thisConn fromNode]] sourcePort];
-			sourceChan = [ _nodeList[[thisConn fromNode]] MIDIChannelForStimulusNumber:[thisConn fromSubChannel] ];
-			destPort = [ _nodeList[[thisConn toNode]] destPort];
-			destChan = [ _nodeList[[thisConn toNode]] destChan]; //always kMIOCOutChannelSameAsInput
-			
-		} else { //source is a tapper node
-			sourcePort = [ _nodeList[[thisConn fromNode]] sourcePort];
-			sourceChan = [ _nodeList[[thisConn fromNode]] sourceChan];
-			
-			//destination depends on if network is weighted
-            // TODO: this needs to be revised to only treat specific connections with weight != 1.0 as weighted.
-                //I don't quite get this, however, as where are the velocity processors made?
-			if (_isWeighted == NO) { //not weighted, direct to destination
-				destPort = [ _nodeList[[thisConn toNode]] destPort];
-				destChan = [ _nodeList[[thisConn toNode]] destChan];
-
-			// destination depends on if network is weighted
-			if (_isWeighted == NO) {// not weighted, direct to destination
-				destPort	= [_nodeList[[thisConn toNode]] destPort];
-				destChan	= [_nodeList[[thisConn toNode]] destChan];
-			} else {											// weighted, direct to destination if source is same node as dest, otherwise route through other port
-				if ([thisConn fromNode] == [thisConn toNode]) {	// to self
-					destPort	= [_nodeList[[thisConn toNode]] destPort];
-					destChan	= [_nodeList[[thisConn toNode]] destChan];
-				} else {// via other port, source to thru port and from thru to our destination
-					// make connection from thru to destination first, then set up for other connection
-					newMIOCConn = [MIOCConnection connectionWithInPort:[_nodeList[[thisConn fromNode]] otherNodePassthroughPort]
-						InChannel	:[_nodeList[[thisConn fromNode]] otherNodePassthroughChan]
-						OutPort		:[_nodeList[[thisConn toNode]] destPort]
-						OutChannel	:[_nodeList[[thisConn toNode]] destChan]];
-					[_MIOCConnectionList addObject:newMIOCConn];
-
-					// next set dest for instantiation below (source is already source node)
-					destPort	= [_nodeList[[thisConn fromNode]] otherNodePassthroughPort];
-					destChan	= [_nodeList[[thisConn fromNode]] otherNodePassthroughChan];
-				}
-			}
-		}
-
-		newMIOCConn = [MIOCConnection connectionWithInPort:sourcePort InChannel:sourceChan OutPort:destPort OutChannel:destChan];
-		[_MIOCConnectionList addObject:newMIOCConn];
+	
+	NodeMatrix *weightMatrix = NULL;
+	NodeMatrix *delayMatrix  = NULL;
+	// for delay, we have to instantiate _MIDIRouting and then grab copies of the routing matrices
+	if (_isDelay) {
+		_MIDIRouting = [[RNMIDIRouting alloc] init];
+		weightMatrix = [_MIDIRouting getEmptyWeightMatrix];
+		delayMatrix  = [_MIDIRouting getEmptyDelayMatrix];
 	}
 
+	while (thisConn = [theEnumerator nextObject]) {
+
+		if ([thisConn fromNode] == 0) { // 2a) source is BB, take into account stimulus channels
+			sourcePort = [_nodeList[[thisConn fromNode]] sourcePort];
+			sourceChan = [_nodeList[[thisConn fromNode]] MIDIChannelForStimulusNumber:[thisConn fromSubChannel]];
+			destPort   = [_nodeList[[thisConn toNode]] destPort];
+			destChan   = [_nodeList[[thisConn toNode]] destChan]; // always kMIOCOutChannelSameAsInput
+
+		} else { // source is a tapper node
+
+			// destination depends on if network is weighted
+			//  TODO: this needs to be revised to only treat specific connections with weight != 1.0 as weighted.
+			// I don't quite get this, however, as where are the velocity processors made?
+			if (_isDelay == NO) { // not delayed, within MIOC direct to destination
+				sourcePort = [_nodeList[[thisConn fromNode]] sourcePort];
+				sourceChan = [_nodeList[[thisConn fromNode]] sourceChan];
+
+				// destination depends on if network is weighted
+				if (_isWeighted == NO) { // not weighted, direct to destination
+					destPort = [_nodeList[[thisConn toNode]] destPort];
+					destChan = [_nodeList[[thisConn toNode]] destChan];
+				} else {  // weighted, direct to destination if source is same node as dest, otherwise route through other port
+					if ([thisConn fromNode] == [thisConn toNode]) { // to self
+						destPort = [_nodeList[[thisConn toNode]] destPort];
+						destChan = [_nodeList[[thisConn toNode]] destChan];
+					} else { // via other port, source to thru port and from thru to our destination
+						// make connection from thru to destination first, then set up for other connection
+						newMIOCConn = [MIOCConnection connectionWithInPort:[_nodeList[[thisConn fromNode]] otherNodePassthroughPort]
+																 InChannel:[_nodeList[[thisConn fromNode]] otherNodePassthroughChan]
+																   OutPort:[_nodeList[[thisConn toNode]] destPort]
+																OutChannel:[_nodeList[[thisConn toNode]] destChan]];
+						[_MIOCConnectionList addObject:newMIOCConn];
+
+						// next set dest for instantiation below (source is already source node)
+						destPort = [_nodeList[[thisConn fromNode]] otherNodePassthroughPort];
+						destChan = [_nodeList[[thisConn fromNode]] otherNodePassthroughChan];
+					}
+				}
+				newMIOCConn = [MIOCConnection connectionWithInPort:sourcePort InChannel:sourceChan OutPort:destPort OutChannel:destChan];
+				[_MIOCConnectionList addObject:newMIOCConn];
+				
+			} else { // Delay
+				// input is already set up in 1b) above
+				// output is generated by computer, sent into MIOC kDelayPort and must route out to standard destination
+				sourcePort = kDelayPort;
+				sourceChan = [_nodeList[[thisConn fromNode]] sourceChan];
+				destPort = [_nodeList[[thisConn toNode]] destPort];
+				destChan = [_nodeList[[thisConn toNode]] destChan];
+				newMIOCConn = [MIOCConnection connectionWithInPort:sourcePort InChannel:sourceChan OutPort:destPort OutChannel:destChan];
+				[_MIOCConnectionList addObject:newMIOCConn];
+				
+				//Also add this connection to RNMIDIRouting table
 				double weight = [thisConn weight];
 				double delay = [thisConn delay];
 				(*weightMatrix)[sourceChan][destChan] = weight;
 				(*delayMatrix)[sourceChan][destChan] = delay;
 			}
 
-
+			
 		}
 	} // while enumerate over connection list
 	
@@ -243,13 +262,12 @@
 // Dynamically harvest any processors from nodes
 - (NSArray *)MIOCVelocityProcessorList
 {
-	unsigned int iNode, nNodes;
 
-	nNodes = [[self nodeList] count] - 1;	// number of tappers (exclude BB)
+	RNNodeNum_t nNodes = [[self nodeList] count] - 1;	// number of tappers (exclude BB)
 	NSMutableArray			*processorList = [NSMutableArray arrayWithCapacity:nNodes];
 	MIOCVelocityProcessor	*processor;
 
-	for (iNode = 1; iNode <= nNodes; iNode++) {
+	for (RNNodeNum_t iNode = 1; iNode <= nNodes; iNode++) {
 		processor = [_nodeList[iNode] sourceVelocityProcessor];
 		if (processor != nil) {
 			[processorList addObject:processor];
@@ -269,15 +287,19 @@
 	return [NSArray arrayWithArray:processorList];
 }
 
-// reminder: channel is 1-based
-- (RNNodeNum_t)nodeIndexForChannel:(Byte)channel Note:(Byte)note
-{
-	return _nodeLookup[channel][note];
+- (RNMIDIRouting *)MIDIRouting {
+	return _MIDIRouting;
 }
+
+// reminder: channel is 1-based
+//- (RNNodeNum_t)nodeIndexForChannel:(Byte)channel Note:(Byte)note
+//{
+//	return _nodeLookup[channel][note];
+//}
 
 - (NSString *)description
 {
-	return _description;
+	return [NSString stringWithFormat:@"%@%@%@", _description, _isWeighted?@"ⓦ":@"", _isDelay?@"🅓":@""];
 }
 
 - (unsigned int)numStimulusChannels
@@ -286,7 +308,7 @@
 }
 
 // these are convenience methods reaching into the big brother node
-// they associate the correct stimuli with it
+// they associate the correct stimuli with iW
 - (RNStimulus *)stimulusForChannel:(Byte)stimulusChannel
 {
 	RNBBNode *bbNode = [self nodeList][0];
@@ -321,12 +343,11 @@
 // !!! this name is no longer accurate now that it handles global strength & input strength...
 - (void)setGlobalConnectionStrength:(RNGlobalConnectionStrength *)connectionStrength
 {
-	unsigned int			iNode, nNodes;
 	MIOCVelocityProcessor	*processor = [connectionStrength processor];
 
-	nNodes = [[self nodeList] count] - 1;	// number of tappers (exclude BB)
+	RNNodeNum_t nNodes = [[self nodeList] count] - 1;	// number of tappers (exclude BB)
 
-	for (iNode = 1; iNode <= nNodes; iNode++) {
+	for (RNNodeNum_t iNode = 1; iNode <= nNodes; iNode++) {
 		if ([[connectionStrength type] isEqual:@"constantInput"]) {	// apply to input
 			[_nodeList[iNode] setSourceVelocityProcessor:processor];
 		} else {
@@ -338,11 +359,9 @@
 
 - (void)setDrumsetNumber:(Byte)drumsetNumber
 {
-	unsigned int iNode, nNodes;
+	RNNodeNum_t nNodes = [[self nodeList] count] - 1;	// number of tappers (exclude BB)
 
-	nNodes = [[self nodeList] count] - 1;	// number of tappers (exclude BB)
-
-	for (iNode = 1; iNode <= nNodes; iNode++) {
+	for (RNNodeNum_t iNode = 1; iNode <= nNodes; iNode++) {
 		[_nodeList[iNode] setDrumsetNumber:drumsetNumber];
 	}
 }
@@ -356,7 +375,7 @@
 {
 	NSEnumerator		*theEnumerator = [_connectionList objectEnumerator];
 	RNConnection		*thisConn;
-	NSPoint				fromPt, toPt, arrowPt, larrowPt, rarrowPt;
+	NSPoint				fromPt, toPt, arrowPt, larrowPt, rarrowPt, textPt;
 	NSBezierPath		*tempPath = [NSBezierPath bezierPath];
 	NSAffineTransform	*arrowRotation, *arrowTranslation, *arrowTransform;
 	double				angle;
@@ -416,6 +435,14 @@
 			}
 
 			[tempPath stroke];
+			
+			//TODO: Add text with weight/delay
+			NSString *connStr = [NSString stringWithFormat:@"%.1f ms", [thisConn delay]];
+			textPt.x = fromPt.x += 1.2 * radius * kNodeScale * cos(-angle);
+			textPt.y = fromPt.y += 1.2 * radius * kNodeScale * sin(-angle);
+			[self drawRotatedText:connStr atPoint:textPt angle:angle];
+
+			
 		}	// if node-to-node connection
 	}		// enumerate over connections
 
@@ -426,6 +453,35 @@
 	while (thisNode = [theEnumerator nextObject]) {
 		[thisNode drawWithRadius:radius];
 	}
+}
+
+- (void)drawRotatedText:(NSString *)text atPoint:(NSPoint)textPt angle:(CGFloat)angle
+{
+	// Save graphics state
+	[[NSGraphicsContext currentContext] saveGraphicsState];
+
+	// Move the origin to textPt
+	NSAffineTransform *transform = [NSAffineTransform transform];
+	[transform translateXBy:textPt.x yBy:textPt.y];
+	[transform rotateByRadians:angle]; // positive angle = counter-clockwise
+	[transform concat];
+
+	// Attributes
+	NSDictionary *attributes = @{
+		NSFontAttributeName: [NSFont systemFontOfSize:10],
+		NSForegroundColorAttributeName: [NSColor redColor],
+		NSBackgroundColorAttributeName: [NSColor whiteColor]  // to "erase" what's underneath
+	};
+
+	// Measure text size
+	NSSize textSize = [text sizeWithAttributes:attributes];
+
+	// Draw the text centered at (0, 0), because the transform moved the origin to textPt
+	NSPoint drawPoint = NSMakePoint(-textSize.width / 2.0, -textSize.height / 2.0);
+	[text drawAtPoint:drawPoint withAttributes:attributes];
+
+	// Restore graphics state
+	[[NSGraphicsContext currentContext] restoreGraphicsState];
 }
 
 @end

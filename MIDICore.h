@@ -8,6 +8,8 @@
 
 //  a class encapsulating an efficient MIDI processor for matrix, velocity and delay (for now)
 
+// TODO: This is obsolete: I've implemented in MIDIIO plus RNMIDIRouting. Issue: MIDIO is subordinate to MIOCModel, but needs to come up?
+
 #import <Foundation/Foundation.h>
 
 #import <CoreMIDI/MIDIServices.h>
