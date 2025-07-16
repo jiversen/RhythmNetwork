@@ -12,11 +12,11 @@
 
 @interface RNConnection : NSObject
 {
-	RNNodeNum_t		_fromNode;
-	RNNodeNum_t		_toNode;
-	double			_weight;
-	double			_delay_ms;
-	unsigned int		_fromSubChannel;// node 0 can have several separately addressable outputs
+	RNNodeNum_t  _fromNode;
+	RNNodeNum_t  _toNode;
+	double       _weight;
+	double       _delay_ms;
+	unsigned int _fromSubChannel; // node 0 can have several separately addressable outputs
 }
 
 // *********************************************

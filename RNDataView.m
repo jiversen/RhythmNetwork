@@ -39,15 +39,12 @@
 
 - (void)addEventAtTime:(double)time_ms withITI:(double)ITI_ms forNode:(RNNodeNum_t)iNode
 {
-	double px, py;
 	// add event to appropriate array (indexed by node)
 	// if necessary, extend
-	int nNodes = [_x count] - 1;// we use 1-based indexes
+	RNNodeNum_t nNodes = [_x count] - 1;// we use 1-based indexes
 
 	if (iNode > nNodes) {
-		int i;
-
-		for (i = (nNodes + 1); i <= iNode; i++) {
+		for (int i = (nNodes + 1); i <= iNode; i++) {
 			[_x addObject:[[NSMutableArray alloc] initWithCapacity:100]];
 			[_y addObject:[[NSMutableArray alloc] initWithCapacity:100]];
 		}
@@ -85,10 +82,15 @@
 	[aPath fill];
 	[[NSColor blackColor] setStroke];
 	[aPath stroke];
+	
+	// July 2025 for some reason this never failed before--why is this view being drawn on init now--it's hidden and there is no experiment loaded
+	if ([_x count] == 0) {
+		return;
+	}
 
 	// now draw curves for nodes
-	int				nNodes = [_x count] - 1;// we don't use element 0
-	int				iNode, nPoints, iPoint;
+	RNNodeNum_t		nNodes = [_x count] - 1;// we don't use element 0
+	NSUInteger		iNode, nPoints, iPoint;
 	NSColor			*color;
 	NSMutableArray	*thisx, *thisy;
 	double			px, py;

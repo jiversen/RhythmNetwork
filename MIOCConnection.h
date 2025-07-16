@@ -19,15 +19,15 @@
 #define kMIOCOutChannelSameAsInput	0x80
 #define kMIOCRoutingProcessorOpcode 0x00
 
-@interface MIOCConnection : NSObject <MIOCProcessor>
+@interface MIOCConnection : NSObject<MIOCProcessor>
 {
-	Byte					_inPort;
-	Byte					_inChannel;
-	Byte					_outPort;
-	Byte					_outChannel;
-	double				_weight;
-	double				_delay_ms;
-	MIOCVelocityProcessor	*_velocityProcessor;
+	Byte                   _inPort;
+	Byte                   _inChannel;
+	Byte                   _outPort;
+	Byte                   _outChannel;
+	double                 _weight;
+	double                 _delay_ms;
+	MIOCVelocityProcessor *_velocityProcessor;
 }
 
 + (MIOCConnection *)connectionWithInPort:(int)anInPort InChannel:(int)anInChannel OutPort:(int)anOutPort OutChannel:(int)anOutChannel;

@@ -223,7 +223,7 @@ enum connectFormIdx {
 
 - (void)receiveSysexData:(NSData *)data
 {
-	dispatch_async(dispatch_get_main_queue(), ^{
+	dispatch_async(dispatch_get_main_queue(), ^{ //because we are manipulating UI
 		NSString *hexStr = [[[NSString alloc] initHexStringWithData:data] autorelease];
 		// NSLog(@"MIOCSetupController Received Sysex (%d bytes): %@\n",[data length], hexStr);
 		// append to outgoing data that is in view

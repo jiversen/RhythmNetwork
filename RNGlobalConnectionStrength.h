@@ -12,9 +12,9 @@
 
 @interface RNGlobalConnectionStrength : NSObject
 {
-	NSString				*_type;			// 'weight' or 'constant' or 'inputConstant'
-	MIOCVelocityProcessor	*_processor;
-	double				_param;			// weight if 'weight', midi velocity if 'constant'
+	NSString              *_type; // 'weight' or 'constant' or 'inputConstant'
+	MIOCVelocityProcessor *_processor;
+	double                 _param; // weight if 'weight', midi velocity if 'constant'
 }
 
 // wierd factory: generate an array of dictionaries from a dictionary defining the ramp

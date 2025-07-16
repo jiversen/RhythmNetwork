@@ -191,7 +191,7 @@ void cleanup_after_disconnect(void) {
 }
 
 // Callbacks
-int LIBUSB_CALL hotplug_callback(struct libusb_context *ctx,
+int LIBUSB_CALL hotplug_callback(struct libusb_context *actx,
 								  struct libusb_device *device,
 								  libusb_hotplug_event event,
 								  void *user_data) {

@@ -14,14 +14,14 @@
 
 @interface MIOCVelocityProcessor : NSObject <MIOCProcessor, NSCopying>
 {
-	Byte		_port;
-	Byte		_channel;
-	Byte		_IOOpcode;
-	Byte		_position;
-	Byte		_threshold;
-	SInt8	_gradientBelowThreshold;
-	SInt8	_gradientAboveThreshold;
-	SInt8	_offset;
+	Byte  _port;
+	Byte  _channel;
+	Byte  _IOOpcode;
+	Byte  _position;
+	Byte  _threshold;
+	SInt8 _gradientBelowThreshold;
+	SInt8 _gradientAboveThreshold;
+	SInt8 _offset;
 }
 
 - (MIOCVelocityProcessor *)initWithPort:(Byte)port Channel:(Byte)channel OnInput:(BOOL)isInput;

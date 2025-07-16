@@ -17,6 +17,7 @@
 #import "RNStimulus.h"
 #import "RNGlobalConnectionStrength.h"
 #import <CoreAudio/HostTime.h>
+#import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 
 @implementation RNController
 
@@ -43,6 +44,8 @@
 	[_startButton setEnabled:NO];
 	[_testPartButton setEnabled:NO];
 	[_testStopButton setEnabled:NO];
+	
+	[_titleText setDelegate:self];
 	
 	//register for notifications
 	[[NSNotificationCenter defaultCenter] addObserver:self 
@@ -71,7 +74,7 @@
 
 	[_drumSetNumber setStringValue:@"--"];
 
-	// a few fixes for dark mose
+	// a few fixes for dark mode
 	[_experimentPartsTable setBackgroundColor:[NSColor controlBackgroundColor]];
 	[_titleText setDrawsBackground:NO];
 	
@@ -153,8 +156,8 @@
 	return _MIOCController;
 }
 
-- (void)loadSaveAlertDidEnd:(NSAlert *)alert returnCode:(int)returnCode contextInfo:(void *)contextInfo {
-	
+- (void)loadSaveAlertDidEndWithReturnCode:(NSModalResponse)returnCode {
+
     if (returnCode == NSAlertFirstButtonReturn) { //OK: save it first
 		[self saveExperiment:nil];
 		[self loadExperiment:nil];
@@ -166,7 +169,6 @@
 
 - (IBAction)loadExperiment:(id)sender;
 {	
-	int result;
 	
 	//if an experiment is already loaded, and needs saving, notify & give chance to save
 	if (_experiment != nil && [_experiment needsSave]) {
@@ -176,33 +178,44 @@
 		[alert addButtonWithTitle:@"Cancel"];
 		[alert setMessageText:@"Save current experiment data?"];
 		[alert setInformativeText:@"Before you load a new experiment, would you like to save the current one? If not, all data will be lost."];
-		[alert setAlertStyle:NSWarningAlertStyle];
-		
-		[alert beginSheetModalForWindow:[self window] 
-						  modalDelegate:self
-						 didEndSelector:@selector(loadSaveAlertDidEnd:returnCode:contextInfo:) 
-							contextInfo:nil];
+		[alert setAlertStyle:NSAlertStyleWarning];
+		[alert beginSheetModalForWindow:[self window]
+					  completionHandler:^(NSModalResponse returnCode) {
+			[self loadSaveAlertDidEndWithReturnCode:returnCode];
+		}];
+
 		return;
 	}
 
 	//load it
-    NSArray *fileTypes = @[@"netdef"];
-    NSOpenPanel *oPanel = [NSOpenPanel openPanel];	
+    NSString *fileType = @"netdef";
+    NSOpenPanel *oPanel = [NSOpenPanel openPanel];
     [oPanel setAllowsMultipleSelection:NO];
-	//*** starting Path: note, this is  hard coded // !!!:jri:20050906
-    NSURL *startPath = [NSURL fileURLWithPathComponents: @[NSHomeDirectory(),
+	//*** starting Path: note, this is  hard coded for my laptop // !!!:jri:20050906
+    NSURL *jriStartPath = [NSURL fileURLWithPathComponents: @[NSHomeDirectory(),
 		@"Documents", @"matlab", @"matlab", @"projects", @"experiment_mfiles", @"rhythm_network", @"Rhythm Network", @""] ];
+	
+	// Load last used directory from defaults
+	NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+	NSString *lastPath = [defaults stringForKey:@"LastOpenDirectory"];
+	NSURL *startPath = nil;
+	if (lastPath && [[NSFileManager defaultManager] fileExistsAtPath:lastPath]) {
+		startPath = [NSURL fileURLWithPath:lastPath];
+	} else {
+		startPath = jriStartPath;
+	}
+	
     [oPanel setDirectoryURL:startPath];
-    [oPanel setAllowedFileTypes:fileTypes];
-    result = [oPanel runModal];
-    if (result == NSFileHandlingPanelOKButton) {		
+	oPanel.allowedContentTypes = @[ [UTType typeWithFilenameExtension:fileType] ];
+    long result = [oPanel runModal];
+	if (result == NSModalResponseOK) {
 		
 		//clear out the old one
 		if (_experiment != nil) {
 			[[[_MIOCController deviceObject] MIDILink] removeMIDIListener:_networkView]; //***fix, may already be removed
 			[_networkView setNetwork:nil];
 			
-			[_experimentPartsController setSelectedObjects:@[]]; //??pass empty array to clear?
+			[_experimentPartsController setSelectedObjects:@[]]; //TODO: there's another way using indexes used elsewhere
 			[_experimentPartsController setContent:nil];
 			[_testPartButton setEnabled:NO];
 
@@ -222,6 +235,10 @@
 		//instantiate experiment from file
 		NSString *filePath = [[oPanel URL] path];
 		_experiment = [[RNExperiment alloc] initFromPath: filePath];
+		
+		// Save selected directory
+		NSURL *selectedDir = [[oPanel URL] URLByDeletingLastPathComponent];
+		[defaults setObject:selectedDir.path forKey:@"LastOpenDirectory"];
 		
 		//Configure view: current network and register view to receive midi
 		[_networkView setNetwork: [_experiment currentNetwork]];	
@@ -251,8 +268,7 @@
     } //Else, user hit cancel; do nothing
 }
 
-//keep text in experiment object in sync with UI
-//title
+//keep text in experiment object in sync with UI title
 -(void) controlTextDidEndEditing: (NSNotification *) notification
 {
 	id source = [notification object];
@@ -301,7 +317,7 @@
 }
 
 //handle notifications of experiment parts becoming active
-// stimulus: shedule midi, update experiment (which updates network), update view
+// stimulus: schedule midi, update experiment (which updates network), update view
 - (void) newStimulusNotificationHandler: (NSNotification *) notification
 {
 	MIDIIO *io = [[_MIOCController deviceObject] MIDILink];
@@ -328,10 +344,10 @@
 - (void) newNetworkNotificationHandler: (NSNotification *) notification
 {
 	RNExperimentPart *part = [notification object];
-	RNNetwork *net = (RNNetwork *) [ part experimentPart];
+	RNNetwork *net = (RNNetwork *) [part experimentPart];
 	NSLog(@"received notification network: %@", [net description]);
 	[part setActualStartTime:[_experiment secondsSinceExperimentStartDate] ];
-	[self programMIOCWithNetwork:net];
+	[self programMIDIRoutingWithNetwork:net];
 	NSTimeInterval uncertainty = [_experiment secondsSinceExperimentStartDate] - [part actualStartTime];
 	[part setStartTimeUncertainty:uncertainty];
 	NSLog(@"MIOC has been programmed");
@@ -345,7 +361,7 @@
 - (void) newGlobalConnectionStrengthNotificationHandler: (NSNotification *) notification
 {
 	RNExperimentPart *part = [notification object];
-	RNGlobalConnectionStrength *weight = (RNGlobalConnectionStrength *) [ part experimentPart];
+	RNGlobalConnectionStrength *weight = (RNGlobalConnectionStrength *) [part experimentPart];
 	NSLog(@"received notification global connection strength: %@", [weight description]);
 	[part setActualStartTime:[_experiment secondsSinceExperimentStartDate] ];
 	RNNetwork *net = [_experiment currentNetwork];
@@ -366,7 +382,7 @@
 	[_experimentPartsController setSelectedObjects:[_experiment currentParts]];
 }
 
-- (void)startSaveAlertDidEnd:(NSAlert *)alert returnCode:(int)returnCode contextInfo:(void *)contextInfo 
+- (void)startSaveAlertDidEndWithReturnCode:(NSModalResponse)returnCode
 {
 	if (returnCode == NSAlertFirstButtonReturn) { //OK: save it first
 		[self saveExperiment:nil];
@@ -391,12 +407,11 @@
 		[alert addButtonWithTitle:@"Cancel"];
 		[alert setMessageText:@"Save current experiment data?"];
 		[alert setInformativeText:@"Before you restart this experiment, would you like to save the current data? If not, all data will be lost."];
-		[alert setAlertStyle:NSWarningAlertStyle];
-		
+		[alert setAlertStyle:NSAlertStyleWarning];
 		[alert beginSheetModalForWindow:[self window] 
-						  modalDelegate:self
-						 didEndSelector:@selector(startSaveAlertDidEnd:returnCode:contextInfo:) 
-							contextInfo:nil];
+					  completionHandler:^(NSModalResponse returnCode) {
+						  [self startSaveAlertDidEndWithReturnCode:returnCode];
+					  }];
 		return;
 	}
 	
@@ -414,6 +429,7 @@
 	now = AudioGetCurrentHostTime();
 	startDate = [NSDate date];
 	now2 = AudioGetCurrentHostTime();
+	
 	//convert to ns, judge error
 	now_ns = AudioConvertHostTimeToNanos(now);
 	now2_ns = AudioConvertHostTimeToNanos(now2);
@@ -422,7 +438,7 @@
 	UInt64 granularity_ns = AudioConvertHostTimeToNanos(granularity);
 	//test error
 	NSLog(@"\n\tStart Time max possible error: %g ms (granularity = %llu; %qu ns)", maxPossibleError_ns / 1000000.0 , granularity, granularity_ns);
-	NSAssert1( (maxPossibleError_ns < 200000), @"Time Uncertainty > 0.2 ms (%g ms)", maxPossibleError_ns / 1000000.0 );
+	NSAssert( (maxPossibleError_ns < 200000), @"Time Uncertainty > 0.2 ms (%g ms)", maxPossibleError_ns / 1000000.0 );
 	
 	//now advance these times by start time delay
 	now_ns = startTimeDelay_ns + (now_ns + now2_ns) / 2; //split the difference between the two estimates
@@ -477,8 +493,9 @@
 		modifiedSecsSinceStart = fabs(secsSinceStart) + 1;
 	} else
 		timerStr = [NSMutableString stringWithString: @" "];
-	NSCalendarDate *experimentTime = [NSCalendarDate dateWithTimeIntervalSinceReferenceDate:modifiedSecsSinceStart];
-	NSString *temp = [experimentTime descriptionWithCalendarFormat:@"%M:%S"];
+	
+	NSUInteger seconds = (NSUInteger)modifiedSecsSinceStart;
+	NSString *temp = [NSString stringWithFormat:@"%02lu:%02lu", (seconds / 60), (seconds % 60)];
 	[timerStr appendString:temp];
 	[_experimentTimer setStringValue:timerStr];
 }
@@ -511,8 +528,7 @@
 	[_networkView setPlotData:NO];
 	
 	//deselect parts
-	[_experimentPartsController setSelectedObjects:nil];
-}
+	[_experimentPartsController setSelectionIndexes:[NSIndexSet indexSet]];}
 
 //stop button handler
 - (IBAction)stopExperiment:(id)sender
@@ -528,15 +544,14 @@
 	[_experiment setExperimentNotes:[_notesText string] ];
 	
 	//save in .experiment file w/ same name as our .netdef file
-	int result;	
     NSURL *definitionDirectory = [NSURL fileURLWithPath:[[_experiment definitionFilePath] stringByDeletingLastPathComponent] isDirectory:TRUE];
 	NSString *expFileName = [[[[_experiment definitionFilePath] lastPathComponent] stringByDeletingPathExtension] stringByAppendingPathExtension:@"experiment"];
 	
     NSSavePanel *sPanel = [NSSavePanel savePanel];
     [sPanel setDirectoryURL:definitionDirectory];
     [sPanel setNameFieldStringValue:expFileName];
-    result = [sPanel runModal];
-    if (result == NSFileHandlingPanelOKButton) {
+    long result = [sPanel runModal];
+	if (result == NSModalResponseOK) {
 		NSString *filePath = [[sPanel URL] path];
 		[_experiment saveToPath: filePath];
 		[_saveButton setEnabled:NO];
@@ -563,8 +578,7 @@
 	
 	MIOCConnection *con;
 	NSArray *nodeList = [[_experiment currentNetwork] nodeList];
-	unsigned int nNodes, iNode;
-	nNodes = [nodeList count];
+	RNNodeNum_t nNodes = [nodeList count];
 	RNBBNode *bb = nodeList[0];
 		
 	//make program change message
@@ -579,7 +593,7 @@
 	// as is, midi data gets queued ahead of sysex connections, need to make this synchronous,
 	//  easiest way for now is to simply wait...
 	NSLog(@"Setting drum set to #%d",drumset);
-	for (iNode = 1; iNode < nNodes; iNode++) {
+	for (RNNodeNum_t iNode = 1; iNode < nNodes; iNode++) {
 		con = [MIOCConnection connectionWithInPort:[bb sourcePort]
 										 InChannel:[bb controlMIDIChannel]
 										   OutPort:[nodeList[iNode] destPort]
@@ -623,7 +637,7 @@
 	} else if ([[testPart partType] isEqualToString: @"RNNetwork"]) {
 		//Program network
 		RNNetwork *net = [testPart experimentPart];
-		[self programMIOCWithNetwork:net];
+		[self programMIDIRoutingWithNetwork:net];
 		[_experiment setCurrentNetwork:net];
 		[_networkView setNetwork:net];
 		

@@ -39,7 +39,7 @@
 
 	buf[0]	= _IOOpcode;
 	buf[1]	= _port - 1;
-	buf[2]	= _channel;
+	buf[2]	= (_channel==kMIOCFilterChannelAll)?kMIOCFilterChannelAll:(_channel-1);
 
 	if ([_type isEqualToString:@"noteoff"]) {
 		return [NSData dataWithBytes:buf length:3];

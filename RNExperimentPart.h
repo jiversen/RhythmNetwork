@@ -15,13 +15,13 @@
 
 @interface RNExperimentPart : NSObject
 {
-	id				_experimentPart;
-	NSString			*_description;
-	NSTimeInterval	_startTime_s;
-	NSTimeInterval	_actualStartTime_s;
-	NSTimeInterval	_startTimeUncertainty_s;
-	NSString			*_subEventTimes;
-	NSTimer			*_startTimer;
+	id             _experimentPart;
+	NSString      *_description;
+	NSTimeInterval _startTime_s;
+	NSTimeInterval _actualStartTime_s;
+	NSTimeInterval _startTimeUncertainty_s;
+	NSString      *_subEventTimes;
+	NSTimer       *_startTimer;
 }
 
 + (RNExperimentPart *)experimentPartFromDictionary:(NSDictionary *)aDict;

@@ -14,18 +14,16 @@
 //  create hexidecimal string w/ space between bytes xx xx xx...
 - (NSString *)initHexStringWithData:(NSData *)data
 {
-	unsigned int	i, n, stringLen;
-	char			*cStr, tmpStr[16], space;
-	Byte			*src, byteVal;
+	char			tmpStr[16];
 
-	n			= [data length];
-	src			= (Byte *)[data bytes];
-	stringLen	= n * 3;						// allow for 2 hex digits plus space (& null at end)
-	cStr		= (char *)calloc(stringLen, sizeof(char));	// initializes to zeros; malloc does not
+	NSUInteger n			= [data length];
+	Byte *src			= (Byte *)[data bytes];
+	NSUInteger stringLen	= n * 3;						// allow for 2 hex digits plus space (& null at end)
+	char *cStr		= (char *)calloc(stringLen, sizeof(char));	// initializes to zeros; malloc does not
 
-	for (i = 1; i <= n; i++) {
-		byteVal = *src++;
-		space	= (i < n)?0x20:0x00;
+	for (NSUInteger i = 1; i <= n; i++) {
+		Byte byteVal = *src++;
+		char space	= (i < n)?0x20:0x00;
 
 		if (byteVal < 0x10) {
 			sprintf(tmpStr, "0%X%c", byteVal, space);

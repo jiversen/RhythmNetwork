@@ -98,7 +98,7 @@ static Byte removeProcessorFlag[1]		= {0x00};
 	[alert addButtonWithTitle:@"Don't reset"];
 	[alert setMessageText:@"Reset MIDI Matrix..."];
 	[alert setInformativeText:@"Please turn the Midi Matrix (PMM 88-E) off, then on. Click OK when done."];
-	[alert setAlertStyle:NSWarningAlertStyle];
+	[alert setAlertStyle:NSAlertStyleWarning];
 
 	long returnCode = [alert runModal];
 
@@ -158,7 +158,7 @@ static Byte removeProcessorFlag[1]		= {0x00};
 		[alert addButtonWithTitle:@"OK (I'll do it)"];
 		[alert setMessageText:@"Problem with MIDI connection!"];
 		[alert setInformativeText:@"Please follow these steps: After clicking OK, make sure the MIDI interface is connected and the proper MIDI Input and Output are selected. Then press the device 'Reset' button."];
-		[alert setAlertStyle:NSWarningAlertStyle];
+		[alert setAlertStyle:NSAlertStyleWarning];
 
 		long returnCode = [alert runModal];
 
@@ -209,7 +209,7 @@ static Byte removeProcessorFlag[1]		= {0x00};
 	[alert addButtonWithTitle:@"Stop trying"];
 	[alert setMessageText:@"Problem connecting with MIDI Matrix (PMM 88-E)!"];
 	[alert setInformativeText:@"Please make sure it is turned on and then click OK."];
-	[alert setAlertStyle:NSWarningAlertStyle];
+	[alert setAlertStyle:NSAlertStyleWarning];
 	long returnCode = [alert runModal];
 
 	if (returnCode == NSAlertFirstButtonReturn) {	// OK: try again

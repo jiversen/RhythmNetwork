@@ -20,7 +20,7 @@ static NSArray *colorArray;
 {
 	if (colorArray == nil) {
 		//colorArray = [@[[NSColor greenColor], [NSColor blueColor], [NSColor orangeColor], \
-			[NSColor purpleColor], [NSColor brownColor], [NSColor blackColor]] retain];
+		//	[NSColor purpleColor], [NSColor brownColor], [NSColor blackColor]] retain];
         colorArray = [@[[NSColor systemGreenColor], [NSColor systemBlueColor], [NSColor systemOrangeColor], \
                         [NSColor systemPurpleColor], [NSColor systemBrownColor], [NSColor systemTealColor], \
                         [NSColor systemYellowColor], [NSColor systemPinkColor], [NSColor systemIndigoColor]] retain];
@@ -193,7 +193,7 @@ static NSArray *colorArray;
 {
 	//assign channels sequentially (channel = node num)
 	Byte patchChan = [self sourceChan] + kNumInputsPerConcentrator * ([self sourcePort] - 1);
-	NSAssert1( (patchChan <= 16), @"patch chan out of range--too many tappers? (%u)", patchChan);
+	NSAssert1( (patchChan <= 15), @"patch chan out of range--too many tappers? (%u)", patchChan);
 	return patchChan;
 }
 

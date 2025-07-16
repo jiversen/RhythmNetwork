@@ -24,7 +24,7 @@
 	Byte		_port;
 	Byte		_channel;
 	Byte		_IOOpcode;
-	NSString	*_type;
+	NSString	*_type; //noteoff or activesense so far
 }
 
 - (MIOCFilterProcessor *)initWithType:(NSString *)type Port:(Byte)port Channel:(Byte)channel OnInput:(BOOL)isInput;

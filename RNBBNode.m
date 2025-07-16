@@ -15,33 +15,32 @@
 
 @implementation RNBBNode
 
-- (RNBBNode *) initWithNumStimulusChannels: (Byte) numStimulusChannels
+- (RNBBNode *)initWithNumStimulusChannels:(Byte)numStimulusChannels
 {
-	self = (RNBBNode *) [super initWithNodeNumber:0];
-		
+	self = (RNBBNode *)[super initWithNodeNumber:0];
+
 	[self setNumStimulusChannels:numStimulusChannels];
-	
-	//these values are for channel 1
-	[self setSourcePort: (Byte) kBigBrotherPort 
-			 SourceChan: (Byte) kBigBrotherChannel 
-			 SourceNote: (Byte) kBaseNote];
-	[self setDestPort: (Byte) kBigBrotherPort
-			 DestChan: (Byte) kMIOCOutChannelSameAsInput 
-			 DestNote: (Byte) kBaseNote];
-	[self setHearsBigBrother:TRUE]; //since is BB
-	[self setHearsSelf:FALSE];	// ***might want to monitor self?
-		
+
+	// these values are for channel 1
+	[self setSourcePort:(Byte)kBigBrotherPort
+			 SourceChan:(Byte)kBigBrotherChannel
+			 SourceNote:(Byte)kBaseNote];
+	[self setDestPort:(Byte)kBigBrotherPort
+			 DestChan:(Byte)kMIOCOutChannelSameAsInput
+			 DestNote:(Byte)kBaseNote];
+	[self setHearsBigBrother:TRUE]; // since is BB
+	[self setHearsSelf:FALSE];      // ***might want to monitor self?
+
 	return self;
-		
 }
 
-- (void) dealloc
+- (void)dealloc
 {
 	unsigned int i;
-	
-	for (i=1; i<= _numStimulusChannels; i++) {
-        [_flashLayerArray[i] removeFromSuperlayer];
-        _flashLayerArray[i] = nil;
+
+	for (i = 1; i <= _numStimulusChannels; i++) {
+		[_flashLayerArray[i] removeFromSuperlayer];
+		_flashLayerArray[i] = nil;
 	}
 	[super dealloc];
 }
