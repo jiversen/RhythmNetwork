@@ -2,6 +2,7 @@
 
 #import <CoreMIDI/MIDIServices.h>
 #import <CoreAudio/HostTime.h>
+#include <assert.h>
 #import "NSStringHexStringCategory.h"
 #import "RNArchitectureDefines.h"
 
@@ -610,6 +611,8 @@ static void myReadProc(const MIDIPacketList *pktlist, void *refCon, void *connRe
 	
 	// copy entire packetlist to ring buffer
 	bool status = TPCircularBufferProduceBytes(&selfMIDIIO->_packetBuffer, pktlist, (uint32_t) pktlistLength);
+	
+	assert(status && "Buffer overrun in MIDI readProc--consider increasing buffer size.");
 	
 	if (!status) {
 		return;

@@ -2,9 +2,9 @@
 #import "BuildFingerprint.h"
 const char *BuildFingerprint = 
 "=== Build Info ===\n"
-"Timestamp: 2025-07-16 10:13:59\n"
+"Timestamp: 2025-07-16 13:35:45\n"
 "Branch: Delays\n"
-"Commit: 6497ac6 — Clean up includes (with uncommitted changes)\n\n"
+"Commit: 36866ab — Prettify and resolve many deprecations (with uncommitted changes)\n\n"
 "Fingerprint (RNArchitectureDefines.h):\n\n"
 "//\n"
 "//  RNArchitectureDefines.h\n"
