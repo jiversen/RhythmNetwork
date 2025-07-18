@@ -3,8 +3,10 @@
 #import <CoreMIDI/MIDIServices.h>
 #import <CoreAudio/HostTime.h>
 #include <assert.h>
+#include <os/log.h>
 #import "NSStringHexStringCategory.h"
 #import "RNArchitectureDefines.h"
+#import "RTAssert.h"
 
 #define kDelayPacketListLength 8192 //big enough for ~500 events
 
@@ -19,14 +21,14 @@ static void myMIDINotifyProc(const MIDINotification *message, void * refCon);
 // Error Handling (CGPT)
 #define CHECK_OSSTATUS_OR_BAIL(s, msg) do { \
 	if ((s) != noErr) { \
-		NSLog(@"%s failed: %@ (%d)", msg, (NSString *)CMIDIErrorDescription(s), (int)(s)); \
+		os_log(OS_LOG_DEFAULT, "%s failed: %@ (%d)", msg, (NSString *)CMIDIErrorDescription(s), (int)(s)); \
 		goto bail; \
 	} \
 } while (0)
 
 #define CHECK_OSSTATUS(s, msg) do { \
 if ((s) != noErr) { \
-	   NSLog(@"%s failed: %@ (%d)", msg, (NSString *)CMIDIErrorDescription(s), (int)(s)); \
+	os_log(OS_LOG_DEFAULT, "%s failed: %@ (%d)", msg, (NSString *)CMIDIErrorDescription(s), (int)(s)); \
    } \
 } while (0)
 
@@ -614,8 +616,10 @@ static void myReadProc(const MIDIPacketList *pktlist, void *refCon, void *connRe
 	
 	// copy entire packetlist to ring buffer
 	bool status = TPCircularBufferProduceBytes(&selfMIDIIO->_packetBuffer, pktlist, (uint32_t) pktlistLength);
+	//logMIDIPacketList(pktlist, pktlistLength, t0);
+	//return;
 	
-	assert(status && "Buffer overrun in MIDI readProc--consider increasing buffer size.");
+	RT_SAFE_ASSERT(status, "Buffer overrun in MIDI readProc--consider increasing buffer size.");
 	
 	if (!status) {
 		return;
@@ -624,6 +628,27 @@ static void myReadProc(const MIDIPacketList *pktlist, void *refCon, void *connRe
 	// signal processing thread that data are available
 	dispatch_semaphore_signal(selfMIDIIO->_dataAvailableSemaphore);
 }
+
+void logMIDIPacketList(const MIDIPacketList *packetList, long pktlistLength, MIDITimeStamp t0)
+{
+	// LOG
+	os_log(OS_LOG_DEFAULT, "--MIDI PacketList - #Packets: %d (0x%lx bytes)", packetList->numPackets, pktlistLength);
+	
+	const MIDIPacket *packet = packetList->packet;
+	
+	for (int i = 0; i < packetList->numPackets; i++) {
+		NSMutableString *dataString = [NSMutableString string];
+		
+		for (int j = 0; j < packet->length; j++) {
+			[dataString appendFormat:@"%02X ", packet->data[j]];
+		}
+		
+		os_log(OS_LOG_DEFAULT, "  MIDI Packet - Timestamp: %llu ms%@, Length: %d, Data: %@", HOSTTIME_TO_MS(packet->timeStamp - t0), (t0>0)?@" (rel)":@"", packet->length, dataString);
+		
+		packet = MIDIPacketNext(packet);
+	}
+		}
+
 
 // These next two methods are called from the high-priority processing thread. Both walk the packetList(s) & packets with two aims: 1) to output delay packets and 2) to send sysex and note on to listeners, which handle configuration, data saving, and UI
 // Not sure there is any way around walking through entire sysex streams because it may be spread across packets and not sure there is a test for a packet being sysex based on its first byte...In our use, sysex receiving is very rare, never during critical path, and short so it is really not any kind of issue
@@ -651,12 +676,12 @@ static void myReadProc(const MIDIPacketList *pktlist, void *refCon, void *connRe
 			packet = MIDIPacketNext(packet);
 		}
 		//packet now points to byte beyond the packetlist
-		NSAssert((Byte *)packet <= bufferEnd+1, @"MIDIPacketList has overrun input buffer.");
+		RT_SAFE_ASSERT((Byte *)packet <= bufferEnd+1, "MIDIPacketList has overrun input buffer.");
 		size_t pktlistLength = (const Byte *)packet - (Byte *)pktlist;
 		
 		// Safety check: is packetList contained within availableBytes?
 		if (bufferPtr + pktlistLength > bufferEnd) {
-			NSLog(@"Incomplete MIDIPacketList in input buffer. Skipping.");
+			os_log(OS_LOG_DEFAULT, "Incomplete MIDIPacketList in input buffer. Skipping.");
 			break;
 		}
 		
@@ -733,7 +758,7 @@ static void myReadProc(const MIDIPacketList *pktlist, void *refCon, void *connRe
 									curPkt =  MIDIPacketListAdd(_delayPacketList,kDelayPacketListLength,curPkt,offTimeStamp,3,_offMessage);
 								}
 								
-								NSAssert((curPkt != NULL), @"Packet List Overflow [%d -> %d]",channel,to);
+								RT_SAFE_ASSERT((curDelayPkt != NULL), "Packet List Overflow [chan %d -> %d]",channel,toChan);
 							}
 						}
 					}
@@ -760,7 +785,7 @@ static void myReadProc(const MIDIPacketList *pktlist, void *refCon, void *connRe
 		nPacketList++;
 		bufferPtr += pktlistLength;
 	}
-	NSLog(@"handleMIDIPktlist handled %d MIDIPacketLists with %ld bytes left over.", nPacketList, bufferEnd-bufferPtr);
+	if (nDelayPackets) {
 }
 
 // *********************************************
@@ -782,14 +807,17 @@ static void myReadProc(const MIDIPacketList *pktlist, void *refCon, void *connRe
 			packet = MIDIPacketNext(packet);
 		}
 		//packet now points to byte beyond the packetlist
-		NSAssert((Byte *)packet <= bufferEnd+1, @"MIDIPacketList has overrun input buffer.");
+		RT_SAFE_ASSERT((Byte *)packet <= bufferEnd+1, "MIDIPacketList has overrun input buffer.");
 		size_t pktlistLength = (Byte *)packet - (Byte *)pktlist;
 		
 		// Safety check: is packetList contained within availableBytes?
 		if (bufferPtr + pktlistLength > bufferEnd) {
-			NSLog(@"Incomplete MIDIPacketList in input buffer. Skipping.");
+			os_log(OS_LOG_DEFAULT, "Incomplete MIDIPacketList in input buffer. Skipping.");
 			break;
 		}
+		// TEST
+		os_log(OS_LOG_DEFAULT, "==handleMIDIPktlist==");
+		logMIDIPacketList(pktlist, pktlistLength, 0);
 		
 		// Second, thoroughly parse midi packets in list--keeping it simple for now, and only doing what we need
 		packet = (MIDIPacket *)&pktlist->packet[0];
@@ -811,11 +839,11 @@ static void myReadProc(const MIDIPacketList *pktlist, void *refCon, void *connRe
 					
 					if (byte == 0xF7) {	// Sysex end
 						if (bp != packetEnd) {
-							NSLog(@"Interesting: %ld bytes following end of sysex message in packet.", packetEnd - bp);
+							os_log(OS_LOG_DEFAULT, "Interesting: %ld bytes following end of sysex message in packet.", packetEnd - bp);
 						}
 						
 						NSString *hexStr = [[NSString alloc] initHexStringWithData:_sysexData];
-						NSLog(@"MIDIIO Received Sysex (%lu bytes): %@\n", (unsigned long)[_sysexData length], hexStr);
+						os_log(OS_LOG_DEFAULT, "MIDIIO Received Sysex (%lu bytes): %@\n", (unsigned long)[_sysexData length], hexStr);
 						
 						for (id listener in _sysexListenerArray) {
 							dispatch_async(_listenerQueue, ^{
@@ -830,7 +858,7 @@ static void myReadProc(const MIDIPacketList *pktlist, void *refCon, void *connRe
 					// note-on (all we care about in RhythmNetwork, so this is hardly general purpose)
 					// we create our own structure, one step abstracted from raw MIDI, and with time in real units
 					if ((byte & 0xF0) == 0x90) {
-						NSAssert(bp + 1 < packetEnd, @"Problem: partial note-on message in packet. Shouldn't happen");
+						RT_SAFE_ASSERT(bp + 1 < packetEnd, "Problem: partial note-on message in packet. Shouldn't happen");
 						Byte channel		= (byte & 0x0F) + 1; // we use 1-based counting
 						Byte	note		= *bp++;
 						Byte	velocity	= *bp++;
@@ -851,17 +879,19 @@ static void myReadProc(const MIDIPacketList *pktlist, void *refCon, void *connRe
 							}
 						}
 					} else {
-						NSLog(@"Received non note-on event! %x %x %x", packet->data[0], packet->data[1], packet->data[2]);
+						os_log(OS_LOG_DEFAULT, "Received non note-on event! %x %x %x", packet->data[0], packet->data[1], packet->data[2]);
 					}
 				}
 			}	// loop over packet contents
 			
 			packet = MIDIPacketNext(packet);
 		}	// loop over packets
+		//os_log(OS_LOG_DEFAULT, "handleMIDIPktlist: Handled a MIDIPacketList (%d packets; %zu bytes).",pktlist->numPackets,pktlistLength);
 		nPacketList++;
 		bufferPtr += pktlistLength;
 	}
-	NSLog(@"handleMIDIPktlist handled %d MIDIPacketLists with %ld bytes left over.", nPacketList, bufferEnd-bufferPtr);
+	
+	//os_log(OS_LOG_DEFAULT, "handleMIDIPktlist handled total %d MIDIPacketLists with %ld bytes left over.", nPacketList, bufferEnd-bufferPtr);
 
 }
 
@@ -997,12 +1027,12 @@ static void mySysexCompletionProc(MIDISysexSendRequest *request)
 
 	MIDISysexSendRequest *req = malloc(sizeof(MIDISysexSendRequest));
 
-	req->destination		= _MIDIDest;
-	req->data			= (Byte *)[data bytes];
-	req->bytesToSend		= (UInt32)[data length];
-	req->complete		= FALSE;
-	req->completionProc	= mySysexCompletionProc;
-	req->completionRefCon	= (void *)data;
+	req->destination	  = _MIDIDest;
+	req->data             = (Byte *)[data bytes];
+	req->bytesToSend      = (UInt32)[data length];
+	req->complete         = FALSE;
+	req->completionProc   = mySysexCompletionProc;
+	req->completionRefCon = (void *)data;
 
 	status = MIDISendSysex(req);
 
