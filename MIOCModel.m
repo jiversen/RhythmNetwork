@@ -26,7 +26,9 @@ static Byte removeProcessorFlag[1]		= {0x00};
 
 - (MIOCModel *)init
 {
-	self					= [super init];
+	self = [super init];
+	if (!self) return nil;
+
 	_deviceID				= 0x00;	// *** hard coded for now, later add discovery if we have multiple devices
 	_deviceType				= kDevicePMM88E;
 	_connectionList			= [[NSMutableArray arrayWithCapacity:0] retain];

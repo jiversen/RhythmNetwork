@@ -23,6 +23,7 @@ static void MIDICoreReadProc(const MIDIPacketList *pktlist, void *refCon, void *
 - (MIDICore *)initWithInterface:(MIDIIO *)midiIO
 {
 	self = [super init];
+	if (!self) return nil;
 
 	_MIDILink = midiIO;
 	[_MIDILink setReadProc:MIDICoreReadProc refCon:self];

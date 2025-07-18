@@ -26,7 +26,8 @@
 - (RNExperiment *) initFromPath: (NSString *) filePath
 {
 	self = [super init];
-	
+	if (!self) return nil;
+
 	//initialize from file
 	_definitionFilePath = [filePath copy];
 	_definitionDictionary = [[NSDictionary dictionaryWithContentsOfFile:filePath] retain];
@@ -47,7 +48,6 @@
 	
 	_recordedEvents = [[NSMutableData dataWithCapacity: (sizeof(NoteOnMessage) * kInitialEventCapacity)] retain];
 	
-
 	[self setNeedsSave:NO];
 	
 	return self; 

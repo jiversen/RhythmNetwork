@@ -22,9 +22,12 @@
 - (RNConnection *)initWithFromNode:(UInt16)fromNode ToNode:(UInt16)toNode
 {
 	self = [super init];
+	if (!self) return nil;
+
 	[self setFromNode:fromNode ToNode:toNode];
 	[self setWeight:1.0];	// for now, no weighting
 	[self setDelay:0.0];
+	
 	return self;
 }
 

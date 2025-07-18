@@ -69,6 +69,8 @@ static NSArray *colorArray;
 	NSAssert( (nodeNumber < kMaxNodes), @"nodeNumber must be < %d (%d passed)", kMaxNodes, nodeNumber);
 	
 	self = [super init];
+	if (!self) return nil;
+
 	_nodeNumber = nodeNumber;
 	
 	if (nodeNumber==0) { //bigBrother, do nothing--subclass initializer will do the init

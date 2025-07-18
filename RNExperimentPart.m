@@ -90,10 +90,13 @@
 
 - (RNExperimentPart *)initWithObject:(id)anObject RelativeStartTime:(NSTimeInterval)startTime_s Description:(NSString *)description
 {
-	self			= [super init];
+	self = [super init];
+	if (!self) return nil;
+
 	_experimentPart = [anObject retain];	// !!!:jri:20050627 did not retain prior, yet did autorelease; now balanced
 	_startTime_s	= startTime_s;
 	_description	= [description copy];	// !!!:jri:20050627 more appropriate to copy; added release in dealloc
+	
 	return self;
 }
 

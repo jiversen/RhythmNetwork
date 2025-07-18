@@ -22,6 +22,7 @@
 - (RNNetwork *)initFromDictionary:(NSDictionary *)theDict
 {
 	self = [super init];
+	if (!self) return nil;
 
 	// extract fields
 

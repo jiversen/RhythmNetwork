@@ -19,6 +19,8 @@
 - (RNStimulus *) initWithStimulusNumber: (Byte) stimChannel MIDIChannel: (Byte) MIDIChannel Note: (Byte) note StartTime: (double) startTime IOI: (double) IOI StartPhase: (double) startPhase Count: (int) nEvents
 {
 	self = [super init];
+	if (!self) return nil;
+
 	_stimulusChannel		= stimChannel;
 	_MIDIChannel			= MIDIChannel;
 	_note				= note;

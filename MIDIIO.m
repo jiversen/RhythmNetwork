@@ -59,7 +59,9 @@ static NSString *CMIDIErrorDescription(OSStatus status) {
 
 - (MIDIIO *)init
 {
-	self                = [super init];
+	self = [super init];
+	if (!self) return nil;
+	
 	_MIDIClient         = kMIDIInvalidRef;
 	_inPort             = kMIDIInvalidRef;
 	_outPort            = kMIDIInvalidRef;
@@ -89,7 +91,6 @@ static NSString *CMIDIErrorDescription(OSStatus status) {
 	
 	[self startMIDIProcessingThread];
 
-
 	return self;
 }
 
@@ -97,7 +98,9 @@ static NSString *CMIDIErrorDescription(OSStatus status) {
 // Simplified init for follower MIDIIO
 - (MIDIIO *)initFollower
 {
-	self        = [super init];
+	self = [super init];
+	if (!self) return nil;
+
 	_MIDIClient = kMIDIInvalidRef; //
 	_inPort     = kMIDIInvalidRef;
 	_outPort    = kMIDIInvalidRef;

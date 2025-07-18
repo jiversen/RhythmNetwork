@@ -12,10 +12,12 @@
 
 - (MIOCFilterProcessor *)initWithType:(NSString *)type Port:(Byte)port Channel:(Byte)channel OnInput:(BOOL)isInput
 {
-	self		= [super init];
-	_port	= port;
-	_channel	= channel;
-	_type	= [type copy];
+	self = [super init];
+	if (!self) return nil;
+
+	_port    = port;
+	_channel = channel;
+	_type    = [type copy];
 
 	if ([type isEqualToString:@"noteoff"]) {
 		_IOOpcode = kMIOCInputNoteOffFilterProcessorOpcode;

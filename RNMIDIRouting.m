@@ -17,18 +17,19 @@
 
 - (RNMIDIRouting *) init {
 	self = [super init];
-	if (self) {
-		// explicitly initialize routing to the first one, and set to empty
-		_weightMatrixIndex = 0;
-		NodeMatrix *active = &_weightMatrix[_weightMatrixIndex];
-		memset(active, 0, sizeof(NodeMatrix));
-		atomic_store(&_routingTable.weightMatrix, active);
-		
-		_delayMatrixIndex = 0;
-		active = &_delayMatrix[_delayMatrixIndex];
-		memset(active, 0, sizeof(NodeMatrix));
-		atomic_store(&_routingTable.delayMatrix, active);
-	}
+	if (!self) return nil;
+
+	// explicitly initialize routing to the first one, and set to empty
+	_weightMatrixIndex = 0;
+	NodeMatrix *active = &_weightMatrix[_weightMatrixIndex];
+	memset(active, 0, sizeof(NodeMatrix));
+	atomic_store(&_routingTable.weightMatrix, active);
+	
+	_delayMatrixIndex = 0;
+	active = &_delayMatrix[_delayMatrixIndex];
+	memset(active, 0, sizeof(NodeMatrix));
+	atomic_store(&_routingTable.delayMatrix, active);
+	
 	return self;
 }
 

@@ -14,6 +14,7 @@
 - (MIOCVelocityProcessor *)initWithPort:(Byte)port Channel:(Byte)channel OnInput:(BOOL)isInput
 {
 	self = [super init];
+	if (!self) return nil;
 
 	[self setPort:port];
 	[self setChannel:channel];

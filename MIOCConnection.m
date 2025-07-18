@@ -24,12 +24,15 @@
 // designated initializer
 - (MIOCConnection *)initWithInPort:(int)anInPort InChannel:(int)anInChannel OutPort:(int)anOutPort OutChannel:(int)anOutChannel
 {
-	self			= [super init];
+	self = [super init];
+	if (!self) return nil;
+
 	_inPort			= (Byte)anInPort;
 	_inChannel		= (Byte)anInChannel;
 	_outPort		= (Byte)anOutPort;
 	_outChannel 	= (Byte)anOutChannel;
 	[self setWeight:1.0];
+	
 	return self;
 }
 
