@@ -161,6 +161,21 @@ static __inline__ __attribute__((always_inline)) void TPCircularBufferConsume(TP
     assert(buffer->fillCount >= 0);
 }
 
+// JRI July 2025: I'm writing structures into the buffer and these have to live at 4-byte aligned addresses,
+// AlignedTPCircularBufferProduceBytes below should ensure availablebytes is always a multiple of 4, for cleanness
+// balance with an aligned consume
+static __inline__ __attribute__((always_inline))
+void AlignedTPCircularBufferConsumeBytes(TPCircularBuffer *buffer, uint32_t len)
+{
+	uint32_t space;
+	void *tail = TPCircularBufferTail(buffer, &space);
+	assert((((uintptr_t)tail % 4) == 0) && "Buffer tail is misaligned — corrupted by earlier unaligned consume?");
+	assert(((len % 4) == 0) && "Attempt to consume unaligned length from alignment-enforced buffer");
+
+	TPCircularBufferConsume(buffer, len);
+}
+
+
 /*!
  * Access front of buffer
  *
@@ -214,6 +229,43 @@ static __inline__ __attribute__((always_inline)) bool TPCircularBufferProduceByt
     memcpy(ptr, src, len);
     TPCircularBufferProduce(buffer, len);
     return true;
+}
+
+// JRI July 2025: I'm writing structures into the buffer and these have to live at 4-byte aligned addresses, so handle
+// this properly by adding needed padding so that next structure starts at aligned address. HOWEVER, the consumer has to handle
+// this on its own, since it has to read all available bytes at once, so as it walks through structures, it needs to bump the pointer itself
+static __inline__ __attribute__((always_inline))
+bool AlignedTPCircularBufferProduceBytes(TPCircularBuffer *buffer, const void *src, uint32_t len)
+{
+	uint32_t space;
+	void *ptr = TPCircularBufferHead(buffer, &space);
+
+	// Ensure head is aligned before proceeding
+	uintptr_t headAddr = (uintptr_t)ptr;
+	if ((headAddr & 0x3) != 0) {
+		assert(false && "Algined produce: head was not at aligned address. Must exclusively use AlignedTPCircularBufferProduceBytes.");
+		// Misaligned head pointer — this should never happen
+		return false;  // or assert(false) in debug builds
+	}
+
+	// Calculate how much total space we'll consume (aligned up)
+	uint32_t paddedLen = (len + 3) & ~((uint32_t)3);
+	uint32_t padding = paddedLen - len;
+
+	if (space < paddedLen)
+		return false;
+
+	// Copy data to aligned head
+	memcpy(ptr, src, len);
+
+	// Zero out trailing padding for cleanliness/debugging
+	if (padding > 0) {
+		memset((char *)ptr + len, 0, padding);
+	}
+
+	// Commit entire region (including padding) to the buffer
+	TPCircularBufferProduce(buffer, paddedLen);
+	return true;
 }
 
 /*!
