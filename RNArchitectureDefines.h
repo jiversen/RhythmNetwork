@@ -16,7 +16,8 @@
 
 // Trigger to MIDI 'concentrators'
 #define kNumConcentrators 4 // Max number of TMC-6 devices (based on available ports on MIOC
-#define kNumInputsPerConcentrator 6 // TMC-6 has 6 inputs
+#define kNumInputsPerConcentrator 3 // TMC-6 has 6 inputs; 08/06/2025 change to 3 (for group of 6) to reduce congestion
+
 
 // MIOC Ports
 #define kBigBrotherPort 8 // MIOC port used to monitor all activity, deliver stimuli and program MIOC
@@ -27,12 +28,16 @@
 #define kBigBrotherControlChannel 1
 #define kBigBrotherChannel 16
 
+// MIDI Constants
 #define kBaseNote 64		// Tappers each identified with a unique note number beginning with this
+#define kStimulusNoteVelocity	127 // Velocity for metronome events
 
+// CONFIGURATION
 #define kDoEmitNoteOff FALSE // whether to send out note-off events
 #define kNoteOffDelay_ms 200
 
-#define kStimulusNoteVelocity	127 // Velocity for metronome events
+#define kSelfFeedbackNoDelayThroughMIOC TRUE //route self-feedback through MIOC, not CoreMIDI router, for reduced latency
+
 
 // ====== Network Architecture =======
 
@@ -46,11 +51,11 @@
 // Types
 typedef UInt16 RNNodeNum_t; //TODO: consider making this float so I can add stim channel
 
-// Define mapping from node number to port, channel, note
+// Define mapping from node number (1-based) to port, channel, note
 // as of July 2025, we're using channel = tapper ID and note is unique to node
 // these don't do any bounds checking, but recal node 1->channel 0; node 0->kBigBrotherChannel (16)
 
-// port depends on how many tappers per trigger to MIDI device concentrated into a port
+// port depends on how many tappers per trigger to MIDI device concentrated into a port. NB 1-based
 static inline Byte portForNode(RNNodeNum_t node) {
 	return (node == 0) ? kBigBrotherPort :
 	((node-1) / kNumInputsPerConcentrator) + 1;
@@ -67,9 +72,14 @@ static inline Byte noteForNode(RNNodeNum_t node) {
 	kBaseNote + node;
 }
 
-//reverse lookup--channel completely determines the node
-static inline RNNodeNum_t nodeForChannel(Byte channel) {
-	return (channel==kBigBrotherChannel) ? 0 : channel+1;
+//reverse lookup--channel completely determines the node (actually, only for tappers)
+//static inline RNNodeNum_t nodeForChannel(Byte channel) {
+//	return (channel==kBigBrotherChannel) ? 0 : channel+1;
+//}
+
+//reverse lookup--Note completely determines the node (for tappers and BB)
+static inline RNNodeNum_t nodeForNote(Byte note) {
+	return note - kBaseNote;
 }
 
 
