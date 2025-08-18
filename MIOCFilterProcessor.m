@@ -20,14 +20,14 @@
 	_type    = [type copy];
 
 	if ([type isEqualToString:@"noteoff"]) {
-		_IOOpcode = kMIOCInputNoteOffFilterProcessorOpcode;
+		_IOOpcode = kMIOCInputNoteOffFilterProcessorType;
 	} else if ([type isEqualToString:@"activesense"]) {
-		_IOOpcode = kMIOCInputActiveSenseFilterProcessorOpcode;
+		_IOOpcode = kMIOCInputActiveSenseFilterProcessorType;
 	} else {
 		NSAssert1(0, @"Unknown filter processor type: %@", type);
 	}
 
-	if (isInput == NO) {// output processor opcode is input opcode + 1
+	if (isInput == NO) { // output processor opcode is input opcode + 1
 		_IOOpcode += 1;
 	}
 
@@ -41,7 +41,7 @@
 
 	buf[0]	= _IOOpcode;
 	buf[1]	= _port - 1;
-	buf[2]	= (_channel==kMIOCFilterChannelAll)?kMIOCFilterChannelAll:(_channel-1);
+	buf[2]	= (_channel==kMIOCFilterChannelAll)?kMIOCFilterChannelAll:((_channel-1) | 0x80);
 
 	if ([_type isEqualToString:@"noteoff"]) {
 		return [NSData dataWithBytes:buf length:3];

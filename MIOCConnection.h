@@ -12,12 +12,9 @@
 
 #import <Foundation/Foundation.h>
 #import "MIOCProcessorProtocol.h"
+#import "MIOCMessage.h"
 
 @class MIOCVelocityProcessor;
-
-#define kMIOCInChannelAll			0x80
-#define kMIOCOutChannelSameAsInput	0x80
-#define kMIOCRoutingProcessorOpcode 0x00
 
 @interface MIOCConnection : NSObject<MIOCProcessor>
 {

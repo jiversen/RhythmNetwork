@@ -8,16 +8,7 @@
 
 #import <Foundation/Foundation.h>
 #import "MIOCProcessorProtocol.h"
-
-// define opcodes we plan to use
-#define kMIOCInputNoteOffFilterProcessorOpcode 0x08
-#define kMIOCOutputNoteOffFilterProcessorOpcode 0x09
-
-#define kMIOCInputActiveSenseFilterProcessorOpcode 0x1A
-#define kMIOCOutputActiveSenseFilterProcessorOpcode 0x1B
-
-#define kMIOCFilterChannelAll 0x00
-
+#import "MIOCMessage.h"
 
 @interface MIOCFilterProcessor : NSObject <MIOCProcessor>
 {

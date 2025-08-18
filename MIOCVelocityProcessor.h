@@ -8,9 +8,7 @@
 
 #import <Foundation/Foundation.h>
 #import "MIOCProcessorProtocol.h"
-
-#define kMIOCInputVelocityProcessorOpcode	0x24
-#define kMIOCOutputVelocityProcessorOpcode	0x25
+#import "MIOCMessage.h"
 
 @interface MIOCVelocityProcessor : NSObject <MIOCProcessor, NSCopying>
 {
@@ -50,6 +48,7 @@
 //processing parameters for a MIDI-input, an odd number specifies
 //a MIDI-output processor. Routing-parameters are always given as
 //input-processing (the connected output is given as parameter).
+
 ///Specific
 //24/25 Velocity proc.            length = 8       
 //Computes a new value for the second MIDI data byte of

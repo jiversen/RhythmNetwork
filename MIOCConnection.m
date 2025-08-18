@@ -12,10 +12,15 @@
 // note--arguments to methods use 1 as basis (e.g. ports 1-8), as does internal representation
 // Conversion to 0 based happens in MIDIBytes method
 
+#define kDebugConnection YES
+
 @implementation MIOCConnection
 
 + (MIOCConnection *)connectionWithInPort:(int)anInPort InChannel:(int)anInChannel OutPort:(int)anOutPort OutChannel:(int)anOutChannel
 {
+	if (kDebugConnection) {
+		NSLog(@"[IN %d, c%d] -> [OUT %d, c%d]", anInPort, anInChannel, anOutPort, anOutChannel);
+	}
 	MIOCConnection *con = [[MIOCConnection alloc] initWithInPort:anInPort InChannel:anInChannel OutPort:anOutPort OutChannel:anOutChannel];
 
 	return [con autorelease];
@@ -47,6 +52,7 @@
 	return _weight;
 }
 
+// FIXME: incorrect in case we have a delay, in which case it will be handled by CoreMIDI, not MIOC
 - (void)setWeight:(double)newWeight
 {
 	if (_weight != newWeight) {
@@ -55,6 +61,7 @@
 		_velocityProcessor = nil;
 
 		if (_weight != 1.0) {
+			NSAssert(NO, @"Hey, we need to rethink weighting because it has to take into account if this is a delay network or not");
 			_velocityProcessor = [[MIOCVelocityProcessor alloc] initWithPort:_outPort Channel:_outChannel OnInput:NO];
 			[_velocityProcessor setWeight:newWeight];
 		}
@@ -106,11 +113,11 @@
 	return hashval;
 }
 
-- (NSData *)MIDIBytes	// convert to MIDI bytestream (NB converts to 0-based channel indexing)
+- (NSData *)MIDIBytes	// convert to MIDI bytestream (NB converts port and channel to 0-based channel indexing, preserving special values)
 {
 	Byte buf[5];
 
-	buf[0]	= kMIOCRoutingProcessorOpcode;
+	buf[0]	= kMIOCRoutingProcessorType;
 	buf[1]	= _inPort - 1;
 	buf[2]	= (_inChannel == kMIOCInChannelAll)?kMIOCInChannelAll:(_inChannel - 1);
 	buf[3]	= _outPort - 1;

@@ -6,31 +6,10 @@
 #import <Foundation/Foundation.h>
 #import "MIOCProcessorProtocol.h"
 #import "MIDIListenerProtocols.h"
+#import "MIOCMessage.h"
 
-#define kMIDITEMPID			0x00200d
 #define kSendSysexSuccess	TRUE
 #define kSendSysexFailure	FALSE
-
-#define kDevicePMM88E		0x20
-
-// MIOC message structure (per dump.txt)
-typedef struct _MIOCMessage {
-	Byte	sysexStart;	// junk
-	Byte	manuID[3];
-	Byte	deviceID;
-	Byte	deviceType;
-	Byte	mode;
-	Byte	opcode;
-	Byte	data[1];// open ended...
-} MIOCMessage;
-
-// bytes before start of data
-#define kPreambleLength			8
-
-#define kModeEncodedMask		(1 << 6)
-#define kModeHandshakeMask		(1 << 2)
-#define kModeMsgTypeMask		(0x03)
-#define kOpcodeDirectionMask	(1 << 6)
 
 @class MIDIIO, MIOCConnection, MIOCVelocityProcessor, MIDICore;
 
@@ -58,13 +37,14 @@ typedef struct _MIOCMessage {
 - (void)reset;
 - (void)initialize;
 - (void)checkOnline;
+- (BOOL)isOnline;
 
 - (BOOL)useInternalMIDIProcessor;
 - (void)setUseInternalMIDIProcessor:(BOOL)useInternal;
 
 - (BOOL)sendVerifiedMIOCQuery:(NSData *)data;
 - (BOOL)sendMIOCQuery:(NSData *)data;
-- (void)handleMIOCReply:(NSNotification *)notification;
+- (void)handleMIOCIsOnlineReply:(NSNotification *)notification;
 - (void)handleMIOCReplyTimeout:(NSTimer *)timer;
 
 - (BOOL)queryPortAddress;
