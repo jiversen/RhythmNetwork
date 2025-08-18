@@ -4,7 +4,6 @@
 
 #import <Foundation/Foundation.h>
 #import <CoreMIDI/MIDIServices.h>
-//#import <os/log.h>
 #import <stdatomic.h>
 #import "RNArchitectureDefines.h"
 #import "TPCircularBuffer.h"
@@ -12,17 +11,22 @@
 #import "MIDIListenerProtocols.h"
 #import "RNMIDIRouting.h"
 
-
 #define kSendMIDISuccess		TRUE
 #define kSendMIDIFailure		FALSE
 #define kMIDIInvalidRef ((MIDIObjectRef)0)
+
+#define kSysexStart 0xF0
+#define kSysexEnd 0xF7
+#define kNoteOnCommand 0x90
+#define kNoteOffCommand 0x80
+#define kCommandMask 0xF0
 
 typedef struct _NoteOnMessage {
 	UInt64	eventTime_ns;
 	Byte		channel;
 	Byte		note;
 	Byte		velocity;
-	Byte		spare;		// seems good to keep it even # of bytes, not sure of impact on storage performance
+	Byte		spare;		// seems good to keep it multiple of 4 bytes--only matters if I'm going to pack them into a buffer
 } NoteOnMessage;
 
 typedef struct _ProgramChangeMessage {
@@ -51,7 +55,7 @@ typedef struct _ProgramChangeMessage {
 	BOOL                                   _isReceivingSysex;
 	BOOL                                   _isLeader;     // are we the owner of a sub-interface, or the sub-interface
 	MIDIIO                                *_delayMIDIIO;  // our sub-interface for delay outputs
-	RNRealtimeRoutingTable                *_routingTable; // used in midi reception to calculate and output delayed packets
+	_Atomic(RNRealtimeRoutingTable *)      _routingTable; // used in midi reception to calculate and output delayed packets
 	Byte                                   _onMessage[3];
 	Byte                                   _offMessage[3];
 	MIDIPacket                             _delayPacket;

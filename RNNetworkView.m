@@ -263,7 +263,7 @@ static RNNetworkView *_sharedNetworkView = nil;
 	if (_doShowMIDIActivity) {
 		//from channel, note figure out which node this is from
 		NoteOnMessage *message = (NoteOnMessage *) [MIDIData bytes];
-		RNNodeNum_t iNode = nodeForChannel(message->channel);
+		RNNodeNum_t iNode = nodeForNote(message->note);
 
 		NSArray *nodeList = [_network nodeList];
 		
@@ -282,7 +282,8 @@ static RNNetworkView *_sharedNetworkView = nil;
                 });
 				
                 //send event to appropriate histogramView
-				if (_doPlotData == YES) {
+				//FIXME: problem with dataView add event...
+				if (NO && _doPlotData == YES) {
 					if (_nodeHistogramViews != nil) {
 						RNNodeHistogramView *hview = _nodeHistogramViews[(iNode-1)]; //**note indexing
 						[hview addEventAtTime:message->eventTime_ns];

@@ -79,7 +79,7 @@ static NSArray *colorArray;
 	} else { // tapper
 		//calculate concentrator assignment based on nodeNumber (RNArchitectureDefines.h)
 		Byte concentratorNo = portForNode(nodeNumber); //same as MIOC port
-		Byte chan = channelForNode(nodeNumber);
+		Byte chan = channelForNode(nodeNumber) + 1; //note this is NOT in MIDI convention (0-based) but is 1-based, to correspond with nodeNumber
 		Byte note = noteForNode(nodeNumber);
 		NSAssert3( (concentratorNo <= kNumConcentrators), @"nodeNumber exceeds the number of inputs available (%d > %d; %d concentrator(s))", nodeNumber, (kNumConcentrators * kNumInputsPerConcentrator), kNumConcentrators);
 		[self setSourcePort: (Byte) concentratorNo 

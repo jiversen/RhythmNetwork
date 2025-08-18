@@ -21,7 +21,7 @@
 	NSMutableArray *_nodeList;            // will contain RNTapperNode s
 	NSMutableArray *_connectionList;      // will contain RNConnection s
 	NSMutableArray *_MIOCConnectionList;  // translation of RNConnections to MIOCConnections
-	RNMIDIRouting  *_MIDIRouting;         // real-time routing table; TODO: how to inform MIDIIO?
+	RNMIDIRouting  *_MIDIRouting;         // real-time routing table; pushed to MIDIIO by RNController (programMIDIRoutingWithNetwork)
 	NSString       *_description;
 	BOOL            _isWeighted;
 	BOOL            _isDelay;

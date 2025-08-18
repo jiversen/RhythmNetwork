@@ -10,6 +10,11 @@
 
 #define kDelayPacketListLength 8192 //big enough for ~500 events
 
+#define NS_PER_MS 1000000ull
+#define MS_TO_HOSTTIME(ms) AudioConvertNanosToHostTime((ms) * NS_PER_MS)
+#define HOSTTIME_TO_MS(hosttime) (AudioConvertHostTimeToNanos((hosttime)) / NS_PER_MS)
+
+
 // wrapper for simple midi io
 
 // Forward definitions of callbacks
@@ -88,7 +93,7 @@ static NSString *CMIDIErrorDescription(OSStatus status) {
 	}
 
 	_isLeader = YES;
-
+	
 	[self setupMIDI];
 	
 	[self startMIDIProcessingThread];
@@ -188,41 +193,7 @@ bail:
 
 // add MIDIRouting table. default null value means 'no routing'
 - (void)setMIDIRoutingTable:(RNRealtimeRoutingTable *)routingTable {
-	_routingTable = routingTable;
-}
-
-
-// *********************************************
-// create high-priority processing thread for MIDI packetlist
-- (void) startMIDIProcessingThread {
-	
-	_processingQueue 	= dispatch_queue_create("org.johniversen.midiProcessing", DISPATCH_QUEUE_CONCURRENT);
-	dispatch_set_target_queue(_processingQueue, dispatch_get_global_queue(QOS_CLASS_USER_INTERACTIVE, 0));
-	
-	_listenerQueue = dispatch_queue_create("org.johniversen.listenerQueue", DISPATCH_QUEUE_CONCURRENT);
-	dispatch_set_target_queue(_listenerQueue, dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0));
-	
-	dispatch_async(_processingQueue, ^{
-		atomic_store(&_MIDIConsumerReady, true); // signal to readproc that we're ready to consume
-		while (_isRunning) {
-			// Wait until signaled - blocks efficiently with no polling
-			dispatch_semaphore_wait(_dataAvailableSemaphore, DISPATCH_TIME_FOREVER);
-			
-			// Get data from the circular buffer
-			uint32_t availableBytes;
-			void* packetList = TPCircularBufferTail(&_packetBuffer, &availableBytes);
-			
-			//process packet list for delayed notes
-			[self emitDelayedNotes:(const MIDIPacketList*)packetList availableBytes:availableBytes];
-
-			//process packet list for listeners
-			[self handleMIDIPktlist:(const MIDIPacketList*)packetList availableBytes:availableBytes];
-			
-			//mark bytes as consumed
-			TPCircularBufferConsume(&_packetBuffer, availableBytes);
-
-		} // while _isRunning
-	});
+	atomic_store_explicit(&_routingTable, routingTable, memory_order_release);
 }
 
 // *********************************************
@@ -614,10 +585,13 @@ static void myReadProc(const MIDIPacketList *pktlist, void *refCon, void *connRe
 	}
 	long pktlistLength = (Byte *)packet - (Byte *)pktlist;
 	
-	// copy entire packetlist to ring buffer
-	bool status = TPCircularBufferProduceBytes(&selfMIDIIO->_packetBuffer, pktlist, (uint32_t) pktlistLength);
+	// TEST
+	//MIDITimeStamp t0 = 0;
 	//logMIDIPacketList(pktlist, pktlistLength, t0);
 	//return;
+	
+	// copy entire packetlist to ring buffer (Use my variant that ensures aligned placement in buffer--consumer must be aware)
+	bool status = AlignedTPCircularBufferProduceBytes(&selfMIDIIO->_packetBuffer, pktlist, (uint32_t) pktlistLength);
 	
 	RT_SAFE_ASSERT(status, "Buffer overrun in MIDI readProc--consider increasing buffer size.");
 	
@@ -643,11 +617,48 @@ void logMIDIPacketList(const MIDIPacketList *packetList, long pktlistLength, MID
 			[dataString appendFormat:@"%02X ", packet->data[j]];
 		}
 		
-		os_log(OS_LOG_DEFAULT, "  MIDI Packet - Timestamp: %llu ms%@, Length: %d, Data: %@", HOSTTIME_TO_MS(packet->timeStamp - t0), (t0>0)?@" (rel)":@"", packet->length, dataString);
+		os_log(OS_LOG_DEFAULT, "      MIDI Packet - Timestamp: %llu ms%@, Length: %d, Data: %@", HOSTTIME_TO_MS(packet->timeStamp - t0), (t0>0)?@" (rel)":@"", packet->length, dataString);
 		
 		packet = MIDIPacketNext(packet);
 	}
-		}
+}
+
+
+// *********************************************
+// create high-priority processing thread for MIDI packetlist
+- (void) startMIDIProcessingThread {
+	
+	dispatch_queue_attr_t attr = dispatch_queue_attr_make_with_qos_class(DISPATCH_QUEUE_SERIAL, QOS_CLASS_USER_INTERACTIVE, 0);
+	_processingQueue = dispatch_queue_create("org.johniversen.midiProcessing", attr);
+	
+	attr = dispatch_queue_attr_make_with_qos_class(DISPATCH_QUEUE_CONCURRENT, QOS_CLASS_USER_INITIATED, 0);
+	_listenerQueue = dispatch_queue_create("org.johniversen.listenerQueue", attr);
+	
+	dispatch_async(_processingQueue, ^{
+		atomic_store(&_MIDIConsumerReady, true); // signal to readproc that we're ready to consume
+		while (_isRunning) {
+			// Wait until signaled - blocks efficiently with no polling
+			dispatch_semaphore_wait(_dataAvailableSemaphore, DISPATCH_TIME_FOREVER);
+			
+			// Get data from the circular buffer
+			uint32_t availableBytes;
+			void* packetList = TPCircularBufferTail(&_packetBuffer, &availableBytes);
+			
+			os_log(OS_LOG_DEFAULT, "=========================================\nBuffer available bytes: 0x%x", availableBytes);
+			
+			//process packet list for delayed notes
+			[self emitDelayedNotes:(const MIDIPacketList*)packetList availableBytes:availableBytes];
+
+			//process packet list for listeners
+			[self handleMIDIPktlist:(const MIDIPacketList*)packetList availableBytes:availableBytes];
+			
+			//mark bytes as consumed (pad to 4-byte alignment as was done when producing)
+			
+			TPCircularBufferConsume(&_packetBuffer, availableBytes);
+
+		} // while _isRunning
+	});
+}
 
 
 // These next two methods are called from the high-priority processing thread. Both walk the packetList(s) & packets with two aims: 1) to output delay packets and 2) to send sysex and note on to listeners, which handle configuration, data saving, and UI
@@ -657,19 +668,21 @@ void logMIDIPacketList(const MIDIPacketList *packetList, long pktlistLength, MID
 // quickly send out delayed midi [runs from high-priority processing thread]
 - (void)emitDelayedNotes:(const MIDIPacketList*)startList availableBytes:(uint32_t)availableBytes {
 	
-	if (_routingTable == nil) { // with no routing table, this is a NOP!
+	RNRealtimeRoutingTable *table = atomic_load_explicit(&_routingTable, memory_order_acquire);
+	if (_delayMIDIIO == NULL || table == nil) { // with no delay output or routing table, this is a NOP!
 		return;
 	}
-	
 	
 	//  note, must handle case that multiple packet lists are available; create some vars to help us conceptualize
 	const Byte *bufferPtr = (const Byte *)startList;
 	const Byte *bufferEnd = bufferPtr + availableBytes;
 	int nPacketList = 0;
+	int nDelayPackets = 0;
 	
 	while (bufferPtr < bufferEnd) {
 		
-		const MIDIPacketList *pktlist = (const MIDIPacketList *) bufferPtr; //start of packet list
+		// SAFE: bufferPtr is aligned to MIDIPacketList boundaries
+		const MIDIPacketList *pktlist = (const MIDIPacketList *)(uintptr_t)bufferPtr; //start of packet list
 		const MIDIPacket *packet = &pktlist->packet[0]; //first packet in list
 		// find total length of (first) packet list
 		for (int i = 0; i < pktlist->numPackets; i++) {
@@ -692,7 +705,7 @@ void logMIDIPacketList(const MIDIPacketList *packetList, long pktlistLength, MID
 		//prolly makes sense to iterate through all the notes and do a single packet list rather than a smaller packet list for each note--figure out the max possible notes in it: (someday) 12 tappers * 11 delay outputs = 132 note on events (worst case if everyone taps at same time and have an all-all network. In general N*(N-1), so now, for 6, 30
 		
 		// initialize the output packetList
-		MIDIPacket *curPkt = MIDIPacketListInit(_delayPacketList);
+		MIDIPacket *curDelayPkt = MIDIPacketListInit(_delayPacketList);
 		
 		MIDITimeStamp earliestTimestamp = UINT64_MAX;
 		
@@ -710,17 +723,12 @@ void logMIDIPacketList(const MIDIPacketList *packetList, long pktlistLength, MID
 				// handle sysex (and ignore)
 				if (status == 0xF0) {		// Sysex start
 					_isReceivingSysex = YES;
-					continue;
-				}
-				if (_isReceivingSysex) {	// Sysex continuation
+				} else if (_isReceivingSysex) {	// Sysex continuation
 					if (status == 0xF7) {	// Sysex end
 						_isReceivingSysex = NO;
-						continue;
 					}
-				}
-
-				if ((status & 0xF0) == 0x90) {
-					NSAssert(bp + 1 < packetEnd, @"Problem: partial note-on message in packet. Shouldn't happen");
+				} else if ((status & 0xF0) == 0x90) {
+					RT_SAFE_ASSERT(bp + 1 < packetEnd, "Problem: partial note-on message in packet. Shouldn't happen");
 					
 					Byte	note		= *bp++;
 					Byte	velocity	= *bp++;
@@ -732,66 +740,111 @@ void logMIDIPacketList(const MIDIPacketList *packetList, long pktlistLength, MID
 					// Special case if delay is 0 pass 0 as timestamp (not input timestamp) as that means 'send as soon as possible' since there is no actual way to send with 0 delay.
 					// TODO: implement velocity weithging
 					if (velocity > 0) {	// only note on
-						Byte channel		= (status & 0x0F) + 1; // we use 1-based counting
+						Byte channel		= (status & 0x0F);
 						//loop over potential destinations
 						float wt;
-						for (int to=1; to<=kMaxNodes; to++) {
-							if ((wt = (*weightMatrix)[channel][to])) {
-								float delay_ms = (*delayMatrix)[channel][to];
+						for (int toChan=0; toChan<kMaxNodes; toChan++) {
+							if ((wt = (*weightMatrix)[channel][toChan])) {
+								float delay_ms = (*delayMatrix)[channel][toChan];
 								
+								UInt64 delayTicks = 0;
 								MIDITimeStamp delayTimeStamp = 0;
 								if (delay_ms > 0.0) {
-									delayTimeStamp = packetTimeStamp + AudioConvertNanosToHostTime(delay_ms * 1000.0);
+									delayTicks = MS_TO_HOSTTIME(delay_ms);
+									delayTimeStamp = packetTimeStamp + delayTicks;
 									earliestTimestamp = MIN(earliestTimestamp, delayTimeStamp); //Keep track of earliest event so we can test for overrun when we send.
+								} else {
+									//delayTimeStamp = packetTimeStamp; //TODO: this will necessarily be in the past, so perhaps should give it 0 for 'immediate' though I assume anyone with a timestamp in the past will be queued immediately?
+									delayTimeStamp = packetTimeStamp;
+									delayTicks = 0;
 								}
-								_onMessage[0] = 0x90 + (to - 1); //NB convert to MIDI 0-based index
+								_onMessage[0] = 0x90 + toChan; //NB convert to MIDI 0-based index
 								_onMessage[1] = note;
 								_onMessage[2] = velocity;
 								
-								curPkt =  MIDIPacketListAdd(_delayPacketList,kDelayPacketListLength,curPkt,delayTimeStamp,3,_onMessage);
+								curDelayPkt =  MIDIPacketListAdd(_delayPacketList,kDelayPacketListLength,curDelayPkt,delayTimeStamp,3,_onMessage);
+								RT_SAFE_ASSERT(curDelayPkt,"MIDIPacketListAdd returned NULL!");
 								
+								os_log(OS_LOG_DEFAULT, "    Added NOTEON with %lld ms delay", HOSTTIME_TO_MS(delayTicks));
 								if (kDoEmitNoteOff) {
 									_offMessage[0] = _onMessage[0];
 									_offMessage[1] = _onMessage[1];
 									_offMessage[2] = 0;
-									MIDITimeStamp offTimeStamp = delayTimeStamp + AudioConvertNanosToHostTime(kNoteOffDelay_ms * 1000.0);
-									curPkt =  MIDIPacketListAdd(_delayPacketList,kDelayPacketListLength,curPkt,offTimeStamp,3,_offMessage);
+									MIDITimeStamp offTimeStamp = delayTimeStamp + MS_TO_HOSTTIME(kNoteOffDelay_ms);
+									curDelayPkt =  MIDIPacketListAdd(_delayPacketList,kDelayPacketListLength,curDelayPkt,offTimeStamp,3,_offMessage);
 								}
 								
 								RT_SAFE_ASSERT((curDelayPkt != NULL), "Packet List Overflow [chan %d -> %d]",channel,toChan);
 							}
 						}
 					}
+				} else {
+					os_log(OS_LOG_DEFAULT, "Received non note-on event! %x %x %x", packet->data[0], packet->data[1], packet->data[2]);
+					switch (status & 0xF0) {
+						case 0x80:
+						case 0xA0:
+						case 0xB0:
+						case 0xE0:
+							bp += 2; //skip rest of message
+							break;
+						case 0xC0:
+						case 0xD0:
+							bp += 1; //skip rest of message
+							break;
+						default:
+							//bp += packet->length - 1; // it seems like packetlists are split radically into a single three-byte packet, but there could be more in principle. As we don't actually know how long any given message is, we can't easily skip it.
+							break;
+					}
 				}
+				
 			}	// loop over packet contents
 			
 			packet = MIDIPacketNext(packet); // next packet in input list
 		}	// loop over packets
 		
-		UInt64 now = AudioGetCurrentHostTime();
-		
-		// PROBLEM: earliest target timestamp is _past_ now--we took too long to schedule them
-		if (now > earliestTimestamp){
-			NSLog(@"emitDelayedNotes: overrun, delay time of earliest event (%lld) has passed (%lld ns over)", AudioConvertHostTimeToNanos(earliestTimestamp), AudioConvertHostTimeToNanos(now - earliestTimestamp));
+		// Send if we've accumulated any delayed packets
+		if (_delayPacketList->numPackets > 0 ) {
+			nDelayPackets += _delayPacketList->numPackets;
+			UInt64 now = AudioGetCurrentHostTime();
+			
+			os_log(OS_LOG_DEFAULT, "---_delayPacketList---");
+			logMIDIPacketList(_delayPacketList, 0, 0);
+			
+			// send our delayPacketList to Core MIDI
+			UInt64 pre = HOSTTIME_TO_MS(AudioGetCurrentHostTime());
+			OSStatus status = MIDISend(_delayMIDIIO->_outPort, _delayMIDIIO->_MIDIDest, _delayPacketList);
+			UInt64 post = HOSTTIME_TO_MS(AudioGetCurrentHostTime());
+			os_log(OS_LOG_DEFAULT, "emitDelayedNotes MIDISend MIDIPacketList (%d packets) @ time ~ %lld (+/- %lld) ms", pktlist->numPackets, (pre+post)/2, (post-pre)/2);
+			
+			CHECK_OSSTATUS(status, "MIDISend delay packet list");
+			
+			// PROBLEM: earliest target timestamp is _past_ now--we took too long to schedule them
+			if (now > earliestTimestamp){
+				os_log(OS_LOG_DEFAULT, "emitDelayedNotes: overrun, delay time of earliest event (%lld ms) has passed (%lld ms over)", HOSTTIME_TO_MS(earliestTimestamp), HOSTTIME_TO_MS(now - earliestTimestamp));
+			} else {
+				os_log(OS_LOG_DEFAULT, "emitDelayedNotes: adequate time :) delay time of earliest event (%lld ms) is %lld ms in future", HOSTTIME_TO_MS(earliestTimestamp), HOSTTIME_TO_MS(earliestTimestamp - now));
+			}
 		}
-		// send our delayPacketList to Core MIDI
-		UInt64 pre = AudioGetCurrentHostTime();
-		OSStatus status = MIDISend(_outPort, _MIDIDest, pktlist);
-		UInt64 post = AudioGetCurrentHostTime();
-		NSLog(@"MIDISend time ~ %lld (+/- %lld) ns", (pre+post)/2, (post-pre)/2);
-
-		CHECK_OSSTATUS(status, "MIDISend delay packet list");
-		
+		//advance to next packet list (enforce alignment)
 		nPacketList++;
-		bufferPtr += pktlistLength;
+		size_t paddedLength = (pktlistLength + 3) & ~3;
+		bufferPtr += paddedLength;
+		
 	}
 	if (nDelayPackets) {
+		os_log(OS_LOG_DEFAULT, "emitDelayedNotes parsed %d input MIDIPacketLists with %ld bytes left over and output %d packets.", nPacketList, bufferEnd-bufferPtr, nDelayPackets);
+	}
 }
 
 // *********************************************
 // send midi to listeners [runs from high-priority processing thread]
 - (void)handleMIDIPktlist:(const MIDIPacketList *)pktlist availableBytes:(uint32_t)availableBytes
 {
+	
+	// TODO: not sure why we're getting empty buffers, but no need to handle them
+	if (availableBytes == 0) {
+		return;
+	}
 	
 	//  note, must handle case that multiple packet lists are available; create some vars to help us conceptualize
 	const Byte *bufferPtr = (const Byte *)pktlist;
@@ -815,8 +868,9 @@ void logMIDIPacketList(const MIDIPacketList *packetList, long pktlistLength, MID
 			os_log(OS_LOG_DEFAULT, "Incomplete MIDIPacketList in input buffer. Skipping.");
 			break;
 		}
+		
 		// TEST
-		os_log(OS_LOG_DEFAULT, "==handleMIDIPktlist==");
+		os_log(OS_LOG_DEFAULT, "==handleMIDIPktlist== (_isReceivingSysex=%@)", _isReceivingSysex?@"YES":@"NO");
 		logMIDIPacketList(pktlist, pktlistLength, 0);
 		
 		// Second, thoroughly parse midi packets in list--keeping it simple for now, and only doing what we need
@@ -848,7 +902,7 @@ void logMIDIPacketList(const MIDIPacketList *packetList, long pktlistLength, MID
 						for (id listener in _sysexListenerArray) {
 							dispatch_async(_listenerQueue, ^{
 								NSData *listenerCopy = [_sysexData copy];
-								[listener receiveSysexData:_sysexData];
+								[listener receiveSysexData:listenerCopy];
 								[listenerCopy release];
 							});
 						}
@@ -859,7 +913,7 @@ void logMIDIPacketList(const MIDIPacketList *packetList, long pktlistLength, MID
 					// we create our own structure, one step abstracted from raw MIDI, and with time in real units
 					if ((byte & 0xF0) == 0x90) {
 						RT_SAFE_ASSERT(bp + 1 < packetEnd, "Problem: partial note-on message in packet. Shouldn't happen");
-						Byte channel		= (byte & 0x0F) + 1; // we use 1-based counting
+						Byte channel		= (byte & 0x0F); // channel is _always_ midi channel. Use nodeForChannel to convert to tapper node idx
 						Byte	note		= *bp++;
 						Byte	velocity	= *bp++;
 						
@@ -877,9 +931,27 @@ void logMIDIPacketList(const MIDIPacketList *packetList, long pktlistLength, MID
 									[listener receiveMIDIData:MIDIData];
 								});
 							}
+							os_log(OS_LOG_DEFAULT, "Dispatched a note-on event! %x %x %x", packet->data[0], packet->data[1], packet->data[2]);
 						}
+					} else if ((byte & 0xF0) == 0x80) {
+						//silently ignore note off events -- in practice they will be filtered by the MIOC
+						bp += 2; //skip rest of message
 					} else {
 						os_log(OS_LOG_DEFAULT, "Received non note-on event! %x %x %x", packet->data[0], packet->data[1], packet->data[2]);
+						switch (byte & 0xF0) {
+							case 0xA0:
+							case 0xB0:
+							case 0xE0:
+								bp += 2; //skip rest of message
+								break;
+							case 0xC0:
+							case 0xD0:
+								bp += 1; //skip rest of message
+								break;
+							default:
+								//bp += packet->length - 1; // it seems like packetlists are split radically into a single three-byte packet, but there could be more in principle. As we don't actually know how long any given message is, we can't easily skip it.
+								break;
+						}
 					}
 				}
 			}	// loop over packet contents
@@ -887,8 +959,11 @@ void logMIDIPacketList(const MIDIPacketList *packetList, long pktlistLength, MID
 			packet = MIDIPacketNext(packet);
 		}	// loop over packets
 		//os_log(OS_LOG_DEFAULT, "handleMIDIPktlist: Handled a MIDIPacketList (%d packets; %zu bytes).",pktlist->numPackets,pktlistLength);
+
+		//advance to next packet list (enforce alignment)
 		nPacketList++;
-		bufferPtr += pktlistLength;
+		size_t paddedLength = (pktlistLength + 3) & ~3;
+		bufferPtr += paddedLength;
 	}
 	
 	//os_log(OS_LOG_DEFAULT, "handleMIDIPktlist handled total %d MIDIPacketLists with %ld bytes left over.", nPacketList, bufferEnd-bufferPtr);

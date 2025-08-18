@@ -289,9 +289,11 @@
 	if (newNet != nil) {
 		[self programMIOCWithNetwork:newNet];
 		
+		MIDIIO *io = [[_MIOCController deviceObject] MIDILink];
 		if ([newNet MIDIRouting]) {
-			MIDIIO *io = [[_MIOCController deviceObject] MIDILink];
 			[io setMIDIRoutingTable:[[newNet MIDIRouting] routingTable]];
+		} else {
+			[io setMIDIRoutingTable:NULL];
 		}
 	}
 }

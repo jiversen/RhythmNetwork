@@ -6,6 +6,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import <stdatomic.h>
 #import "RNArchitectureDefines.h"
 
 typedef double NodeMatrix[kMaxNodes + 1][kMaxNodes + 1]; // we use 1-based index, with 0 as BB node

@@ -73,6 +73,9 @@
 		return nil;
 	}
 	
+	//TODO: fix to enable different notes per stimulus
+	NSAssert(note==kBaseNote, @"Stimuli must use base note (%d)",kBaseNote);
+	
 	self = [self initWithStimulusNumber:stimChannel MIDIChannel:MIDIChannel Note:note StartTime:startTime IOI:IOI StartPhase:startPhase Count:nEvents];
 	[self setJitter:jitter];
 	return self;
