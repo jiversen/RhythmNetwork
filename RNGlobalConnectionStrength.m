@@ -104,6 +104,7 @@
 - (RNGlobalConnectionStrength *)initWithType:(NSString *)type value:(double)param
 {
 	self = [super init];
+	if (!self) return nil;
 
 	_type	= type;
 	_param	= param;

@@ -8,7 +8,9 @@
 
 //  a class encapsulating an efficient MIDI processor for matrix, velocity and delay (for now)
 
-#import <Cocoa/Cocoa.h>
+// TODO: This is obsolete: I've implemented in MIDIIO plus RNMIDIRouting. Issue: MIDIO is subordinate to MIOCModel, but needs to come up?
+
+#import <Foundation/Foundation.h>
 
 #import <CoreMIDI/MIDIServices.h>
 #import <CoreAudio/HostTime.h>
@@ -28,6 +30,7 @@ typedef struct _MIDICoreProcess {
 
 @class MIDIIO, MIOCConnection, MIOCVelocityProcessor;
 
+// TODO: seems this would make more sense as a subclass of MIDIIO--it would swap in a new handleMIDI (and could even pass it along to [super handleMIDI..]? But why bother for now...!
 @interface MIDICore : NSObject
 {
 	MIDIIO			*_MIDILink;				// our bridge to MIDI

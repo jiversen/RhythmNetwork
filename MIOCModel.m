@@ -9,14 +9,19 @@
 #import "NSStringHexStringCategory.h"
 
 // various components of sysex messages
-static Byte sysexStart[1]				= {0xF0};
-static Byte sysexEnd[1]					= {0xF7};
-static Byte MIDITEMPID[3]				= {0x00, 0x20, 0x0d};
-static Byte encodedMode[1]				= {0x40};	// we'll never send handshaking or multi-packet messages
+static Byte sysexStart[1]				= {kSysexStart};
+static Byte sysexEnd[1]					= {kSysexEnd};
+static Byte MIDITEMPID[3]				= {kMIDITEMPID};
+static Byte encodedMode[1]				= {kModeEncodedMask};	// we'll never send handshaking or multi-packet messages
 static Byte notEncodedMode[1]			= {0x00};	// so these two suffice
-static Byte addRemoveProcessorOpcode[1] = {0x04};
-static Byte addProcessorFlag[1]			= {0x80};
-static Byte removeProcessorFlag[1]		= {0x00};
+static Byte addRemoveProcessorOpcode[1] = {kMIOCAddRemoveMIDIProcessorOpcode};
+static Byte addProcessorFlag[1]			= {kMIOCAddMIDIProcessorFlag};
+static Byte removeProcessorFlag[1]		= {kMIOCRemoveMIDIProcessorFlag};
+
+#define SKIP_IF_OFFLINE if (!self->_isOnline) return;
+#define ONLY_IF_ONLINE if (self->_isOnline) {
+#define END_ONLY_IF_ONLINE }
+
 
 @implementation MIOCModel
 
@@ -26,7 +31,9 @@ static Byte removeProcessorFlag[1]		= {0x00};
 
 - (MIOCModel *)init
 {
-	self					= [super init];
+	self = [super init];
+	if (!self) return nil;
+
 	_deviceID				= 0x00;	// *** hard coded for now, later add discovery if we have multiple devices
 	_deviceType				= kDevicePMM88E;
 	_connectionList			= [[NSMutableArray arrayWithCapacity:0] retain];
@@ -42,8 +49,8 @@ static Byte removeProcessorFlag[1]		= {0x00};
 
 	// check it mioc is online--if so, initialize it
 	[[NSNotificationCenter defaultCenter] addObserver:self
-	selector:@selector(handleMIOCReply:)
-	name	:@"MIOCReplyNotification"
+	selector:@selector(handleMIOCIsOnlineReply:)
+	name	:@"MIOCIsOnlineReplyNotification"
 	object	:nil];
 
 	[self checkOnline];	// once online, we'll initizlize in reply handler
@@ -97,8 +104,8 @@ static Byte removeProcessorFlag[1]		= {0x00};
 	[alert addButtonWithTitle:@"OK"];
 	[alert addButtonWithTitle:@"Don't reset"];
 	[alert setMessageText:@"Reset MIDI Matrix..."];
-	[alert setInformativeText:@"Please turn the Midi Matrix (PMM 88-E) off, then on. Click OK when done."];
-	[alert setAlertStyle:NSWarningAlertStyle];
+	[alert setInformativeText:@"Please turn the Midi Matrix (PMM 88-E) off to delete all programs, then on. Click OK when done."];
+	[alert setAlertStyle:NSAlertStyleWarning];
 
 	long returnCode = [alert runModal];
 
@@ -121,6 +128,10 @@ static Byte removeProcessorFlag[1]		= {0x00};
 	}
 }
 
+- (BOOL)isOnline {
+	return _isOnline;
+}
+
 - (BOOL)queryPortAddress
 {
 	// send dump request message
@@ -136,6 +147,9 @@ static Byte removeProcessorFlag[1]		= {0x00};
 - (BOOL)sendVerifiedMIOCQuery:(NSData *)data
 {
 	NSAssert((_awaitingReply == NO), @"Trying to send sysex before receiving earlier reply");
+	
+	[self logMIOCMessage:data];
+
 	// try to send
 	BOOL success = [_MIDILink sendSysex:data];
 
@@ -158,7 +172,7 @@ static Byte removeProcessorFlag[1]		= {0x00};
 		[alert addButtonWithTitle:@"OK (I'll do it)"];
 		[alert setMessageText:@"Problem with MIDI connection!"];
 		[alert setInformativeText:@"Please follow these steps: After clicking OK, make sure the MIDI interface is connected and the proper MIDI Input and Output are selected. Then press the device 'Reset' button."];
-		[alert setAlertStyle:NSWarningAlertStyle];
+		[alert setAlertStyle:NSAlertStyleWarning];
 
 		long returnCode = [alert runModal];
 
@@ -173,7 +187,7 @@ static Byte removeProcessorFlag[1]		= {0x00};
 }
 
 // called after sending request used for testing whether MIOC is online
-- (void)handleMIOCReply:(NSNotification *)notification
+- (void)handleMIOCIsOnlineReply:(NSNotification *)notification
 {
 	// if we get here, we know we're online
 	NSAssert((_isOnline == YES), @"_isOnline should be YES");	// sanity check
@@ -209,12 +223,19 @@ static Byte removeProcessorFlag[1]		= {0x00};
 	[alert addButtonWithTitle:@"Stop trying"];
 	[alert setMessageText:@"Problem connecting with MIDI Matrix (PMM 88-E)!"];
 	[alert setInformativeText:@"Please make sure it is turned on and then click OK."];
-	[alert setAlertStyle:NSWarningAlertStyle];
+	[alert setAlertStyle:NSAlertStyleWarning];
 	long returnCode = [alert runModal];
 
 	if (returnCode == NSAlertFirstButtonReturn) {	// OK: try again
 		[self checkOnline];
 	}	// otherwise do nothing more
+}
+
+- (void) logMIOCMessage:(NSData *)data {
+	NSData *decoded = [self decodeMessage:data];
+	MIOCMessage *sendMessage = (MIOCMessage *)[decoded bytes];
+	NSString *hexStr = [[[NSString alloc] initHexStringWithData:decoded] autorelease];
+	NSLog(@"MIOCModel Send: %@ [%@]", MIOCMessageString(sendMessage), hexStr);
 }
 
 // send an un verified query
@@ -227,6 +248,8 @@ static Byte removeProcessorFlag[1]		= {0x00};
 
 	NSAssert((_awaitingReply == NO), @"Trying to send sysex before receiving earlier reply");
 	_awaitingReply = YES;
+	
+	[self logMIOCMessage:data];
 	// try to send
 	return [_MIDILink sendSysex:data];
 }
@@ -271,12 +294,14 @@ static Byte removeProcessorFlag[1]		= {0x00};
 - (void)connectOne:(MIOCConnection *)aConnection
 {
 	if (![_connectionList containsObject:aConnection]) {
+		ONLY_IF_ONLINE
 		if ([self sendConnect:aConnection] == kSendSysexSuccess) {
 			[_connectionList addObject:aConnection];
 			NSLog(@"Connected:    %@", aConnection);
 		} else {
 			NSLog(@"\n\tFailed to add connection processor (%@).", aConnection);
 		}
+		END_ONLY_IF_ONLINE
 	} else {
 		NSLog(@"Attempt was made to add connection (%@) multiple times.", aConnection);
 	}
@@ -311,12 +336,14 @@ static Byte removeProcessorFlag[1]		= {0x00};
 - (void)disconnectOne:(MIOCConnection *)aConnection
 {
 	if ([_connectionList containsObject:aConnection]) {
+		ONLY_IF_ONLINE
 		if ([self sendDisconnect:aConnection] == kSendSysexSuccess) {
 			[_connectionList removeObject:aConnection];
 			NSLog(@"Disconnected: %@", aConnection);
 		} else {
 			NSLog(@"\n\tFailed to remove connection processor (%@).", aConnection);
 		}
+		END_ONLY_IF_ONLINE
 	} else {
 		NSLog(@"Attempt was made to remove non-existent connection (%@).", aConnection);
 	}
@@ -401,12 +428,14 @@ static Byte removeProcessorFlag[1]		= {0x00};
 - (void)addVelocityProcessor:(MIOCVelocityProcessor *)aVelProc
 {
 	if (![_velocityProcessorList containsObject:aVelProc]) {
+		ONLY_IF_ONLINE
 		if ([self sendAddVelocityProcessor:aVelProc] == kSendSysexSuccess) {
 			[_velocityProcessorList addObject:aVelProc];
 			NSLog(@"Added vel proc: %@", aVelProc);
 		} else {
 			NSLog(@"\n\tFailed to add velocity processor (%@).", aVelProc);
 		}
+		END_ONLY_IF_ONLINE
 	} else {
 		NSLog(@"Attempt was made to add velocity processor (%@) multiple times.", aVelProc);
 	}
@@ -415,12 +444,14 @@ static Byte removeProcessorFlag[1]		= {0x00};
 - (void)removeVelocityProcessor:(MIOCVelocityProcessor *)aVelProc
 {
 	if ([_velocityProcessorList containsObject:aVelProc]) {
+		ONLY_IF_ONLINE
 		if ([self sendRemoveVelocityProcessor:aVelProc] == kSendSysexSuccess) {
 			[_velocityProcessorList removeObject:aVelProc];
 			NSLog(@"Removed vel proc: %@", aVelProc);
 		} else {
 			NSLog(@"\n\tFailed to remove velocity processor (%@).", aVelProc);
 		}
+		END_ONLY_IF_ONLINE
 	} else {
 		NSLog(@"Attempt was made to remove non-existent velocity processor (%@).", aVelProc);
 	}
@@ -490,7 +521,7 @@ static Byte removeProcessorFlag[1]		= {0x00};
 	NSLog(@"Update velocity processors: Remove %lu; Add %lu\n", (unsigned long)[processorsToRemove count], (unsigned long)[processorsToAdd count]);
 }
 
-// filter out active sense and note-offs from all inputs (1-7) that are connected to
+// filter out active sense and note-offs from all inputs (1-2) that are potentially connected to
 //  trigger to midi converters
 //  error handling: on first sysex failure, bail out. Weakness: could leave things in indeterminate state
 - (void)addFilterProcessors
@@ -498,10 +529,15 @@ static Byte removeProcessorFlag[1]		= {0x00};
 	Byte				iPort;
 	MIOCFilterProcessor *aProc;
 	BOOL				result;
-
+	
+	SKIP_IF_OFFLINE
+	
 	_filtersInitialized = YES;
+	
+	NSLog(@"!!!! Skipping filter initialization--ensure that MIOC active patch has NoteOff and Activesense filtering on input ports (1 and 2) and all channels (omni)");
+	return;
 
-	for (iPort = 1; iPort <= 7; iPort++) {
+	for (iPort = 1; iPort <= 2; iPort++) {
 		// remove note off
 		aProc = [[MIOCFilterProcessor alloc] initWithType:@"noteoff"
 			Port	:iPort
@@ -517,7 +553,7 @@ static Byte removeProcessorFlag[1]		= {0x00};
 		// remove active sense
 		aProc = [[MIOCFilterProcessor alloc] initWithType:@"activesense"
 			Port	:iPort
-			Channel :kMIOCFilterChannelAll
+			Channel :kMIOCFilterChannelAll //actually, ignored
 			OnInput :YES];
 		result = [self sendAddProcessor:aProc];
 
@@ -548,41 +584,45 @@ static Byte removeProcessorFlag[1]		= {0x00};
 //     Process incoming sysex data (if we're expecting it)
 - (void)receiveSysexData:(NSData *)data
 {
-	MIOCMessage *reply;
+	NSData *decoded = [self decodeMessage:data];
+
+	NSString *hexStr = [[NSString alloc] initHexStringWithData:decoded];
+	MIOCMessage *reply = (MIOCMessage *)[decoded bytes];
 
 	if (_awaitingReply == YES) {
-		NSString *hexStr = [[NSString alloc] initHexStringWithData:data];
-		NSLog(@"MIOCModel Received Expected Sysex (%lu bytes): %@\n", (unsigned long)[data length], hexStr);
-		reply = (MIOCMessage *)[data bytes];
 
+		NSLog(@"MIOCModel Received Expected Sysex (%lu bytes): %@\n%@\n", (unsigned long)[decoded length], hexStr, MIOCMessageString(reply));
+		
 		// add logic here to parse info messages and fill in instance values
 		// also potentially to verify connections made
-		if (reply->opcode == 0x05) {
+		if (reply->opcode == kMIOCRDeviceNameResponseOpcode) {
 			_awaitingReply = NO;
 			[_deviceName autorelease];
-			_deviceName = [[[NSString alloc] initWithBytes:(const char *)(&reply->data[1]) length:8 encoding:NSASCIIStringEncoding] retain];
+			_deviceName = [[[NSString alloc] initWithBytes:(const char *)(&reply->data[1]) length:8 encoding:NSASCIIStringEncoding] retain]; // we skip the 'prefix' character
 			// post notification for UI to resync
-			[[NSNotificationCenter defaultCenter] postNotificationName:@"MIOCModelChangeNotification"
-			object:self];
+			[[NSNotificationCenter defaultCenter] postNotificationName:@"MIOCModelNameChangeNotification" object:self];
+			
 			// we use this reply as a means to check MIOC is online--
-		} else if (reply->opcode == 0x38) {	// what ports are we connected to?
+		} else if (reply->opcode == kMIOCAllPortAddressResponseOpcode) {	// what ports are we connected to?
 			_awaitingReply	= NO;
 			_isOnline		= YES;
 			// check we're connected to correct port
 			Byte	outport = reply->data[0];
 			Byte	inport	= reply->data[1];
 
-			if ((outport == 0x07) && (inport == 0x07)) {// should be connected to port #8
+			if ((outport == (kBigBrotherPort-1)) && (inport == (kBigBrotherPort-1))) {// should be connected to port #8
 				_correctPort = YES;
 			} else {
 				_correctPort = NO;
 			}
 
-			[[NSNotificationCenter defaultCenter] postNotificationName:@"MIOCReplyNotification"
+			[[NSNotificationCenter defaultCenter] postNotificationName:@"MIOCIsOnlineReplyNotification"
 			object:self];
 		} else {
-			NSLog(@"Unhandled Sysex Message, opcode = %x", reply->opcode);
+			NSLog(@"Unhandled Sysex Message, opcode = 0x%x", reply->opcode);
 		}
+	} else {
+		NSLog(@"MIOCModel Received Sysex data when not expecting it: %@\nAttempted Interpretation as MIOC Message: %@", hexStr, MIOCMessageString(reply));
 	}
 }
 
@@ -621,6 +661,7 @@ static Byte removeProcessorFlag[1]		= {0x00};
 
 	// unsigned i = [message retainCount];
 	// printf("before sendSysex, message: %x (%d B) retain %d\n",(unsigned) message, [message length], i);
+	[self logMIOCMessage:message];
 
 	return [_MIDILink sendSysex:message];
 
@@ -654,6 +695,8 @@ static Byte removeProcessorFlag[1]		= {0x00};
 {
 	NSData *message = [self sysexMessageForProcessor:aVelProc withFlag:flagPtr];
 
+	[self logMIOCMessage:message];
+	
 	return [_MIDILink sendSysex:message];
 }
 
@@ -680,6 +723,8 @@ static Byte removeProcessorFlag[1]		= {0x00};
 - (BOOL)sendAddRemoveProcessorSysex:(id <MIOCProcessor>)aProc withFlag:(Byte *)flagPtr
 {
 	NSData *message = [self sysexMessageForProcessor:aProc withFlag:flagPtr];
+	
+	[self logMIOCMessage:message];
 
 	return [_MIDILink sendSysex:message];
 }
@@ -767,7 +812,7 @@ static Byte removeProcessorFlag[1]		= {0x00};
 	actualChecksumByte	= *p;
 
 	BOOL isChecksumOK = (calcChecksumByte == actualChecksumByte);
-	NSAssert3((isChecksumOK == YES), @"Checksum error: calc=%d, actual = %d, message = %@",
+	NSAssert((isChecksumOK == YES), @"MIOCModel verifyChecksum Checksum error: calc=%d, actual = %d, message = %@",
 		calcChecksumByte, actualChecksumByte, message);
 
 	return isChecksumOK;
@@ -780,7 +825,6 @@ static Byte removeProcessorFlag[1]		= {0x00};
 	Byte			msbByte, thisByte, encodedLength = 0;
 	Byte			*source, *end, *blockEnd, *sp;
 	unsigned long	inputLength, blockIdx;
-	// unsigned checksum;
 	NSRange firstByte = NSMakeRange(0, 1);
 
 	inputLength = [sourceData length];
@@ -812,20 +856,15 @@ static Byte removeProcessorFlag[1]		= {0x00};
 		// save msbByte and truncated data bytes
 		[encodedData appendBytes:&msbByte length:1];
 
-		// checksum += msbByte;
 		while (source <= blockEnd) {
 			thisByte = *source++ & 0x7F;// mask msb
 			[encodedData appendBytes:&thisByte length:1];
-			// checksum += thisByte;
 		}
 	}
 
-	// fill in the length (first byte) and checksum (at end)
+	// fill in the length (first byte)
 	encodedLength = [encodedData length] - 2;	// length should be length of encoded -1, and another -1 for the length byte itself
 	[encodedData replaceBytesInRange:firstByte withBytes:&encodedLength];
-	// checksum += encodedLength;
-	// checksumByte = (Byte) (checksum & 0x7F); //keep only lsbyte (??? BROKEN?)
-	// [encodedData appendBytes:&checksumByte length:1];
 
 	return [NSData dataWithData:encodedData];	// return unmutable
 }

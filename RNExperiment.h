@@ -6,9 +6,9 @@
 //  Copyright 2005 John Iversen. All rights reserved.
 //
 
-#import <Cocoa/Cocoa.h>
-
+#import <Foundation/Foundation.h>
 #import <CoreMidi/MidiServices.h>
+#import "MIDIListenerProtocols.h"
 
 @class	RNNetwork;
 @class	MIDIIO;
@@ -17,31 +17,31 @@
 @class	RNExperimentPart;
 @class	RNGlobalConnectionStrength;
 
-@interface RNExperiment : NSObject
+@interface RNExperiment : NSObject <MIDIDataReceiver>
 {
 	// the structure of the experiment
-	NSString					*_definitionFilePath;
-	NSDictionary				*_definitionDictionary;		// copy of the dictionary used to define the experiment
-	NSMutableArray			*_experimentParts;			// a list of experiment parts, stimuli, networks w/ associated start times
-	RNNetwork				*_currentNetwork;			// currently active network
-	RNStimulus				*_currentStimulusArray[17];	// currently active stimuli
-	RNGlobalConnectionStrength	*_currentGlobalConnectionStrength;
+	NSString                   *_definitionFilePath;
+	NSDictionary               *_definitionDictionary;     // copy of the dictionary used to define the experiment
+	NSMutableArray             *_experimentParts;          // a list of experiment parts, stimuli, networks w/ associated start times
+	RNNetwork                  *_currentNetwork;           // currently active network
+	RNStimulus                 *_currentStimulusArray[17]; // currently active stimuli
+	RNGlobalConnectionStrength *_currentGlobalConnectionStrength;
 
 	// these refer to an instantiation of the experiment--data to be saved
 	// coming perilously close to document/file wrapper classes, but here will roll my own
-	NSTimeInterval	_experimentDuration_s;
-	NSTimeInterval	_experimentActualStopTime_s;
-	NSTimer			*_experimentEndTimer;
-	MIDITimeStamp		_experimentStartTimestamp;	// we maintain two formats of the starting moment
-	NSDate			*_experimentStartDate;
-	NSMutableData		*_recordedEvents;
-	NSString			*_experimentDescription;
-	NSString			*_experimentNotes;
+	NSTimeInterval _experimentDuration_s;
+	NSTimeInterval _experimentActualStopTime_s;
+	NSTimer       *_experimentEndTimer;
+	MIDITimeStamp  _experimentStartTimestamp; // we maintain two formats of the starting moment
+	NSDate        *_experimentStartDate;
+	NSMutableData *_recordedEvents;
+	NSString      *_experimentDescription;
+	NSString      *_experimentNotes;
 
 	// pertaining to saving--we'll create a dictionary for the save
-	BOOL			_needsSave;
-	NSString		*_experimentSaveFilePath;
-	NSDictionary	*_experimentSaveDictionary;
+	BOOL          _needsSave;
+	NSString     *_experimentSaveFilePath;
+	NSDictionary *_experimentSaveDictionary;
 
 	// we do know where our recorded events are coming from
 	MIOCModel *_MIOC;

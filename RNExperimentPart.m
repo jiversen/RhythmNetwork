@@ -90,10 +90,13 @@
 
 - (RNExperimentPart *)initWithObject:(id)anObject RelativeStartTime:(NSTimeInterval)startTime_s Description:(NSString *)description
 {
-	self			= [super init];
+	self = [super init];
+	if (!self) return nil;
+
 	_experimentPart = [anObject retain];	// !!!:jri:20050627 did not retain prior, yet did autorelease; now balanced
 	_startTime_s	= startTime_s;
 	_description	= [description copy];	// !!!:jri:20050627 more appropriate to copy; added release in dealloc
+	
 	return self;
 }
 
@@ -258,7 +261,7 @@
 		// for network, setup a timer to trigger the reprogramming
 	} else if ([[self partType] isEqualToString:@"RNNetwork"]) {
 		preroll = 0.03;	// just a guess for how long it'll take to reprogram MIOC
-		NSDate *absStartTime = [time dateByAddingTimeInterval:_startTime_s];
+		absStartTime = [time dateByAddingTimeInterval:_startTime_s];
 		interval1 = [absStartTime timeIntervalSinceNow] - preroll;
 		NSTimer *startTimer = [NSTimer scheduledTimerWithTimeInterval:interval1
 			target	:self
@@ -277,7 +280,7 @@
 		[self setStartTimer:startTimer];
 	} else if ([[self partType] isEqualToString:@"RNGlobalConnectionStrength"]) {
 		preroll = 0.02;	// just a guess for how long it'll take to reprogram MIOC
-		NSDate *absStartTime = [time dateByAddingTimeInterval:_startTime_s];
+		absStartTime = [time dateByAddingTimeInterval:_startTime_s];
 		interval1 = [absStartTime timeIntervalSinceNow] - preroll;
 		NSTimer *startTimer = [NSTimer scheduledTimerWithTimeInterval:interval1
 			target	:self

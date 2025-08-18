@@ -11,40 +11,42 @@
 #import "MIOCConnection.h"
 #import "RNNetworkView.h"
 #import "RNStimulus.h"
+#import "RNArchitectureDefines.h"
 
 @implementation RNBBNode
 
-- (RNBBNode *) initWithNumStimulusChannels: (Byte) numStimulusChannels
+- (RNBBNode *)initWithNumStimulusChannels:(Byte)numStimulusChannels
 {
-	self = (RNBBNode *) [super initWithNodeNumber:0];
-		
+	self = (RNBBNode *)[super initWithNodeNumber:0];
+
 	[self setNumStimulusChannels:numStimulusChannels];
-	
-	//these values are for channel 1
-	[self setSourcePort: (Byte) kBigBrotherPort 
-			 SourceChan: (Byte) kBigBrotherChannel 
-			 SourceNote: (Byte) kBaseNote];
-	[self setDestPort: (Byte) kBigBrotherPort
-			 DestChan: (Byte) kMIOCOutChannelSameAsInput 
-			 DestNote: (Byte) kBaseNote];
-	[self setHearsBigBrother:TRUE]; //since is BB
-	[self setHearsSelf:FALSE];	// ***might want to monitor self?
-		
+
+	// these values are for channel 1
+	[self setSourcePort:(Byte)kBigBrotherPort
+			 SourceChan:(Byte)kBigBrotherChannel
+			 SourceNote:(Byte)kBaseNote];
+	[self setDestPort:(Byte)kBigBrotherPort
+			 DestChan:(Byte)kMIOCOutChannelSameAsInput
+			 DestNote:(Byte)kBaseNote];
+	[self setHearsBigBrother:TRUE]; // since is BB
+	[self setHearsSelf:FALSE];      // ***might want to monitor self?
+
 	return self;
-		
 }
 
-- (void) dealloc
+- (void)dealloc
 {
 	unsigned int i;
-	
-	for (i=1; i<= _numStimulusChannels; i++) {
-        [_flashLayerArray[i] removeFromSuperlayer];
-        _flashLayerArray[i] = nil;
+
+	for (i = 1; i <= _numStimulusChannels; i++) {
+		[_flashLayerArray[i] removeFromSuperlayer];
+		_flashLayerArray[i] = nil;
 	}
 	[super dealloc];
 }
 
+// TODO: this needs rethinking. We currently map stimuli into descending channel from 16--complication is not really needed
+// as long as we use NOTE to dismbiguate stimuli from tappers
 - (Byte) stimulusNumberForMIDIChannel: (Byte) midiChannel
 {
 	Byte stimulusChannel;
@@ -60,6 +62,7 @@
 	return channel;	
 }
 
+// TODO: what is this used for? Aah, for programming the drum machines--Suggest we make _this_ channel 16 (1-based)
 - (Byte) controlMIDIChannel
 {
 	return kBigBrotherControlChannel;

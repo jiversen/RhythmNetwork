@@ -6,15 +6,15 @@
 //  Copyright 2005 John Iversen (iversen@nsi.edu). All rights reserved.
 //
 
-#import <Cocoa/Cocoa.h>
+#import <Foundation/Foundation.h>
 
 @class MIOCVelocityProcessor;
 
 @interface RNGlobalConnectionStrength : NSObject
 {
-	NSString				*_type;			// 'weight' or 'constant' or 'inputConstant'
-	MIOCVelocityProcessor	*_processor;
-	double				_param;			// weight if 'weight', midi velocity if 'constant'
+	NSString              *_type; // 'weight' or 'constant' or 'inputConstant'
+	MIOCVelocityProcessor *_processor;
+	double                 _param; // weight if 'weight', midi velocity if 'constant'
 }
 
 // wierd factory: generate an array of dictionaries from a dictionary defining the ramp

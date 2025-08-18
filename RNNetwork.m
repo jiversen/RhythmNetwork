@@ -14,6 +14,7 @@
 #import "RNStimulus.h"
 #import "MIOCConnection.h"
 #import "RNGlobalConnectionStrength.h"
+#import "RNArchitectureDefines.h"
 
 @implementation RNNetwork
 
@@ -21,6 +22,7 @@
 - (RNNetwork *)initFromDictionary:(NSDictionary *)theDict
 {
 	self = [super init];
+	if (!self) return nil;
 
 	// extract fields
 
@@ -53,11 +55,15 @@
 	//	See specifications.txt for rationale 9/8/05
 	_isWeighted = NO;	// default
 	NSNumber *isWeightedNum = [theDict valueForKey:@"isWeighted"];
-
-	if (isWeightedNum != nil) {
-		_isWeighted = (BOOL)[isWeightedNum boolValue];
-	}
-
+	if (isWeightedNum != nil)
+		_isWeighted = (BOOL) [isWeightedNum boolValue];
+	
+	//Does network contain delays? If so, we need some additional special routing and the use of a second MIDIIO.
+	_isDelay = NO; //default
+	NSNumber *isDelayNum = [theDict valueForKey:@"isDelay"];
+	if (isDelayNum != nil)
+		_isDelay = (BOOL) [isDelayNum boolValue];
+	
 	// *********************************************
 	//  Construct nodeList (creating the nodes), include as 0 'bigBrother' node, this computer
 	//
@@ -72,9 +78,9 @@
 	// we need to associate stimuli with each channel--done while constructing connection list
 
 	// tapper nodes--arrange in a circle
-	double x, y, dAngle, angle, pi;
+	CGFloat x, y, dAngle, angle, pi;
 	pi		= acos(-1.0);
-	angle	= pi / 2.0;
+	angle	= pi / 2.0; // start angle is 12 o'clock
 	dAngle	= 2.0 * pi / nNodes;
 
 	for (iNode = 1; iNode <= nNodes; iNode++) {
@@ -89,15 +95,16 @@
 	// *********************************************
 	//  Construct connectionList -- logical connections, doesn't reflect physical path, which might go via another node
 	//
-	unsigned iConn, nConnections = [connectionsArray count];
+	NSUInteger iConn, nConnections = [connectionsArray count];
 	_connectionList = [[NSMutableArray arrayWithCapacity:nConnections] retain];
 	RNConnection	*tempConn;
 	NSString		*connString;
 
 	for (iConn = 0; iConn < nConnections; iConn++) {
 		connString	= connectionsArray[iConn];
-		tempConn	= [[RNConnection alloc] initWithString:connString];
-		[_connectionList addObject:[tempConn autorelease]];
+		tempConn	= [[[RNConnection alloc] initWithString:connString] autorelease];
+		[_connectionList addObject:tempConn];
+		
 		// now, test to see if this connection is from bb or self
 		// update to node's properties accordingly
 		RNNodeNum_t from	= [tempConn fromNode];
@@ -123,6 +130,9 @@
 	//		c) tapper to other tapper
 	//			**new 20050908: if isWeighted = YES, route via a patchthru node and apply velocity processing
 	//  grab port/channel from nodes
+	//		    **new 20250704: if isDelay = YES, construct RNMIDIRouting tables and associated MIOC Connections
+	//			And, if timing is performant enough, could do all weighting internally rather than in MIOC
+	//			TODO: compare MIOC route to MIDIIO internal route timing
 
 	_MIOCConnectionList = [[NSMutableArray arrayWithCapacity:(nConnections + nNodes)] retain];
 	MIOCConnection	*newMIOCConn;
@@ -131,91 +141,135 @@
 
 	// 1a) all BB output back to self (so computer can monitor everything it outputs)
 	for (iStim = 1; iStim <= _numStimulusChannels; iStim++) {
-		sourcePort	= [_nodeList[0] sourcePort];
+		sourcePort	= kBigBrotherPort;
 		sourceChan	= [_nodeList[0] MIDIChannelForStimulusNumber:iStim];
-		destPort	= [_nodeList[0] destPort];	// big brother
-		destChan	= [_nodeList[0] destChan];	// keep it on same chan as output
+		destPort	= kBigBrotherPort;
+		destChan	= kMIOCOutChannelSameAsInput;	// keep it on same chan as output
 		newMIOCConn = [MIOCConnection connectionWithInPort:sourcePort InChannel:sourceChan OutPort:destPort OutChannel:destChan];
 		[_MIOCConnectionList addObject:newMIOCConn];
 	}
 
 	// 1b) all tapper nodes to BB (so computer records all taps)
-	for (iNode = 1; iNode <= nNodes; iNode++) {
-		sourcePort	= [_nodeList[iNode] sourcePort];
-		sourceChan	= [_nodeList[iNode] sourceChan];
-		destPort	= [_nodeList[0] destPort];	// big brother
-		destChan	= [_nodeList[0] destChan];
-		newMIOCConn = [MIOCConnection connectionWithInPort:sourcePort InChannel:sourceChan OutPort:destPort OutChannel:destChan];
+	//for (iNode = 1; iNode <= nNodes; iNode++) {
+//	for (iNode = 1; iNode <= 1; iNode++) { //TODO: testing if this is the cause of multiple (nNodes) copies of each input message--maybe, but why all of a sudden
+//
+//		sourcePort	= [_nodeList[iNode] sourcePort];
+//		sourceChan	= [_nodeList[iNode] sourceChan];
+//		destPort	= [_nodeList[0] destPort];	// big brother
+//		destChan	= [_nodeList[0] destChan];
+//		newMIOCConn = [MIOCConnection connectionWithInPort:sourcePort InChannel:sourceChan OutPort:destPort OutChannel:destChan];
+//		[_MIOCConnectionList addObject:newMIOCConn];
+//	}
+	
+	// 1b) Better to use kMIOCInChannelAll & kMIOCOutChannelSameAsInput?
+	Byte maxPort = [_nodeList[nNodes] destPort];
+	for (Byte port = 1; port <= maxPort; port++) {
+		newMIOCConn = [MIOCConnection connectionWithInPort:port InChannel:kMIOCInChannelAll OutPort:kBigBrotherPort OutChannel:kMIOCOutChannelSameAsInput];
 		[_MIOCConnectionList addObject:newMIOCConn];
 	}
+
 
 	// 2) network
 	NSEnumerator	*theEnumerator = [_connectionList objectEnumerator];
 	RNConnection	*thisConn;
+	
+	NodeMatrix *weightMatrix = NULL;
+	NodeMatrix *delayMatrix  = NULL;
+	// for delay, we have to instantiate _MIDIRouting and then grab copies of the routing matrices
+	if (_isDelay) {
+		_MIDIRouting = [[RNMIDIRouting alloc] init];
+		weightMatrix = [_MIDIRouting getEmptyWeightMatrix];
+		delayMatrix  = [_MIDIRouting getEmptyDelayMatrix];
+	} else { // if not delay, remove routing
+		[_MIDIRouting release];
+		_MIDIRouting = nil;
+	}
 
 	while (thisConn = [theEnumerator nextObject]) {
-		if ([thisConn fromNode] == 0) {	// source is BB, take into account stimulus channels
-			sourcePort	= [_nodeList[[thisConn fromNode]] sourcePort];
-			sourceChan	= [_nodeList[[thisConn fromNode]] MIDIChannelForStimulusNumber:[thisConn fromSubChannel]];
-			destPort	= [_nodeList[[thisConn toNode]] destPort];
-			destChan	= [_nodeList[[thisConn toNode]] destChan];	// always kMIOCOutChannelSameAsInput
-		} else {													// source is a tapper node
-			sourcePort	= [_nodeList[[thisConn fromNode]] sourcePort];
-			sourceChan	= [_nodeList[[thisConn fromNode]] sourceChan];
+
+		if ([thisConn fromNode] == 0) { // 2a) source is BB, take into account stimulus channels
+			sourcePort = [_nodeList[[thisConn fromNode]] sourcePort];
+			sourceChan = [_nodeList[[thisConn fromNode]] MIDIChannelForStimulusNumber:[thisConn fromSubChannel]];
+			destPort   = [_nodeList[[thisConn toNode]] destPort];
+			destChan   = [_nodeList[[thisConn toNode]] destChan]; // always kMIOCOutChannelSameAsInput
+
+		} else { // source is a tapper node
 
 			// destination depends on if network is weighted
-			if (_isWeighted == NO) {// not weighted, direct to destination
-				destPort	= [_nodeList[[thisConn toNode]] destPort];
-				destChan	= [_nodeList[[thisConn toNode]] destChan];
-			} else {											// weighted, direct to destination if source is same node as dest, otherwise route through other port
-				if ([thisConn fromNode] == [thisConn toNode]) {	// to self
-					destPort	= [_nodeList[[thisConn toNode]] destPort];
-					destChan	= [_nodeList[[thisConn toNode]] destChan];
-				} else {// via other port, source to thru port and from thru to our destination
-					// make connection from thru to destination first, then set up for other connection
-					newMIOCConn = [MIOCConnection connectionWithInPort:[_nodeList[[thisConn fromNode]] otherNodePassthroughPort]
-						InChannel	:[_nodeList[[thisConn fromNode]] otherNodePassthroughChan]
-						OutPort		:[_nodeList[[thisConn toNode]] destPort]
-						OutChannel	:[_nodeList[[thisConn toNode]] destChan]];
-					[_MIOCConnectionList addObject:newMIOCConn];
+			//  TODO: this needs to be revised to only treat specific connections with weight != 1.0 as weighted.
+			// I don't quite get this, however, as where are the velocity processors made?
+			if (_isDelay == NO) { // not delayed, within MIOC direct to destination
+				sourcePort = [_nodeList[[thisConn fromNode]] sourcePort];
+				sourceChan = [_nodeList[[thisConn fromNode]] sourceChan];
 
-					// next set dest for instantiation below (source is already source node)
-					destPort	= [_nodeList[[thisConn fromNode]] otherNodePassthroughPort];
-					destChan	= [_nodeList[[thisConn fromNode]] otherNodePassthroughChan];
+				// destination depends on if network is weighted
+				if (_isWeighted == NO) { // not weighted, direct to destination
+					destPort = [_nodeList[[thisConn toNode]] destPort];
+					destChan = [_nodeList[[thisConn toNode]] destChan];
+				} else {  // weighted, direct to destination if source is same node as dest, otherwise route through other port
+					if ([thisConn fromNode] == [thisConn toNode]) { // to self
+						destPort = [_nodeList[[thisConn toNode]] destPort];
+						destChan = [_nodeList[[thisConn toNode]] destChan];
+					} else { // via other port, source to thru port and from thru to our destination
+						// make connection from thru to destination first, then set up for other connection
+						newMIOCConn = [MIOCConnection connectionWithInPort:[_nodeList[[thisConn fromNode]] otherNodePassthroughPort]
+																 InChannel:[_nodeList[[thisConn fromNode]] otherNodePassthroughChan]
+																   OutPort:[_nodeList[[thisConn toNode]] destPort]
+																OutChannel:[_nodeList[[thisConn toNode]] destChan]];
+						[_MIOCConnectionList addObject:newMIOCConn];
+
+						// next set dest for instantiation below (source is already source node)
+						destPort = [_nodeList[[thisConn fromNode]] otherNodePassthroughPort];
+						destChan = [_nodeList[[thisConn fromNode]] otherNodePassthroughChan];
+					}
 				}
+				// connection from input to destination or otherNodePassthroughPort depending on if weighted
+				newMIOCConn = [MIOCConnection connectionWithInPort:sourcePort InChannel:sourceChan OutPort:destPort OutChannel:destChan];
+				[_MIOCConnectionList addObject:newMIOCConn];
+				
+			} else { // Delay
+				// input to big brother is already set up in 1b) above
+				// delay output is generated by computer, sent into MIOC kDelayPort so must route that out to standard destination
+				
+				double weight = [thisConn weight];
+				double delay = [thisConn delay];
+				
+				// is this a self-feedback connection?
+				BOOL isSelfFeedbackNoDelay = ([thisConn fromNode] == [thisConn toNode] && weight==1.0 && delay==0);
+				
+				if (isSelfFeedbackNoDelay && kSelfFeedbackNoDelayThroughMIOC) { // Add standard route through MIOC
+					sourcePort = [_nodeList[[thisConn fromNode]] sourcePort];
+					sourceChan = [_nodeList[[thisConn fromNode]] sourceChan];
+					destPort = [_nodeList[[thisConn toNode]] destPort];
+					destChan = [_nodeList[[thisConn toNode]] destChan];
+				} else {														// Delay output comes from kDelayPort and is already addressed with channel of recipient, so an omni connection suffices. TODO: only add it once!
+					sourcePort = kDelayPort;
+					sourceChan = kMIOCInChannelAll;
+					destPort = [_nodeList[[thisConn toNode]] destPort];
+					destChan = kMIOCOutChannelSameAsInput;
+				}
+				newMIOCConn = [MIOCConnection connectionWithInPort:sourcePort InChannel:sourceChan OutPort:destPort OutChannel:destChan];
+				[_MIOCConnectionList addObject:newMIOCConn];
+				
+				//Add this connection to RNMIDIRouting table. Note uses 0-based MIDI channels
+				if ( !(isSelfFeedbackNoDelay && kSelfFeedbackNoDelayThroughMIOC) ) {
+					sourceChan = [_nodeList[[thisConn fromNode]] sourceChan];
+					destChan = [_nodeList[[thisConn toNode]] destChan];
+					(*weightMatrix)[sourceChan-1][destChan-1] = weight;
+					(*delayMatrix)[sourceChan-1][destChan-1] = delay;
+				}
+				
+				//TODO: After checking latencies could route all weight=1, delay=0 through MIOC instead of core MIDI. This would be used for 'self feedback'
 			}
 		}
-
-		newMIOCConn = [MIOCConnection connectionWithInPort:sourcePort InChannel:sourceChan OutPort:destPort OutChannel:destChan];
-		[_MIOCConnectionList addObject:newMIOCConn];
-	}
-
-	// *********************************************
-	// generate input channel,note -> node number lookup table
-	// to translate midi input (to BB) from tappers into corresponding node #
-	// just for display purposes--to flash the node
-	//
-	Byte chan, note;
-
-	// first, fill it with bogus values
-	for (chan = 0; chan < kNumMIDIChans; chan++) {
-		for (note = 0; note < kNumMIDINotes; note++) {
-			_nodeLookup[chan][note] = (RNNodeNum_t)0xFFFF;
-		}
-	}
-
-	// add BB entries (possibly multiple stimulus channels
-	for (iStim = 1; iStim <= _numStimulusChannels; iStim++) {
-		chan	= [_nodeList[0] MIDIChannelForStimulusNumber:iStim];
-		note	= [_nodeList[0] MIDINoteForStimulusNumber:iStim];
-		_nodeLookup[chan][note] = 0;
-	}
-
-	// add tapper nodes
-	for (iNode = 1; iNode <= nNodes; iNode++) {
-		chan	= [_nodeList[iNode] sourceChan];
-		note	= [_nodeList[iNode] sourceNote];
-		_nodeLookup[chan][note] = iNode;	// NB chan index is 1-based
+	} // while enumerate over connection list
+	
+	// Oh, crap. We can't commit the routing matrices yet as we've only just created the network, not made it 'live'. No,
+	// wait, we own the RNMIDIRouting, so yes we absolutely can and then when we go live we just pass OUR routing
+	// table pointer to MIDIIO for use. Phew. This can be done on RNController's programMIOCWithNetwork!
+	if (_isDelay) {
+		[_MIDIRouting setWeightMatrix:weightMatrix];
+		[_MIDIRouting setDelayMatrix:delayMatrix];
 	}
 
 	return self;
@@ -239,13 +293,12 @@
 // Dynamically harvest any processors from nodes
 - (NSArray *)MIOCVelocityProcessorList
 {
-	unsigned int iNode, nNodes;
 
-	nNodes = [[self nodeList] count] - 1;	// number of tappers (exclude BB)
+	RNNodeNum_t nNodes = [[self nodeList] count] - 1;	// number of tappers (exclude BB)
 	NSMutableArray			*processorList = [NSMutableArray arrayWithCapacity:nNodes];
 	MIOCVelocityProcessor	*processor;
 
-	for (iNode = 1; iNode <= nNodes; iNode++) {
+	for (RNNodeNum_t iNode = 1; iNode <= nNodes; iNode++) {
 		processor = [_nodeList[iNode] sourceVelocityProcessor];
 		if (processor != nil) {
 			[processorList addObject:processor];
@@ -265,15 +318,19 @@
 	return [NSArray arrayWithArray:processorList];
 }
 
-// reminder: channel is 1-based
-- (RNNodeNum_t)nodeIndexForChannel:(Byte)channel Note:(Byte)note
-{
-	return _nodeLookup[channel][note];
+- (RNMIDIRouting *)MIDIRouting {
+	return _MIDIRouting;
 }
+
+// reminder: channel is 1-based
+//- (RNNodeNum_t)nodeIndexForChannel:(Byte)channel Note:(Byte)note
+//{
+//	return _nodeLookup[channel][note];
+//}
 
 - (NSString *)description
 {
-	return _description;
+	return [NSString stringWithFormat:@"%@%@%@", _description, _isWeighted?@"ⓦ":@"", _isDelay?@"🅓":@""];
 }
 
 - (unsigned int)numStimulusChannels
@@ -282,7 +339,7 @@
 }
 
 // these are convenience methods reaching into the big brother node
-// they associate the correct stimuli with it
+// they associate the correct stimuli with iW
 - (RNStimulus *)stimulusForChannel:(Byte)stimulusChannel
 {
 	RNBBNode *bbNode = [self nodeList][0];
@@ -317,12 +374,11 @@
 // !!! this name is no longer accurate now that it handles global strength & input strength...
 - (void)setGlobalConnectionStrength:(RNGlobalConnectionStrength *)connectionStrength
 {
-	unsigned int			iNode, nNodes;
 	MIOCVelocityProcessor	*processor = [connectionStrength processor];
 
-	nNodes = [[self nodeList] count] - 1;	// number of tappers (exclude BB)
+	RNNodeNum_t nNodes = [[self nodeList] count] - 1;	// number of tappers (exclude BB)
 
-	for (iNode = 1; iNode <= nNodes; iNode++) {
+	for (RNNodeNum_t iNode = 1; iNode <= nNodes; iNode++) {
 		if ([[connectionStrength type] isEqual:@"constantInput"]) {	// apply to input
 			[_nodeList[iNode] setSourceVelocityProcessor:processor];
 		} else {
@@ -334,11 +390,9 @@
 
 - (void)setDrumsetNumber:(Byte)drumsetNumber
 {
-	unsigned int iNode, nNodes;
+	RNNodeNum_t nNodes = [[self nodeList] count] - 1;	// number of tappers (exclude BB)
 
-	nNodes = [[self nodeList] count] - 1;	// number of tappers (exclude BB)
-
-	for (iNode = 1; iNode <= nNodes; iNode++) {
+	for (RNNodeNum_t iNode = 1; iNode <= nNodes; iNode++) {
 		[_nodeList[iNode] setDrumsetNumber:drumsetNumber];
 	}
 }
@@ -352,10 +406,12 @@
 {
 	NSEnumerator		*theEnumerator = [_connectionList objectEnumerator];
 	RNConnection		*thisConn;
-	NSPoint				fromPt, toPt, arrowPt, larrowPt, rarrowPt;
+	NSPoint				fromPt, toPt, arrowPt, larrowPt, rarrowPt, textPt;
 	NSBezierPath		*tempPath = [NSBezierPath bezierPath];
 	NSAffineTransform	*arrowRotation, *arrowTranslation, *arrowTransform;
-	double				angle;
+	CGFloat				angle, pi;
+	
+	pi = acos(-1);
 
 	[[NSColor labelColor] setFill];
 	[[NSColor labelColor] setStroke];
@@ -412,6 +468,15 @@
 			}
 
 			[tempPath stroke];
+			
+			//TODO: Add text with weight/delay
+			NSString *connStr = [NSString stringWithFormat:@"%.1f ms", [thisConn delay]];
+			double revAng = angle+pi;
+			textPt.x = fromPt.x += 3 * radius * kNodeScale * cos(revAng);
+			textPt.y = fromPt.y += 3 * radius * kNodeScale * sin(revAng);
+			[self drawRotatedText:connStr atPoint:textPt angle:revAng];
+
+			
 		}	// if node-to-node connection
 	}		// enumerate over connections
 
@@ -422,6 +487,42 @@
 	while (thisNode = [theEnumerator nextObject]) {
 		[thisNode drawWithRadius:radius];
 	}
+}
+
+- (void)drawRotatedText:(NSString *)text atPoint:(NSPoint)textPt angle:(CGFloat)angle
+{
+	
+	//adjust angle so text is always right side up
+	CGFloat pi = acos(-1);
+	if (cos(angle) < 0) {
+		angle += pi;
+	}
+	
+	// Save graphics state
+	[[NSGraphicsContext currentContext] saveGraphicsState];
+
+	// Move the origin to textPt
+	NSAffineTransform *transform = [NSAffineTransform transform];
+	[transform translateXBy:textPt.x yBy:textPt.y];
+	[transform rotateByRadians:angle]; // positive angle = counter-clockwise
+	[transform concat];
+
+	// Attributes
+	NSDictionary *attributes = @{
+		NSFontAttributeName: [NSFont systemFontOfSize:12],
+		NSForegroundColorAttributeName: [NSColor redColor],
+		NSBackgroundColorAttributeName: [NSColor whiteColor]  // to "erase" what's underneath
+	};
+
+	// Measure text size
+	NSSize textSize = [text sizeWithAttributes:attributes];
+
+	// Draw the text centered at (0, 0), because the transform moved the origin to textPt
+	NSPoint drawPoint = NSMakePoint(-textSize.width / 2.0, -textSize.height / 2.0);
+	[text drawAtPoint:drawPoint withAttributes:attributes];
+
+	// Restore graphics state
+	[[NSGraphicsContext currentContext] restoreGraphicsState];
 }
 
 @end

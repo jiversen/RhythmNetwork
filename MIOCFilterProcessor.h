@@ -6,25 +6,16 @@
 //  Copyright 2005 John Iversen. All rights reserved.
 //
 
-#import <Cocoa/Cocoa.h>
+#import <Foundation/Foundation.h>
 #import "MIOCProcessorProtocol.h"
-
-// define opcodes we plan to use
-#define kMIOCInputNoteOffFilterProcessorOpcode 0x08
-#define kMIOCOutputNoteOffFilterProcessorOpcode 0x09
-
-#define kMIOCInputActiveSenseFilterProcessorOpcode 0x1A
-#define kMIOCOutputActiveSenseFilterProcessorOpcode 0x1B
-
-#define kMIOCFilterChannelAll 0x00
-
+#import "MIOCMessage.h"
 
 @interface MIOCFilterProcessor : NSObject <MIOCProcessor>
 {
 	Byte		_port;
 	Byte		_channel;
 	Byte		_IOOpcode;
-	NSString	*_type;
+	NSString	*_type; //noteoff or activesense so far
 }
 
 - (MIOCFilterProcessor *)initWithType:(NSString *)type Port:(Byte)port Channel:(Byte)channel OnInput:(BOOL)isInput;

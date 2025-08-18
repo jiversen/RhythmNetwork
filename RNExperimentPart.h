@@ -6,7 +6,7 @@
 //  Copyright 2005 John Iversen. All rights reserved.
 //
 
-#import <Cocoa/Cocoa.h>
+#import <Foundation/Foundation.h>
 
 #import <CoreMIDI/MIDIServices.h>
 
@@ -15,13 +15,13 @@
 
 @interface RNExperimentPart : NSObject
 {
-	id				_experimentPart;
-	NSString			*_description;
-	NSTimeInterval	_startTime_s;
-	NSTimeInterval	_actualStartTime_s;
-	NSTimeInterval	_startTimeUncertainty_s;
-	NSString			*_subEventTimes;
-	NSTimer			*_startTimer;
+	id             _experimentPart;
+	NSString      *_description;
+	NSTimeInterval _startTime_s;
+	NSTimeInterval _actualStartTime_s;
+	NSTimeInterval _startTimeUncertainty_s;
+	NSString      *_subEventTimes;
+	NSTimer       *_startTimer;
 }
 
 + (RNExperimentPart *)experimentPartFromDictionary:(NSDictionary *)aDict;

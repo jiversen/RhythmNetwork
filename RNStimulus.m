@@ -11,9 +11,7 @@
 #import "RNTapperNode.h"
 #import <CoreAudio/HostTime.h>
 #import <CoreMIDI/MIDIServices.h>
-
-#define kNoteDuration_ms 100 
-#define kNoteVelocity	127
+#import "RNArchitectureDefines.h"
 
 @implementation RNStimulus
 
@@ -21,10 +19,12 @@
 - (RNStimulus *) initWithStimulusNumber: (Byte) stimChannel MIDIChannel: (Byte) MIDIChannel Note: (Byte) note StartTime: (double) startTime IOI: (double) IOI StartPhase: (double) startPhase Count: (int) nEvents
 {
 	self = [super init];
+	if (!self) return nil;
+
 	_stimulusChannel		= stimChannel;
 	_MIDIChannel			= MIDIChannel;
 	_note				= note;
-	_noteDuration_ms		= kNoteDuration_ms;
+	_noteDuration_ms		= kNoteOffDelay_ms;
 	_relativeStartTime_ms	= startTime;
 	_IOI_ms				= IOI;
 	_startPhase_ms		= startPhase;
@@ -72,6 +72,9 @@
 		NSAssert1(FALSE, @"Error parsing stimulus string: %@", initString);
 		return nil;
 	}
+	
+	//TODO: fix to enable different notes per stimulus
+	NSAssert(note==kBaseNote, @"Stimuli must use base note (%d)",kBaseNote);
 	
 	self = [self initWithStimulusNumber:stimChannel MIDIChannel:MIDIChannel Note:note StartTime:startTime IOI:IOI StartPhase:startPhase Count:nEvents];
 	[self setJitter:jitter];
@@ -151,7 +154,7 @@
 	//note on and off MIDI messages
 	onMessage[0] = 0x90 + (_MIDIChannel - 1); //NB convert to MIDI 0-based index
 	onMessage[1] = _note;
-	onMessage[2] = kNoteVelocity;
+	onMessage[2] = kStimulusNoteVelocity;
 	
 	offMessage[0] = onMessage[0];
 	offMessage[1] = onMessage[1];
@@ -186,10 +189,12 @@
 		eventTimeStamp = AudioConvertNanosToHostTime(eventOnTime_ns);
 		curPkt = MIDIPacketListAdd(packetList,packetListLength,curPkt,eventTimeStamp,3,onMessage);
 		
-		//noteOff
-		eventOffTime_ns = eventOnTime_ns + noteDuration_ns;
-		eventTimeStamp = AudioConvertNanosToHostTime(eventOffTime_ns);
-		curPkt = MIDIPacketListAdd(packetList,packetListLength,curPkt,eventTimeStamp,3,offMessage);
+		if (kDoEmitNoteOff) {
+			//noteOff
+			eventOffTime_ns = eventOnTime_ns + noteDuration_ns;
+			eventTimeStamp = AudioConvertNanosToHostTime(eventOffTime_ns);
+			curPkt = MIDIPacketListAdd(packetList,packetListLength,curPkt,eventTimeStamp,3,offMessage);
+		}
 		
 		NSAssert2( (curPkt != NULL), @"Packet List overflow (after %d events of %d)", iEvent, _nEvents);
 		

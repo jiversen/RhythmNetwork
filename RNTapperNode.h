@@ -9,35 +9,28 @@
 #import <Cocoa/Cocoa.h>
 #import <QuartzCore/QuartzCore.h>
 
-#define kNumConcentrators			4
-#define kNumInputsPerConcentrator	6
-#define kPatchThruPort				7
-#define kBigBrotherPort				8
-#define kBigBrotherChannel			16
-#define kBaseNote					64
+#import "RNArchitectureDefines.h"
 
 #define kNodeScale					0.075
-
-typedef UInt16 RNNodeNum_t;
 
 @class MIOCVelocityProcessor;
 
 @interface RNTapperNode : NSObject
 {
-	RNNodeNum_t			_nodeNumber; // as if...we'll ever have > 255 tappers, but it's logically possible
+	RNNodeNum_t			_nodeNumber;
 	Byte					_sourcePort; // where to find tapper's performance
-	Byte					_sourceChan;
+	Byte					_sourceChan; // 0-based MIDI channel
 	Byte					_sourceNote;
-	Byte					_destPort;						// where to send sound for this tapper to hear
+	Byte					_destPort;	// where to send sound for this tapper to hear
 	Byte					_destChan;
-	Byte					_destNote;						// can this also be mapped by MIOC?
-	Byte					_drumsetNumber;					// program number on drum machine (0 to 49 for user sets)
-	MIOCVelocityProcessor	*_sourceVelocityProcessor;		// processing applied to performance
-	MIOCVelocityProcessor	*_destVelocityProcessor;		// processing applied to sound sent to tapper
-	MIOCVelocityProcessor	*_otherNodeVelocityProcessor;	// applied to performance destined for other nodes
+	Byte					_destNote;	// can this also be mapped by MIOC?
+	Byte					_drumsetNumber;	// program number on drum machine (0 to 49 for user sets)
+	MIOCVelocityProcessor	*_sourceVelocityProcessor;	// processing applied to performance
+	MIOCVelocityProcessor	*_destVelocityProcessor;	// processing applied to sound sent to tapper
+	MIOCVelocityProcessor	*_otherNodeVelocityProcessor;// applied to performance destined for other nodes
 	BOOL					_hearsSelf;
 	BOOL					_hearsBigBrother;
-	Byte					_bigBrotherSubChannel;
+	Byte					_bigBrotherSubChannel; // Which stimulus channel it's hearing
 	NSPoint				_plotLocation;	// for drawing, in normalized coordinates
 	NSColor				*_flashColor;
 	double				_flashIntensity;// 1 then fades to 0

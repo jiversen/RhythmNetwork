@@ -3,20 +3,20 @@
 // manage setup drawer for MIOC device
 
 #import <Cocoa/Cocoa.h>
+#import "MIDIListenerProtocols.h"
 
 @class MIOCModel;
 
-@interface MIOCSetupController : NSObject
-{
-	IBOutlet NSDrawer			*_myDrawer;
-	IBOutlet MIOCModel		*_deviceObject;
-	IBOutlet NSTextField		*_MIOCName;
-	IBOutlet NSPopUpButton	*_sourcePopup;
-	IBOutlet NSPopUpButton	*_destinationPopup;
-	IBOutlet NSTextField		*_messageToSend;
-	IBOutlet NSTextView		*_response;
-	IBOutlet NSForm			*_inForm;
-	IBOutlet NSForm			*_outForm;
+@interface MIOCSetupController : NSObject <SysexDataReceiver> {
+	IBOutlet NSDrawer      *_myDrawer;
+	IBOutlet MIOCModel     *_deviceObject;
+	IBOutlet NSTextField   *_MIOCName;
+	IBOutlet NSPopUpButton *_sourcePopup;
+	IBOutlet NSPopUpButton *_destinationPopup;
+	IBOutlet NSTextField   *_messageToSend;
+	IBOutlet NSTextView    *_response;
+	IBOutlet NSForm        *_inForm;
+	IBOutlet NSForm        *_outForm;
 }
 
 - (void)awakeFromNib;

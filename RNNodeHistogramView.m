@@ -11,6 +11,10 @@
 #import <CoreAudio/HostTime.h>
 #import "RNStimulus.h"
 
+#define kFontSize 9
+
+static const NSInteger kNoSingleBinUpdatePending = -1;
+
 @implementation RNNodeHistogramView
 
 - (id)initWithFrame:(NSRect)frameRect
@@ -21,6 +25,7 @@
 		// set origin half way along x axis, keep same dimensions (in owning view's coordinates (pixels))
 		bounds = NSMakeRect(-(frameRect.size.width / 2.0), 0.0, frameRect.size.width, frameRect.size.height);
 		[self setBounds:bounds];
+		_updatedBinIndex = -1; //default to full draw
 	}
 
 	return self;
@@ -108,6 +113,12 @@
 	return _smoothITI_ms;
 }
 
+- (NSRect)barRectForIndex:(NSUInteger)iBin {
+	CGFloat yCount = (_counts[iBin] / _yMax) * self.bounds.size.height * 0.8;
+	CGFloat x = iBin - (self.bounds.size.width / 2.0);
+	return NSMakeRect(x, 0.0, 1.0, yCount);
+}
+
 - (void)addEventAtTime:(UInt64)eventTime_ns
 {
 	// figure out which bin this event belongs into
@@ -138,17 +149,24 @@
 			return;
 		}
 
-		// just update the single bin
-		NSRect bounds = [self bounds];
-		// NSRect barRect = NSMakeRect( (iBin * _binWidth_ms) - (_targetIOI_ms/2.0), 0, _binWidth_ms, _counts[iBin]);
-		float			yCount	= (_counts[iBin] / _yMax) * bounds.size.height * 0.8;
-		NSRect			barRect = NSMakeRect(iBin - (bounds.size.width / 2.0), 0.0, 1.0, yCount);
-		NSBezierPath	*aPath	= [NSBezierPath bezierPathWithRect:barRect];
-
-		[self lockFocus];
-		[[NSColor blueColor] setFill];
-		[aPath fill];
-		[self unlockFocus];
+		// no rescale, so just update the single bin
+		// If a previous bin update hasn't been flushed to the screen yet,
+		// we fall back to a full redraw to ensure all changes are visible.
+		if (_updatedBinIndex == kNoSingleBinUpdatePending) {
+			_updatedBinIndex = iBin;
+			[self setNeedsDisplayInRect:[self barRectForIndex:iBin]];
+		} else { //another single bin had been requested, so just redraw it all
+			NSLog(@"!!! RNHistogramView: ⚠️ Multiple bins queued before redraw — falling back to full redraw.Oh, ");
+			_updatedBinIndex = kNoSingleBinUpdatePending; //aka draw them all
+			[self setNeedsDisplay:YES];
+		}
+		
+		//TODO: if the log above shows up a lot, keep track of multiple bin update, but I doubt this'll be the case
+		//NSMutableIndexSet *_binsToRedraw;
+		//[binsToRedraw addIndex:iBin];
+		//[self setNeedsDisplayInRect:[self barRectForIndex:iBin]];
+		// in drawRect,  iterate over [binsToRedraw enumerateIndexesUsingBlock:].
+		
 	}
 }
 
@@ -163,13 +181,28 @@
 {
 	NSBezierPath	*aPath;
 	NSRect			barRect, bounds;
-	int				iBin, nBins;
+	NSUInteger		iBin, nBins;
 
 	// aPath = [NSBezierPath bezierPathWithRect:[self bounds]];
 	// [aPath setLineWidth:1.0];
 	// [aPath stroke];
 
 	if (_targetStimulus != nil) {
+		
+		// New: a shortcircuited single-bin draw
+		if (_updatedBinIndex != kNoSingleBinUpdatePending) {
+			iBin = _updatedBinIndex;
+			_updatedBinIndex = kNoSingleBinUpdatePending;
+			if (_counts[iBin] > 0) {
+				barRect = [self barRectForIndex:iBin];
+				[[NSColor blueColor] setFill];
+				aPath	= [NSBezierPath bezierPathWithRect:barRect];
+				[aPath fill];
+			}
+			return;
+		}
+		
+		// FULL REDRAW
 		// clear
 		bounds	= [self bounds];
 		aPath	= [NSBezierPath bezierPathWithRect:bounds];
@@ -203,9 +236,10 @@
 			IOIStr = [NSString stringWithFormat:@"---"];
 		}
 
-		NSDictionary *attributes = [NSDictionary dictionaryWithObjectsAndKeys:[NSColor redColor], NSForegroundColorAttributeName, \
-			[NSFont fontWithName:@"Helvetica" size:7], NSFontAttributeName, nil, nil];
-		// [IOIStr drawAtPoint:NSMakePoint((-_targetIOI_ms/2.0), _yMax) withAttributes:attributes];
+		NSDictionary *attributes = @{
+			NSForegroundColorAttributeName: [NSColor redColor],
+			NSFontAttributeName:[NSFont fontWithName:@"Helvetica" size:kFontSize]
+		};
 		[IOIStr drawAtPoint:NSMakePoint(-(bounds.size.width / 2.0), (bounds.size.height * 0.7)) withAttributes:attributes];
 
 		// smoothed ITI text
@@ -217,8 +251,10 @@
 			ITIStr = [NSString stringWithFormat:@"---"];
 		}
 
-		attributes = [NSDictionary dictionaryWithObjectsAndKeys:[NSColor blueColor], NSForegroundColorAttributeName, \
-			[NSFont fontWithName:@"Helvetica" size:7], NSFontAttributeName, nil, nil];
+		attributes = @{
+			NSForegroundColorAttributeName: [NSColor redColor],
+			NSFontAttributeName:[NSFont fontWithName:@"Helvetica" size:kFontSize]
+		};
 		[ITIStr drawAtPoint:NSMakePoint((0.15 * bounds.size.width / 2.0), (bounds.size.height * 0.7)) withAttributes:attributes];
 
 		// draw histogram

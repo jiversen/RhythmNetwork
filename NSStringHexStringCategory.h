@@ -11,7 +11,7 @@
 // could just have well made this part of NSData, but felt it was more related to human-readable
 //  UI
 
-#import <Cocoa/Cocoa.h>
+#import <Foundation/Foundation.h>
 
 @interface NSString (HexStringCategory)
 

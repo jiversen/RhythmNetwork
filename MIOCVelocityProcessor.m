@@ -14,6 +14,7 @@
 - (MIOCVelocityProcessor *)initWithPort:(Byte)port Channel:(Byte)channel OnInput:(BOOL)isInput
 {
 	self = [super init];
+	if (!self) return nil;
 
 	[self setPort:port];
 	[self setChannel:channel];
@@ -22,6 +23,7 @@
 	[self setPosition:0];	// unnecessary, but explicit
 	// set to default: no modification of velocity (Miditemp Manual p. 94)
 	[self setVelocityMapThreshold:64 GradientAbove:1.0 GradientBelow:1.0 Offset:0];
+	
 	return self;
 }
 
@@ -40,9 +42,9 @@
 - (void)setOnInput:(BOOL)isInput
 {
 	if (isInput == YES) {
-		_IOOpcode = kMIOCInputVelocityProcessorOpcode;
+		_IOOpcode = kMIOCInputVelocityProcessorType;
 	} else {
-		_IOOpcode = kMIOCOutputVelocityProcessorOpcode;
+		_IOOpcode = kMIOCOutputVelocityProcessorType;
 	}
 }
 
@@ -85,7 +87,7 @@
 - (NSString *)description
 {
 	return [NSString stringWithFormat:@"%c port %d, channel %d: %.2f (%u) %.2f +%u", \
-		   (_IOOpcode == kMIOCInputVelocityProcessorOpcode)?'I':'O', _port, _channel, \
+		   (_IOOpcode == kMIOCInputVelocityProcessorType)?'I':'O', _port, _channel, \
 		   (float)_gradientBelowThreshold / 8.0, \
 		   _threshold, (float)_gradientAboveThreshold / 8.0, _offset];
 }
@@ -117,7 +119,7 @@
 {
 	Byte buf[8];
 
-	NSAssert((_IOOpcode == kMIOCInputVelocityProcessorOpcode || _IOOpcode == kMIOCOutputVelocityProcessorOpcode), @"Opcode incorrect");
+	NSAssert((_IOOpcode == kMIOCInputVelocityProcessorType || _IOOpcode == kMIOCOutputVelocityProcessorType), @"Procesor Type incorrect");
 	buf[0]	= _IOOpcode;
 	buf[1]	= _port - 1;
 	buf[2]	= (_channel == kMIOCInChannelAll)?0x10:(0x90 + _channel - 1);
@@ -132,7 +134,7 @@
 
 - (id)copyWithZone:(NSZone *)zone
 {
-	BOOL isInput = (_IOOpcode == kMIOCInputVelocityProcessorOpcode)?YES:NO;
+	BOOL isInput = (_IOOpcode == kMIOCInputVelocityProcessorType)?YES:NO;
 	// NB we descend directly from NSObject, so no need to call super's allocWithZone (see NSObject, copy)
 	MIOCVelocityProcessor *newProcessor = [[MIOCVelocityProcessor allocWithZone:zone] initWithPort:_port
 		Channel :_channel

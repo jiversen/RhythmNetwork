@@ -102,8 +102,8 @@ enum connectFormIdx {
 
 	// register to receive notifications of MIOC device status changes
 	[[NSNotificationCenter defaultCenter] addObserver:self
-	selector:@selector(handleMIOCChange:)
-	name	:@"MIOCModelChangeNotification"
+	selector:@selector(handleMIOCNameChange:)
+	name	:@"MIOCModelNameChangeNotification"
 	object	:nil];
 }
 
@@ -136,7 +136,7 @@ enum connectFormIdx {
 	[self populatePopups];
 }
 
-- (void)handleMIOCChange:(NSNotification *)notification
+- (void)handleMIOCNameChange:(NSNotification *)notification
 {
 	[_MIOCName setStringValue:[_deviceObject deviceName]];
 }
@@ -178,12 +178,16 @@ enum connectFormIdx {
 {
 	NSString	*sendStr	= [_messageToSend stringValue];
 	NSData		*data		= [sendStr convertHexStringToData];
-
-	NSLog(@"Send Button Pressed\n\tData (%lu B): %@", (unsigned long)[data length], data);
+	
+	NSData *decoded = [_deviceObject decodeMessage:data];
+	MIOCMessage *sendMessage = (MIOCMessage *)[decoded bytes];
+	NSString *outStr = [NSString stringWithFormat:@"%@\n[%@]", MIOCMessageString(sendMessage), [[[NSString alloc] initHexStringWithData:decoded] autorelease]];
+	
+	NSLog(@"Send Button Pressed\n\tData (%lu B): %@\nMessage: %@", (unsigned long)[data length], data, outStr);
 	[[_deviceObject MIDILink] sendSysex:data];
-
+	
 	// add outgoing to receive box
-	[_response setString:sendStr];
+	[_response setString:outStr];
 }
 
 // test connect/disconnect routing processor
@@ -198,11 +202,11 @@ enum connectFormIdx {
 	[_deviceObject connectOne:con];
 
 	// this is just to show the result in the window
-	Byte	flag[1]		= {0x80};
-	NSData	*message	= [_deviceObject sysexMessageForProcessor:con withFlag:flag];
-	// ***test of decoding process
-	NSData *decoded = [_deviceObject decodeMessage:message];
-	[_response setString:[[[NSString alloc] initHexStringWithData:decoded] autorelease]];
+	Byte         flag[1]     = {0x80};
+	NSData      *message     = [_deviceObject sysexMessageForProcessor:con withFlag:flag];
+	NSData      *decoded     = [_deviceObject decodeMessage:message];
+	MIOCMessage *sendMessage = (MIOCMessage *)[decoded bytes];
+	[_response setString:[NSString stringWithFormat:@"%@\n[%@]", MIOCMessageString(sendMessage), [[[NSString alloc] initHexStringWithData:decoded] autorelease]]];
 }
 
 - (IBAction)DisconnectAction:(id)sender
@@ -216,27 +220,36 @@ enum connectFormIdx {
 	[_deviceObject disconnectOne:con];
 
 	// this is just to show the result in the window
-	Byte	flag[1]		= {0x00};
-	NSData	*message	= [_deviceObject sysexMessageForProcessor:con withFlag:flag];
-	[_response setString:[[[NSString alloc] initHexStringWithData:message] autorelease]];
+	Byte         flag[1]     = {0x00};
+	NSData      *message     = [_deviceObject sysexMessageForProcessor:con withFlag:flag];
+	NSData      *decoded     = [_deviceObject decodeMessage:message];
+	MIOCMessage *sendMessage = (MIOCMessage *)[decoded bytes];
+    [_response setString:[NSString stringWithFormat:@"%@\n[%@]", MIOCMessageString(sendMessage), [[[NSString alloc] initHexStringWithData:decoded] autorelease]]];
 }
 
 - (void)receiveSysexData:(NSData *)data
 {
-	NSString *hexStr = [[[NSString alloc] initHexStringWithData:data] autorelease];
-	// NSLog(@"MIOCSetupController Received Sysex (%d bytes): %@\n",[data length], hexStr);
-	// append to outgoing data that is in view
-	NSMutableString *outStr = [NSMutableString stringWithString:[_response string]];
+	if (![_deviceObject isOnline]) return;
+	
+	dispatch_async(dispatch_get_main_queue(), ^{ //because we are manipulating UI
+		NSString *hexStr;
+		// we don't care about raw response any more--decoder works
+		//hexStr = [[[NSString alloc] initHexStringWithData:data] autorelease];
+		// NSLog(@"MIOCSetupController Received Sysex (%d bytes): %@\n",[data length], hexStr);
+		
+		// append to outgoing data that is already in view
+		NSMutableString *outStr = [NSMutableString stringWithString:[_response string]];
+		[outStr appendString:@"\n -> \n"];
+				
+		NSData *decoded = [_deviceObject decodeMessage:data];
+		MIOCMessage *receiveMessage = (MIOCMessage *)[decoded bytes];
+		hexStr = [[[NSString alloc] initHexStringWithData:decoded] autorelease];
+		
+		[outStr appendFormat:@"%@\n[%@]", MIOCMessageString(receiveMessage), hexStr];
 
-	[outStr appendString:@" -> "];
-	[outStr appendString:hexStr];
-
-	// also, decode it
-	NSData *decoded = [_deviceObject decodeMessage:data];
-	hexStr = [[[NSString alloc] initHexStringWithData:decoded] autorelease];
-	[outStr appendFormat:@"\n[ %@ ]", hexStr];
-
-	[_response setString:outStr];
+		// now, describe it
+		[_response setString:outStr];
+	});
 }
 
 @end

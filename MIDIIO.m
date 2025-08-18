@@ -2,18 +2,60 @@
 
 #import <CoreMIDI/MIDIServices.h>
 #import <CoreAudio/HostTime.h>
+#include <assert.h>
+#include <os/log.h>
 #import "NSStringHexStringCategory.h"
+#import "RNArchitectureDefines.h"
+#import "RTAssert.h"
+
+#define kDelayPacketListLength 8192 //big enough for ~500 events
+
+#define NS_PER_MS 1000000ull
+#define MS_TO_HOSTTIME(ms) AudioConvertNanosToHostTime((ms) * NS_PER_MS)
+#define HOSTTIME_TO_MS(hosttime) (AudioConvertHostTimeToNanos((hosttime)) / NS_PER_MS)
+
 
 // wrapper for simple midi io
 
 // Forward definitions of callbacks
 static void myReadProc(const MIDIPacketList *pktlist, void *refCon, void *connRefCon);
-
 static void mySysexCompletionProc(MIDISysexSendRequest *request);
+static void myMIDINotifyProc(const MIDINotification *message, void * refCon);
 
-static void myMIDINotifyProc(const MIDINotification *message, void *refCon);
+#pragma mark CoreMIDI Error Handling
+// Error Handling (CGPT)
+#define CHECK_OSSTATUS_OR_BAIL(s, msg) do { \
+	if ((s) != noErr) { \
+		os_log(OS_LOG_DEFAULT, "%s failed: %@ (%d)", msg, (NSString *)CMIDIErrorDescription(s), (int)(s)); \
+		goto bail; \
+	} \
+} while (0)
 
-static void logMIDIPacketList(const MIDIPacketList *packetList, long pktlistLengthconst, MIDIIO *selfMIDIO);
+#define CHECK_OSSTATUS(s, msg) do { \
+if ((s) != noErr) { \
+	os_log(OS_LOG_DEFAULT, "%s failed: %@ (%d)", msg, (NSString *)CMIDIErrorDescription(s), (int)(s)); \
+   } \
+} while (0)
+
+static NSString *CMIDIErrorDescription(OSStatus status) {
+	switch (status) {
+		case kMIDIInvalidClient: return @"Invalid MIDI client";
+		case kMIDIInvalidPort: return @"Invalid MIDI port";
+		case kMIDIWrongEndpointType: return @"Wrong endpoint type";
+		case kMIDINoConnection: return @"No connection";
+		case kMIDIUnknownEndpoint: return @"Unknown endpoint";
+		case kMIDIUnknownProperty: return @"Unknown property";
+		case kMIDIWrongPropertyType: return @"Wrong property type";
+		case kMIDINoCurrentSetup: return @"No current setup";
+		case kMIDIMessageSendErr: return @"Error sending message";
+		case kMIDIServerStartErr: return @"Could not start MIDI server";
+		case kMIDISetupFormatErr: return @"Bad setup format";
+		case kMIDIWrongThread: return @"Wrong thread";
+		case kMIDIObjectNotFound: return @"Object not found";
+		case kMIDIIDNotUnique: return @"ID not unique";
+		default: return [NSString stringWithFormat:@"Unknown error (%d)", (int)status];
+	}
+}
 
 @implementation MIDIIO
 
@@ -24,65 +66,134 @@ static void logMIDIPacketList(const MIDIPacketList *packetList, long pktlistLeng
 
 - (MIDIIO *)init
 {
-	self				= [super init];
-	_MIDIClient			= NULL;
-	_inPort				= NULL;
-	_outPort			= NULL;
-	_MIDISource			= NULL;
-	_MIDIDest			= NULL;
+	self = [super init];
+	if (!self) return nil;
+	
+	_MIDIClient         = kMIDIInvalidRef;
+	_inPort             = kMIDIInvalidRef;
+	_outPort            = kMIDIInvalidRef;
+	_MIDISource         = kMIDIInvalidRef;
+	_MIDIDest           = kMIDIInvalidRef;
 	_sysexListenerArray = [[NSMutableArray arrayWithCapacity:0] retain];
-	_MIDIListenerArray	= [[NSMutableArray arrayWithCapacity:0] retain];
+	_MIDIListenerArray  = [[NSMutableArray arrayWithCapacity:0] retain];
 
-	_midiLoggingQueue = dispatch_queue_create("org.johniversen.midiLogging", DISPATCH_QUEUE_SERIAL);
 
-	_sysexData			= [[NSMutableData alloc] initWithCapacity:1024];
-	_isReceivingSysex	= NO;
+	_sysexData        = [[NSMutableData alloc] initWithCapacity:16 * 1024];
+	_isReceivingSysex = NO;
 
+	// setup sidecar MIDIIO for sending delayed messages
+	if (MIDIGetNumberOfDestinations() >= 2) {
+		_delayMIDIIO = [[MIDIIO alloc] initFollower];
+
+		// pre-allocate MIDIPacketList
+		_delayPacketList = malloc(kDelayPacketListLength);
+	} else {
+		NSLog(@"Warning: Only one MIDI output available. Delayed output functionality will be disabled.");
+		_delayMIDIIO = nil;
+	}
+
+	_isLeader = YES;
+	
 	[self setupMIDI];
+	
+	[self startMIDIProcessingThread];
+
 	return self;
 }
 
 // *********************************************
-//
+// Simplified init for follower MIDIIO
+- (MIDIIO *)initFollower
+{
+	self = [super init];
+	if (!self) return nil;
+
+	_MIDIClient = kMIDIInvalidRef; //
+	_inPort     = kMIDIInvalidRef;
+	_outPort    = kMIDIInvalidRef;
+	_MIDISource = kMIDIInvalidRef;
+	_MIDIDest   = kMIDIInvalidRef;
+	_isLeader   = NO;
+	// remaining ivars are initialized to null by default
+
+	return self;
+}
+
+// *********************************************
 - (void)dealloc
 {
 	MIDIClientDispose(_MIDIClient);	// automatically disposes of ports
 	[_sysexListenerArray release];
 	[_MIDIListenerArray  release];
 	[_sysexData release];
+	[_delayMIDIIO release];
 	[super dealloc];
 }
 
 // *********************************************
-//
-// Setup a midi client, create its input and output ports, connect ports to outside world
+//Setup a midi client, create its input and output ports, connect ports to outside world
 - (void)setupMIDI
 {
 	OSStatus status;
+	
+	atomic_init(&_MIDIConsumerReady, false);
+	NSAssert(TPCircularBufferInit(&_packetBuffer, 4096*8),@"Unable to init TPCircularBuffer");
+	_dataAvailableSemaphore = dispatch_semaphore_create(0);
+    
+	// set up main MIDI
+    //create this client
+    status = MIDIClientCreate(CFSTR("MIDIIO"), myMIDINotifyProc, (void*)self, &_MIDIClient);
+	CHECK_OSSTATUS_OR_BAIL(status, "MIDIClientCreate");
 
-	// create this client
-	status = MIDIClientCreate(CFSTR("MIDIIO"), myMIDINotifyProc, (void *)self, &_MIDIClient);
+	//create an input port
+    status = MIDIInputPortCreate(_MIDIClient, CFSTR("MIDIIO Input Port"), myReadProc, (void*)self, &_inPort);
+	CHECK_OSSTATUS_OR_BAIL(status, "MIDIInputPortCreate");
 
-	// create an input port
-	status = MIDIInputPortCreate(_MIDIClient, CFSTR("MIDIIO Input Port"), myReadProc, (void *)self, &_inPort);
-
-	// create an output port
+	//create an output port
 	status = MIDIOutputPortCreate(_MIDIClient, CFSTR("MIDIIO Output Port"), &_outPort);
-
-	// set source and destination (take user default, otherwise first--after initial entry, which will be "(not connected)")
-	NSArray *sourceList = [self getSourceList];
-
-	// try to use default
-	if ([self useSourceNamed:[self defaultSourceName]] == NO) {
-		// set to no connection
-		[self useSourceNamed:sourceList[0]];// during init, list will always have (not connected) as first
+	CHECK_OSSTATUS_OR_BAIL(status, "MIDIOutputPortCreate");
+	
+	// setup a secondary (follower) transmit-only client on the next port from the leader client.
+	// this totally requires that the MIDI interface has at least two ports, which we checked in init
+	if (_isLeader && _delayMIDIIO) {
+		status = MIDIClientCreate(CFSTR("MIDIIO_Delay"), NULL, (void*)self, &_delayMIDIIO->_MIDIClient); //config notifications will come from leader MIDIIO
+		CHECK_OSSTATUS_OR_BAIL(status, "MIDIClientCreate_Follower");
+		
+		//delay MIDI doesn't have an input port
+		_delayMIDIIO->_inPort = kMIDIInvalidRef;
+		
+		//create an output port
+		status = MIDIOutputPortCreate(_MIDIClient, CFSTR("MIDIIO_Delay Output Port"), &_delayMIDIIO->_outPort);
+		CHECK_OSSTATUS_OR_BAIL(status, "MIDIOutputPortCreate_Follower");
 	}
-
+	
+	//set source and destination (take user default, otherwise first--after initial entry, which will be "(not connected)")
+	NSArray *sourceList = [self getSourceList];
+	//try to use default
+	if ([self useSourceNamed:[self defaultSourceName]] == NO) {
+		//set to no connection
+		[self useSourceNamed:sourceList[0]]; //during init, list will always have (not connected) as first
+	}
+	
 	NSArray *destinationList = [self getDestinationList];
-
-	if ([self useDestinationNamed:[self defaultDestinationName]] == NO) {
+	if ([self useDestinationNamed:[self defaultDestinationName]] == NO) { //this will update _delayMIDIIO as well
+		//set to no connection
 		[self useDestinationNamed:destinationList[0]];
 	}
+	
+	_isRunning = TRUE;
+	return;
+	
+	// Required by CHECK_OSSTATUS_OR_BAIL
+bail:
+	_isRunning = FALSE;
+	NSLog(@"MIDI Setup Failed");
+	
+}
+
+// add MIDIRouting table. default null value means 'no routing'
+- (void)setMIDIRoutingTable:(RNRealtimeRoutingTable *)routingTable {
+	atomic_store_explicit(&_routingTable, routingTable, memory_order_release);
 }
 
 // *********************************************
@@ -103,14 +214,14 @@ static void logMIDIPacketList(const MIDIPacketList *packetList, long pktlistLeng
 // :jri:20050913 Something new to try--add an external readproc
 - (void)setReadProc:(MIDIReadProc)newReadProc refCon:(void *)refCon
 {
-	NSAssert((_inPort != NULL), @"an InputPort should already exist");
-
+	NSAssert( (_inPort != kMIDIInvalidRef), @"an InputPort should already exist");
+	
 	OSStatus status;
 	status = MIDIPortDispose(_inPort);
-	NSAssert((status == noErr), @"problem disposing old input port");
-	_inPort = NULL;
-
-	status = MIDIInputPortCreate(_MIDIClient, CFSTR("MIDIIO Input Port"), newReadProc, (void *)refCon, &_inPort);
+	NSAssert( (status == noErr), @"problem disposing old input port");
+	_inPort = kMIDIInvalidRef;
+	
+	status = MIDIInputPortCreate(_MIDIClient, CFSTR("MIDIIO Input Port"), newReadProc, (void*)refCon, &_inPort);
 }
 
 // *********************************************
@@ -131,14 +242,13 @@ static void logMIDIPacketList(const MIDIPacketList *packetList, long pktlistLeng
 
 - (NSArray *)getSourceList
 {
-	int				n, i;
+	NSUInteger		n, i;
 	CFStringRef		name;
 	NSMutableArray	*list		= [NSMutableArray arrayWithCapacity:0];
-	NSMutableString *uniqueName = [NSMutableString stringWithCapacity:10];
-
-	if (_MIDISource == NULL) {
-		[list addObject:@"(not connected)"];// add a placeholder if we're not connected
-	}
+	NSMutableString 	*uniqueName = [NSMutableString stringWithCapacity:10];
+	
+	if (_MIDISource == kMIDIInvalidRef)
+		[list addObject:@"(not connected)"]; //add a placeholder if we're not connected
 
 	n = MIDIGetNumberOfSources();
 
@@ -164,38 +274,41 @@ static void logMIDIPacketList(const MIDIPacketList *packetList, long pktlistLeng
 	return [NSArray arrayWithArray:list];	// returns immutable version
 }
 
+// *********************************************
 - (NSArray *)getDestinationList
 {
-	int				n, i;
-	CFStringRef		name;
-	NSMutableArray	*list = [NSMutableArray arrayWithCapacity:0];
-
-	if (_MIDIDest == NULL) {
+	NSUInteger 		n,i;
+	CFStringRef 		name;
+	NSMutableArray 	*list = [NSMutableArray arrayWithCapacity:0];
+	
+	if (_MIDIDest == kMIDIInvalidRef)
 		[list addObject:@"(not connected)"];
-	}
-
+	
 	n = MIDIGetNumberOfDestinations();
-
+	
 	for (i = 0; i < n; i++) {
 		MIDIEndpointRef dest = MIDIGetDestination(i);
 		MIDIObjectGetStringProperty(dest, kMIDIPropertyName, &name);
 		[list addObject:(NSString *)name];
 		CFRelease(name);
 	}
-
+	
 	if ([list count] == 0) {
 		[list addObject:@"(not connected)"];
 	}
 
-	return [NSArray arrayWithArray:list];	// returns immutable version
+return [NSArray arrayWithArray:list];	// returns immutable version
 }
 
+// *********************************************
 - (BOOL)useSourceNamed:(NSString *)sourceName
 {
 	OSStatus	status;
-	int			n, i;
+    NSUInteger n,i;
 	CFStringRef name;
 	BOOL		didConnect = FALSE;
+	
+	NSAssert(self != _delayMIDIIO, @"useSourceNamed: should not be called on _delayMIDIIO directly!");
 
 	// iterate thru sources, finding first match to sourceName
 	n = MIDIGetNumberOfSources();
@@ -203,41 +316,46 @@ static void logMIDIPacketList(const MIDIPacketList *packetList, long pktlistLeng
 	for (i = 0; i < n; i++) {
 		MIDIEndpointRef src = MIDIGetSource(i);
 		MIDIObjectGetStringProperty(src, kMIDIPropertyName, &name);
-
+		
 		if ([sourceName isEqualToString:(NSString *)name]) {
-			if (_MIDISource != NULL) {
-				MIDIPortDisconnectSource(_inPort, _MIDISource);
-			}
-
+			if (_MIDISource != kMIDIInvalidRef)
+				MIDIPortDisconnectSource(_inPort,_MIDISource);
 			_MIDISource = src;
 			status		= MIDIPortConnectSource(_inPort, _MIDISource, (void *)i);
-			NSLog(@"connecting to source %@", sourceName);
-			didConnect = TRUE;
-			[self setDefaultSourceName:sourceName];
+			if (status == noErr) {
+				NSLog(@"connecting to source %@", sourceName);
+				didConnect = TRUE;
+				if (_isLeader) {
+					[self setDefaultSourceName:sourceName]; // only update default for the leader
+				}
+			} else {
+				didConnect = FALSE;
+			}
 		}
-
 		CFRelease(name);
 	}
 
 	// didn't find it, don't connect to anything
 	if (!didConnect) {
 		NSLog(@"Could not connect: source %@ does not exist", sourceName);
-		_MIDISource = NULL;
+		_MIDISource = kMIDIInvalidRef;
 	}
 
 	return didConnect;
 }
 
+// *********************************************
 - (BOOL)useDestinationNamed:(NSString *)destinationName
 {
-	int			n, i;
 	CFStringRef name;
 	BOOL		didConnect = FALSE;
+	
+	NSAssert(self != _delayMIDIIO, @"useDestinationNamed: should not be called on _delayMIDIIO directly!");
 
 	// iterate thru sources, finding first match to sourceName
-	n = MIDIGetNumberOfDestinations();
+	ItemCount n = MIDIGetNumberOfDestinations();
 
-	for (i = 0; i < n; i++) {
+	for (int i = 0; i < n; i++) {
 		MIDIEndpointRef dest = MIDIGetDestination(i);
 		MIDIObjectGetStringProperty(dest, kMIDIPropertyName, &name);
 
@@ -245,28 +363,42 @@ static void logMIDIPacketList(const MIDIPacketList *packetList, long pktlistLeng
 			_MIDIDest = dest;
 			NSLog(@"connecting to destination %@", destinationName);
 			didConnect = TRUE;
-			[self setDefaultDestinationName:destinationName];
+            if (_isLeader) {
+                [self setDefaultDestinationName:destinationName];
+            }
 		}
-
 		CFRelease(name);
 	}
 
 	if (!didConnect) {
 		NSLog(@"Could not connect: destination %@ does not exist", destinationName);
-		_MIDIDest = NULL;
+		_MIDIDest = kMIDIInvalidRef;
+		if (_delayMIDIIO) {
+			_delayMIDIIO->_MIDIDest = kMIDIInvalidRef;
+		}
+		return NO;
 	}
-
-	// publish our new destination
-	[[NSNotificationCenter defaultCenter] postNotificationName:@"MIDIIO_newDestinationNotification" object:self];
-
-	return didConnect;
+	
+	// now update follower, output only
+	if (_isLeader && _delayMIDIIO) {
+		if ([self destinationIsConnected]) {
+			[_delayMIDIIO useDestinationNamed:NextPortName([self destinationName])];
+		}
+	}
+	
+	//publish our new destination (only MIDICore listens...what is this for?)
+	if (_isLeader) {
+        [[NSNotificationCenter defaultCenter] postNotificationName:@"MIDIIO_newDestinationNotification" object:self];
+    }
+    
+	return YES;
 }
 
+// *********************************************
 - (NSString *)sourceName
 {
 	CFStringRef name;
-
-	if (_MIDISource != NULL) {
+	if (_MIDISource != kMIDIInvalidRef) {
 		MIDIObjectGetStringProperty(_MIDISource, kMIDIPropertyName, &name);
 		return [NSString stringWithString:(NSString *)name];
 	} else {
@@ -277,8 +409,7 @@ static void logMIDIPacketList(const MIDIPacketList *packetList, long pktlistLeng
 - (NSString *)destinationName
 {
 	CFStringRef name;
-
-	if (_MIDIDest != NULL) {
+	if (_MIDIDest != kMIDIInvalidRef) {
 		MIDIObjectGetStringProperty(_MIDIDest, kMIDIPropertyName, &name);
 		return [NSString stringWithString:(NSString *)name];
 	} else {
@@ -286,17 +417,19 @@ static void logMIDIPacketList(const MIDIPacketList *packetList, long pktlistLeng
 	}
 }
 
+// *********************************************
 // simple queries of connection state
 - (BOOL)sourceIsConnected
 {
-	return _MIDISource != NULL;
+	return (_MIDISource != kMIDIInvalidRef);
 }
 
 - (BOOL)destinationIsConnected
 {
-	return _MIDIDest != NULL;
+	return (_MIDIDest != kMIDIInvalidRef);
 }
 
+// *********************************************
 // user defaults
 // if no default, return empty string, otherwise return last stored default
 - (NSString *)defaultSourceName
@@ -334,8 +467,38 @@ static void logMIDIPacketList(const MIDIPacketList *packetList, long pktlistLeng
 }
 
 // *********************************************
+// function to find the next port name in sequence for use with follower MIDIIO
+NSString *NextPortName(NSString *currentPortName) {
+    NSRegularExpression *regex = [NSRegularExpression regularExpressionWithPattern:@"^(.*?)(\\d+|[A-Za-z])$" options:0 error:nil];
+    NSTextCheckingResult *match = [regex firstMatchInString:currentPortName options:0 range:NSMakeRange(0, currentPortName.length)];
+    
+    NSCAssert(match != nil && match.numberOfRanges == 3, @"NextPortName: Unrecognized format %@", currentPortName);
+    
+    NSString *prefix = [currentPortName substringWithRange:[match rangeAtIndex:1]];
+    NSString *suffix = [currentPortName substringWithRange:[match rangeAtIndex:2]];
+    
+    unichar c = [suffix characterAtIndex:0];
+    
+    // Handle numeric suffix
+    if ([[NSCharacterSet decimalDigitCharacterSet] characterIsMember:c]) {
+        NSInteger number = [suffix integerValue];
+        return [NSString stringWithFormat:@"%@%ld", prefix, (long)(number + 1)];
+    }
+    
+    // Handle alphabetic suffix
+    if ((c >= 'A' && c < 'Z') || (c >= 'a' && c < 'z')) {
+        return [NSString stringWithFormat:@"%@%c", prefix, c + 1];
+    }
+
+	//fallthrough
+    NSCAssert(NO, @"NextPortName: Unable to increment suffix %@", suffix);
+    return nil;
+}
+
+// *********************************************
 //  Handle changes in the midi setup--
 //		this executes on our main thread, but still follows pattern of calling object method to handle things
+//
 static void myMIDINotifyProc(const MIDINotification *message, void *refCon)
 {
 	MIDIIO *me = (MIDIIO *)refCon;
@@ -347,47 +510,51 @@ static void myMIDINotifyProc(const MIDINotification *message, void *refCon)
 	}
 }
 
+// *********************************************
 - (void)handleMIDISetupChange
 {
-	int		n, i;
 	BOOL	found = FALSE;
-
-	// if we're still unconnected, check if default has appeared
-	if (_MIDISource == NULL) {
-		[self useSourceNamed:[self defaultSourceName]];	// if this fails, source still = NULL
+	
+	//if we're still unconnected, check if default has appeared
+	if (_MIDISource == kMIDIInvalidRef) {
+		[self useSourceNamed:[self defaultSourceName]]; //if this fails, source still = NULL
 	} else {
 		// is our current source still in the list?
 		// if not, clear our _MIDISource
-		n = MIDIGetNumberOfSources();
+		ItemCount n = MIDIGetNumberOfSources();
 
-		for (i = 0; i < n; i++) {
+		for (int i = 0; i < n; i++) {
 			MIDIEndpointRef src = MIDIGetSource(i);
 
 			if (_MIDISource == src) {
 				found = TRUE;
 			}
 		}
-
-		if (!found) {
-			_MIDISource = NULL;
-		}
+		if (!found)
+			_MIDISource = kMIDIInvalidRef;
 	}
 
-	if (_MIDIDest == NULL) {
-		[self useDestinationNamed:[self defaultDestinationName]];	// if this fails, dest = NULL
+			
+	if (_MIDIDest == kMIDIInvalidRef) {
+		[self useDestinationNamed:[self defaultDestinationName]]; //if this fails, dest = NULL
 	} else {
-		n = MIDIGetNumberOfDestinations();
+		ItemCount n = MIDIGetNumberOfDestinations();
 
-		for (i = 0; i < n; i++) {
+		for (int i = 0; i < n; i++) {
 			MIDIEndpointRef dest = MIDIGetDestination(i);
 
 			if (_MIDIDest == dest) {
 				found = TRUE;
 			}
 		}
-
-		if (!found) {
-			_MIDIDest = NULL;
+		if (!found)
+            _MIDIDest = kMIDIInvalidRef;
+	}
+	
+	// now update follower, output only
+	if (_isLeader && _delayMIDIIO) {
+		if ([self destinationIsConnected]) {
+			[_delayMIDIIO useDestinationNamed:NextPortName([self destinationName])];
 		}
 	}
 
@@ -401,120 +568,406 @@ static void myMIDINotifyProc(const MIDINotification *message, void *refCon)
 // *********************************************
 #pragma mark RECEIVING
 
-// quickly pass on to a dispatch_async queue to get out of the thread. Do minimal potentially blocking work here
+// quickly copy packet list to lockless ring buffer and raise semaphore for processing thread
 static void myReadProc(const MIDIPacketList *pktlist, void *refCon, void *connRefCon)
 {
+		
 	MIDIIO *selfMIDIIO = (MIDIIO *)refCon;
+	
+	if (!atomic_load(&selfMIDIIO->_MIDIConsumerReady)) return; // short out if our listening thread is not up yet
 
-	// find total length of packet list
+	// packet list
 	MIDIPacket *packet = (MIDIPacket *)&pktlist->packet[0];
-
+	
+	// find total length of packet list
 	for (int i = 0; i < pktlist->numPackets; i++) {
 		packet = MIDIPacketNext(packet);
 	}
-
 	long pktlistLength = (Byte *)packet - (Byte *)pktlist;
+	
+	// TEST
+	//MIDITimeStamp t0 = 0;
+	//logMIDIPacketList(pktlist, pktlistLength, t0);
+	//return;
+	
+	// copy entire packetlist to ring buffer (Use my variant that ensures aligned placement in buffer--consumer must be aware)
+	bool status = AlignedTPCircularBufferProduceBytes(&selfMIDIIO->_packetBuffer, pktlist, (uint32_t) pktlistLength);
+	
+	RT_SAFE_ASSERT(status, "Buffer overrun in MIDI readProc--consider increasing buffer size.");
+	
+	if (!status) {
+		return;
+	}
+	
+	// signal processing thread that data are available
+	dispatch_semaphore_signal(selfMIDIIO->_dataAvailableSemaphore);
+}
 
-	MIDIPacketList *packetListCopy = malloc(pktlistLength);
-
-	if (packetListCopy) {
-		memcpy(packetListCopy, pktlist, pktlistLength);
-
-		dispatch_async(selfMIDIIO->_midiLoggingQueue, ^{
-			logMIDIPacketList(packetListCopy, pktlistLength, selfMIDIIO);
-			free(packetListCopy);
-		});
+void logMIDIPacketList(const MIDIPacketList *packetList, long pktlistLength, MIDITimeStamp t0)
+{
+	// LOG
+	os_log(OS_LOG_DEFAULT, "--MIDI PacketList - #Packets: %d (0x%lx bytes)", packetList->numPackets, pktlistLength);
+	
+	const MIDIPacket *packet = packetList->packet;
+	
+	for (int i = 0; i < packetList->numPackets; i++) {
+		NSMutableString *dataString = [NSMutableString string];
+		
+		for (int j = 0; j < packet->length; j++) {
+			[dataString appendFormat:@"%02X ", packet->data[j]];
+		}
+		
+		os_log(OS_LOG_DEFAULT, "      MIDI Packet - Timestamp: %llu ms%@, Length: %d, Data: %@", HOSTTIME_TO_MS(packet->timeStamp - t0), (t0>0)?@" (rel)":@"", packet->length, dataString);
+		
+		packet = MIDIPacketNext(packet);
 	}
 }
 
-// logging and forwarding received packets on async queue
 
-void logMIDIPacketList(const MIDIPacketList *packetList, long pktlistLength, const MIDIIO *selfMIDIO)
-{
-	// LOG
-#if 0
-		os_log(OS_LOG_DEFAULT, "MIDI PacketList - Length: %d", packetList->numPackets);
+// *********************************************
+// create high-priority processing thread for MIDI packetlist
+- (void) startMIDIProcessingThread {
+	
+	dispatch_queue_attr_t attr = dispatch_queue_attr_make_with_qos_class(DISPATCH_QUEUE_SERIAL, QOS_CLASS_USER_INTERACTIVE, 0);
+	_processingQueue = dispatch_queue_create("org.johniversen.midiProcessing", attr);
+	
+	attr = dispatch_queue_attr_make_with_qos_class(DISPATCH_QUEUE_CONCURRENT, QOS_CLASS_USER_INITIATED, 0);
+	_listenerQueue = dispatch_queue_create("org.johniversen.listenerQueue", attr);
+	
+	dispatch_async(_processingQueue, ^{
+		atomic_store(&_MIDIConsumerReady, true); // signal to readproc that we're ready to consume
+		while (_isRunning) {
+			// Wait until signaled - blocks efficiently with no polling
+			dispatch_semaphore_wait(_dataAvailableSemaphore, DISPATCH_TIME_FOREVER);
+			
+			// Get data from the circular buffer
+			uint32_t availableBytes;
+			void* packetList = TPCircularBufferTail(&_packetBuffer, &availableBytes);
+			
+			os_log(OS_LOG_DEFAULT, "=========================================\nBuffer available bytes: 0x%x", availableBytes);
+			
+			//process packet list for delayed notes
+			[self emitDelayedNotes:(const MIDIPacketList*)packetList availableBytes:availableBytes];
 
-		const MIDIPacket *packet = packetList->packet;
+			//process packet list for listeners
+			[self handleMIDIPktlist:(const MIDIPacketList*)packetList availableBytes:availableBytes];
+			
+			//mark bytes as consumed (pad to 4-byte alignment as was done when producing)
+			
+			TPCircularBufferConsume(&_packetBuffer, availableBytes);
 
-		for (int i = 0; i < packetList->numPackets; i++) {
-			NSMutableString *dataString = [NSMutableString string];
+		} // while _isRunning
+	});
+}
 
-			for (int j = 0; j < packet->length; j++) {
-				[dataString appendFormat:@"%02X ", packet->data[j]];
-			}
 
-			os_log(OS_LOG_DEFAULT, " MIDI Packet - Timestamp: %llu, Length: %d, Data: %@", packet->timeStamp, packet->length, dataString);
+// These next two methods are called from the high-priority processing thread. Both walk the packetList(s) & packets with two aims: 1) to output delay packets and 2) to send sysex and note on to listeners, which handle configuration, data saving, and UI
+// Not sure there is any way around walking through entire sysex streams because it may be spread across packets and not sure there is a test for a packet being sysex based on its first byte...In our use, sysex receiving is very rare, never during critical path, and short so it is really not any kind of issue
 
+// *********************************************
+// quickly send out delayed midi [runs from high-priority processing thread]
+- (void)emitDelayedNotes:(const MIDIPacketList*)startList availableBytes:(uint32_t)availableBytes {
+	
+	RNRealtimeRoutingTable *table = atomic_load_explicit(&_routingTable, memory_order_acquire);
+	if (_delayMIDIIO == NULL || table == nil) { // with no delay output or routing table, this is a NOP!
+		return;
+	}
+	
+	//  note, must handle case that multiple packet lists are available; create some vars to help us conceptualize
+	const Byte *bufferPtr = (const Byte *)startList;
+	const Byte *bufferEnd = bufferPtr + availableBytes;
+	int nPacketList = 0;
+	int nDelayPackets = 0;
+	
+	while (bufferPtr < bufferEnd) {
+		
+		// SAFE: bufferPtr is aligned to MIDIPacketList boundaries
+		const MIDIPacketList *pktlist = (const MIDIPacketList *)(uintptr_t)bufferPtr; //start of packet list
+		const MIDIPacket *packet = &pktlist->packet[0]; //first packet in list
+		// find total length of (first) packet list
+		for (int i = 0; i < pktlist->numPackets; i++) {
 			packet = MIDIPacketNext(packet);
 		}
-#endif
-
-	// WRAP and forward to our  handler
-	CFDataRef wrappedPktlist = CFDataCreate(kCFAllocatorDefault, (const UInt8 *)packetList, (CFIndex)pktlistLength);
-	[selfMIDIO handleMIDIInput:(NSData *)wrappedPktlist];
+		//packet now points to byte beyond the packetlist
+		RT_SAFE_ASSERT((Byte *)packet <= bufferEnd+1, "MIDIPacketList has overrun input buffer.");
+		size_t pktlistLength = (const Byte *)packet - (Byte *)pktlist;
+		
+		// Safety check: is packetList contained within availableBytes?
+		if (bufferPtr + pktlistLength > bufferEnd) {
+			os_log(OS_LOG_DEFAULT, "Incomplete MIDIPacketList in input buffer. Skipping.");
+			break;
+		}
+		
+		//grab the routing and delay matrices (we'll maintain it constant across each packet list
+		NodeMatrix *weightMatrix = atomic_load(&_routingTable->weightMatrix);
+		NodeMatrix *delayMatrix = atomic_load(&_routingTable->delayMatrix);
+		
+		//prolly makes sense to iterate through all the notes and do a single packet list rather than a smaller packet list for each note--figure out the max possible notes in it: (someday) 12 tappers * 11 delay outputs = 132 note on events (worst case if everyone taps at same time and have an all-all network. In general N*(N-1), so now, for 6, 30
+		
+		// initialize the output packetList
+		MIDIPacket *curDelayPkt = MIDIPacketListInit(_delayPacketList);
+		
+		MIDITimeStamp earliestTimestamp = UINT64_MAX;
+		
+		// walk through packets, handling note on
+		packet = &pktlist->packet[0];
+		MIDITimeStamp packetTimeStamp = packet->timeStamp;
+		for (int i = 0; i < pktlist->numPackets; i++) {
+			const Byte *bp			= packet->data;
+			const Byte *packetEnd	= bp + packet->length;
+			
+			while (bp < packetEnd) {
+				
+				const Byte status = *bp++;
+				
+				// handle sysex (and ignore)
+				if (status == 0xF0) {		// Sysex start
+					_isReceivingSysex = YES;
+				} else if (_isReceivingSysex) {	// Sysex continuation
+					if (status == 0xF7) {	// Sysex end
+						_isReceivingSysex = NO;
+					}
+				} else if ((status & 0xF0) == 0x90) {
+					RT_SAFE_ASSERT(bp + 1 < packetEnd, "Problem: partial note-on message in packet. Shouldn't happen");
+					
+					Byte	note		= *bp++;
+					Byte	velocity	= *bp++;
+					
+					// DELAY PROCESSING
+					// Quickly scan for note on and re-emit any delayed messages to other channels/notes
+					
+					// NB: check if target timestamp is _past_ now, in which case we're not able to meet the target and say by how far off
+					// Special case if delay is 0 pass 0 as timestamp (not input timestamp) as that means 'send as soon as possible' since there is no actual way to send with 0 delay.
+					// TODO: implement velocity weithging
+					if (velocity > 0) {	// only note on
+						Byte channel		= (status & 0x0F);
+						//loop over potential destinations
+						float wt;
+						for (int toChan=0; toChan<kMaxNodes; toChan++) {
+							if ((wt = (*weightMatrix)[channel][toChan])) {
+								float delay_ms = (*delayMatrix)[channel][toChan];
+								
+								UInt64 delayTicks = 0;
+								MIDITimeStamp delayTimeStamp = 0;
+								if (delay_ms > 0.0) {
+									delayTicks = MS_TO_HOSTTIME(delay_ms);
+									delayTimeStamp = packetTimeStamp + delayTicks;
+									earliestTimestamp = MIN(earliestTimestamp, delayTimeStamp); //Keep track of earliest event so we can test for overrun when we send.
+								} else {
+									//delayTimeStamp = packetTimeStamp; //TODO: this will necessarily be in the past, so perhaps should give it 0 for 'immediate' though I assume anyone with a timestamp in the past will be queued immediately?
+									delayTimeStamp = packetTimeStamp;
+									delayTicks = 0;
+								}
+								_onMessage[0] = 0x90 + toChan; //NB convert to MIDI 0-based index
+								_onMessage[1] = note;
+								_onMessage[2] = velocity;
+								
+								curDelayPkt =  MIDIPacketListAdd(_delayPacketList,kDelayPacketListLength,curDelayPkt,delayTimeStamp,3,_onMessage);
+								RT_SAFE_ASSERT(curDelayPkt,"MIDIPacketListAdd returned NULL!");
+								
+								os_log(OS_LOG_DEFAULT, "    Added NOTEON with %lld ms delay", HOSTTIME_TO_MS(delayTicks));
+								if (kDoEmitNoteOff) {
+									_offMessage[0] = _onMessage[0];
+									_offMessage[1] = _onMessage[1];
+									_offMessage[2] = 0;
+									MIDITimeStamp offTimeStamp = delayTimeStamp + MS_TO_HOSTTIME(kNoteOffDelay_ms);
+									curDelayPkt =  MIDIPacketListAdd(_delayPacketList,kDelayPacketListLength,curDelayPkt,offTimeStamp,3,_offMessage);
+								}
+								
+								RT_SAFE_ASSERT((curDelayPkt != NULL), "Packet List Overflow [chan %d -> %d]",channel,toChan);
+							}
+						}
+					}
+				} else {
+					os_log(OS_LOG_DEFAULT, "Received non note-on event! %x %x %x", packet->data[0], packet->data[1], packet->data[2]);
+					switch (status & 0xF0) {
+						case 0x80:
+						case 0xA0:
+						case 0xB0:
+						case 0xE0:
+							bp += 2; //skip rest of message
+							break;
+						case 0xC0:
+						case 0xD0:
+							bp += 1; //skip rest of message
+							break;
+						default:
+							//bp += packet->length - 1; // it seems like packetlists are split radically into a single three-byte packet, but there could be more in principle. As we don't actually know how long any given message is, we can't easily skip it.
+							break;
+					}
+				}
+				
+			}	// loop over packet contents
+			
+			packet = MIDIPacketNext(packet); // next packet in input list
+		}	// loop over packets
+		
+		// Send if we've accumulated any delayed packets
+		if (_delayPacketList->numPackets > 0 ) {
+			nDelayPackets += _delayPacketList->numPackets;
+			UInt64 now = AudioGetCurrentHostTime();
+			
+			os_log(OS_LOG_DEFAULT, "---_delayPacketList---");
+			logMIDIPacketList(_delayPacketList, 0, 0);
+			
+			// send our delayPacketList to Core MIDI
+			UInt64 pre = HOSTTIME_TO_MS(AudioGetCurrentHostTime());
+			OSStatus status = MIDISend(_delayMIDIIO->_outPort, _delayMIDIIO->_MIDIDest, _delayPacketList);
+			UInt64 post = HOSTTIME_TO_MS(AudioGetCurrentHostTime());
+			os_log(OS_LOG_DEFAULT, "emitDelayedNotes MIDISend MIDIPacketList (%d packets) @ time ~ %lld (+/- %lld) ms", pktlist->numPackets, (pre+post)/2, (post-pre)/2);
+			
+			CHECK_OSSTATUS(status, "MIDISend delay packet list");
+			
+			// PROBLEM: earliest target timestamp is _past_ now--we took too long to schedule them
+			if (now > earliestTimestamp){
+				os_log(OS_LOG_DEFAULT, "emitDelayedNotes: overrun, delay time of earliest event (%lld ms) has passed (%lld ms over)", HOSTTIME_TO_MS(earliestTimestamp), HOSTTIME_TO_MS(now - earliestTimestamp));
+			} else {
+				os_log(OS_LOG_DEFAULT, "emitDelayedNotes: adequate time :) delay time of earliest event (%lld ms) is %lld ms in future", HOSTTIME_TO_MS(earliestTimestamp), HOSTTIME_TO_MS(earliestTimestamp - now));
+			}
+		}
+		//advance to next packet list (enforce alignment)
+		nPacketList++;
+		size_t paddedLength = (pktlistLength + 3) & ~3;
+		bufferPtr += paddedLength;
+		
+	}
+	if (nDelayPackets) {
+		os_log(OS_LOG_DEFAULT, "emitDelayedNotes parsed %d input MIDIPacketLists with %ld bytes left over and output %d packets.", nPacketList, bufferEnd-bufferPtr, nDelayPackets);
+	}
 }
 
 // *********************************************
-//  parse packets and send out to listeners
-//	will execute on main thread, so no worries about object allocation, realtime priority, etc
-//	Note that input argument was retained by performSelectorOnMainThread, so we don't have to retain
-- (void)handleMIDIInput:(NSData *)wrappedPktlist
+// send midi to listeners [runs from high-priority processing thread]
+- (void)handleMIDIPktlist:(const MIDIPacketList *)pktlist availableBytes:(uint32_t)availableBytes
 {
-	const MIDIPacketList	*pktlist	= (const MIDIPacketList *)[wrappedPktlist bytes];
-	const MIDIPacket		*packet		= pktlist->packet;
-	NSData					*MIDIData	= nil;
-
-	// parse midi--keeping it simple for now, and only doing what we need
-	for (int i = 0; i < pktlist->numPackets; i++) {
-		const UInt8 *bp			= packet->data;
-		const UInt8 *packetEnd	= bp + packet->length;	// could include single-byte realtime, so copy one byte at a time
-
-		while (bp < packetEnd) {
-			const UInt8 byte = *bp++;
-
-			if (byte == 0xF0) {		// Sysex start
-				_isReceivingSysex = YES;
-				[_sysexData setLength:0];
-				[_sysexData appendBytes:&byte length:1];
-			} else if (_isReceivingSysex) {	// Sysex continuation
-				[_sysexData appendBytes:&byte length:1];
-
-				if (byte == 0xF7) {	// Sysex end
-					if (bp != packetEnd) {
-						NSLog(@"Interesting: %ld bytes following end of sysex message in packet.", packetEnd - bp);
+	
+	// TODO: not sure why we're getting empty buffers, but no need to handle them
+	if (availableBytes == 0) {
+		return;
+	}
+	
+	//  note, must handle case that multiple packet lists are available; create some vars to help us conceptualize
+	const Byte *bufferPtr = (const Byte *)pktlist;
+	const Byte *bufferEnd = bufferPtr + availableBytes;
+	int nPacketList = 0;
+	
+	while (bufferPtr < bufferEnd) {
+		
+		pktlist = (const MIDIPacketList *) bufferPtr;
+		// find total length of (first) packet list
+		const MIDIPacket *packet = (MIDIPacket *)&pktlist->packet[0]; //first packet in list
+		for (int i = 0; i < pktlist->numPackets; i++) {
+			packet = MIDIPacketNext(packet);
+		}
+		//packet now points to byte beyond the packetlist
+		RT_SAFE_ASSERT((Byte *)packet <= bufferEnd+1, "MIDIPacketList has overrun input buffer.");
+		size_t pktlistLength = (Byte *)packet - (Byte *)pktlist;
+		
+		// Safety check: is packetList contained within availableBytes?
+		if (bufferPtr + pktlistLength > bufferEnd) {
+			os_log(OS_LOG_DEFAULT, "Incomplete MIDIPacketList in input buffer. Skipping.");
+			break;
+		}
+		
+		// TEST
+		os_log(OS_LOG_DEFAULT, "==handleMIDIPktlist== (_isReceivingSysex=%@)", _isReceivingSysex?@"YES":@"NO");
+		logMIDIPacketList(pktlist, pktlistLength, 0);
+		
+		// Second, thoroughly parse midi packets in list--keeping it simple for now, and only doing what we need
+		packet = (MIDIPacket *)&pktlist->packet[0];
+		for (int i = 0; i < pktlist->numPackets; i++) {
+			const Byte *bp			= packet->data;
+			const Byte *packetEnd	= bp + packet->length;	// could include single-byte realtime, so copy one byte at a time
+			
+			while (bp < packetEnd) {
+				const Byte byte = *bp++;
+				
+				if (byte == 0xF0) {		// Sysex start
+					_isReceivingSysex = YES;
+					[_sysexData setLength:0];
+					[_sysexData appendBytes:&byte length:1];
+				} else if (_isReceivingSysex) {	// Sysex continuation
+					if (byte < 0xF8) { // ignore realtime messages embedded in sysex
+						[_sysexData appendBytes:&byte length:1];
 					}
-
-					NSString *hexStr = [[NSString alloc] initHexStringWithData:_sysexData];
-					NSLog(@"MIDIIO Received Sysex (%lu bytes): %@\n", (unsigned long)[_sysexData length], hexStr);
-					[_sysexListenerArray makeObjectsPerformSelector:@selector(receiveSysexData:) withObject:_sysexData];
-					_isReceivingSysex = NO;
-				}
-			} else {// non sysex
-				// note-on (all we care about in RhythmNetwork, so this is hardly general purpose)
-				// we create our own structure, one step abstracted from raw MIDI, and with time in real units
-				if ((byte & 0xF0) == 0x90) {
-					NSAssert(bp + 1 < packetEnd, @"Problem: partial note-on message in packet. Shouldn't happen");
-					Byte	note		= *bp++;
-					Byte	velocity	= *bp++;
-
-					if (velocity > 0) {	// only note on
-						NoteOnMessage thisMessage;
-						thisMessage.eventTime_ns	= AudioConvertHostTimeToNanos(packet->timeStamp);
-						thisMessage.channel			= (byte & 0x0F) + 1;// we use 1-based counting
-						thisMessage.note			= note;
-						thisMessage.velocity		= velocity;
-						MIDIData = [NSData dataWithBytes:&thisMessage length:sizeof(NoteOnMessage)];
-						[_MIDIListenerArray makeObjectsPerformSelector:@selector(receiveMIDIData:) withObject:MIDIData];
+					
+					if (byte == 0xF7) {	// Sysex end
+						if (bp != packetEnd) {
+							os_log(OS_LOG_DEFAULT, "Interesting: %ld bytes following end of sysex message in packet.", packetEnd - bp);
+						}
+						
+						NSString *hexStr = [[NSString alloc] initHexStringWithData:_sysexData];
+						os_log(OS_LOG_DEFAULT, "MIDIIO Received Sysex (%lu bytes): %@\n", (unsigned long)[_sysexData length], hexStr);
+						
+						for (id listener in _sysexListenerArray) {
+							dispatch_async(_listenerQueue, ^{
+								NSData *listenerCopy = [_sysexData copy];
+								[listener receiveSysexData:listenerCopy];
+								[listenerCopy release];
+							});
+						}
+						_isReceivingSysex = NO;
 					}
-				} else {
-					// NSLog(@"Received non note-on event! %x %x %x", packet->data[0], packet->data[1], packet->data[2]);
+				} else {// non sysex
+					// note-on (all we care about in RhythmNetwork, so this is hardly general purpose)
+					// we create our own structure, one step abstracted from raw MIDI, and with time in real units
+					if ((byte & 0xF0) == 0x90) {
+						RT_SAFE_ASSERT(bp + 1 < packetEnd, "Problem: partial note-on message in packet. Shouldn't happen");
+						Byte channel		= (byte & 0x0F); // channel is _always_ midi channel. Use nodeForChannel to convert to tapper node idx
+						Byte	note		= *bp++;
+						Byte	velocity	= *bp++;
+						
+						if (velocity > 0) {	// only note on
+						
+							NoteOnMessage thisMessage;
+							thisMessage.eventTime_ns	= AudioConvertHostTimeToNanos(packet->timeStamp);
+							thisMessage.channel		= channel;
+							thisMessage.note			= note;
+							thisMessage.velocity		= velocity;
+							
+							NSData *MIDIData = [NSData dataWithBytes:&thisMessage length:sizeof(NoteOnMessage)];
+							for (id listener in _MIDIListenerArray) {
+								dispatch_async(_listenerQueue, ^{
+									[listener receiveMIDIData:MIDIData];
+								});
+							}
+							os_log(OS_LOG_DEFAULT, "Dispatched a note-on event! %x %x %x", packet->data[0], packet->data[1], packet->data[2]);
+						}
+					} else if ((byte & 0xF0) == 0x80) {
+						//silently ignore note off events -- in practice they will be filtered by the MIOC
+						bp += 2; //skip rest of message
+					} else {
+						os_log(OS_LOG_DEFAULT, "Received non note-on event! %x %x %x", packet->data[0], packet->data[1], packet->data[2]);
+						switch (byte & 0xF0) {
+							case 0xA0:
+							case 0xB0:
+							case 0xE0:
+								bp += 2; //skip rest of message
+								break;
+							case 0xC0:
+							case 0xD0:
+								bp += 1; //skip rest of message
+								break;
+							default:
+								//bp += packet->length - 1; // it seems like packetlists are split radically into a single three-byte packet, but there could be more in principle. As we don't actually know how long any given message is, we can't easily skip it.
+								break;
+						}
+					}
 				}
-			}
-		}	// loop over packet contents
+			}	// loop over packet contents
+			
+			packet = MIDIPacketNext(packet);
+		}	// loop over packets
+		//os_log(OS_LOG_DEFAULT, "handleMIDIPktlist: Handled a MIDIPacketList (%d packets; %zu bytes).",pktlist->numPackets,pktlistLength);
 
-		packet = MIDIPacketNext(packet);
-	}	// loop over packets
+		//advance to next packet list (enforce alignment)
+		nPacketList++;
+		size_t paddedLength = (pktlistLength + 3) & ~3;
+		bufferPtr += paddedLength;
+	}
+	
+	//os_log(OS_LOG_DEFAULT, "handleMIDIPktlist handled total %d MIDIPacketLists with %ld bytes left over.", nPacketList, bufferEnd-bufferPtr);
+
 }
 
 // *********************************************
@@ -527,49 +980,43 @@ void logMIDIPacketList(const MIDIPacketList *packetList, long pktlistLength, con
 //
 // add object to list of objects to send sysex data to
 //	ensure it responds to appropriate selector and is not already in list
-- (void)registerSysexListener:(id)object
+- (void)registerSysexListener:(id<SysexDataReceiver>)object
 {
-	if ([object respondsToSelector:@selector(receiveSysexData:)]) {
-		if ([_sysexListenerArray containsObject:object]) {
-			NSLog(@"Problem: Trying to add object %@ again!", object);
-		} else {
-			[_sysexListenerArray addObject:object];	// this retains object
-		}
-	} else {
-		NSLog(@"Problem: Cannot register %@ as sysexListener. (Does not respond to receiveSysexData:)", object);
-	}
+	NSAssert([object conformsToProtocol:@protocol(SysexDataReceiver)],
+			 @"Cannot register %@ as Sysex Listener. (Does not conform to <SysexDataReceiver>)", object);
+	
+	NSAssert(![_sysexListenerArray containsObject:object],
+			 @"Trying to add Sysex Listener object %@ again!", object);
+	
+	[_sysexListenerArray addObject:object];	// this retains object
 }
 
-- (void)removeSysexListener:(id)object {
-	if (![_sysexListenerArray containsObject:object]) {
-		NSLog(@"Problem: Trying to remove non-listener object %@!", object);
-	} else {
-		[_sysexListenerArray removeObject:object];
-	}
+- (void)removeSysexListener:(id<SysexDataReceiver>)object {
+	NSAssert([_sysexListenerArray containsObject:object],
+			 @"Trying to remove non-registered Sysex listener!: %@", object);
+	
+	[_sysexListenerArray removeObject:object];
 }
 
 // *********************************************
 //
-- (void)registerMIDIListener:(id)object
+- (void)registerMIDIListener:(id<MIDIDataReceiver>)object
 {
-	if ([object respondsToSelector:@selector(receiveMIDIData:)]) {
-		if ([_MIDIListenerArray containsObject:object]) {
-			NSLog(@"Problem: Trying to add object %@ again!", object);
-		} else {
-			[_MIDIListenerArray addObject:object];	// this retains object
-		}
-	} else {
-		NSLog(@"Problem: Cannot register %@ as MIDIListener. (Does not respond to receiveMIDIData:)", object);
-	}
+	NSAssert([object conformsToProtocol:@protocol(MIDIDataReceiver)],
+			 @"Cannot register %@ as MIDI Listener. (Does not conform to <MIDIDataReceiver>)", object);
+	
+	NSAssert(![_MIDIListenerArray containsObject:object],
+			 @"Trying to add MIDI Listener object %@ again!", object);
+	
+	[_MIDIListenerArray addObject:object];	// this retains object
 }
 
-- (void)removeMIDIListener:(id)object
+- (void)removeMIDIListener:(id<MIDIDataReceiver>)object
 {
-	if (![_MIDIListenerArray containsObject:object]) {
-		NSLog(@"Problem: Trying to remove non-listener object %@!", object);
-	} else {
-		[_MIDIListenerArray removeObject:object];
-	}
+	NSAssert([_MIDIListenerArray containsObject:object],
+			 @"Removing non-registered MIDI listener!: %@", object);
+	
+	[_MIDIListenerArray removeObject:object];
 }
 
 // *********************************************
@@ -599,6 +1046,7 @@ void logMIDIPacketList(const MIDIPacketList *packetList, long pktlistLength, con
 	curPacket	= MIDIPacketListAdd(pktlist, pktlistLength, curPacket, 0, dataLength, [data bytes]);
 
 	status = MIDISend(_outPort, _MIDIDest, pktlist);
+	CHECK_OSSTATUS(status, "MIDIIO sendMIDI");
 
 	if (status == noErr) {
 		return kSendMIDISuccess;
@@ -620,6 +1068,8 @@ void logMIDIPacketList(const MIDIPacketList *packetList, long pktlistLength, con
 
 	MIDIPacketList *pktlist = (MIDIPacketList *)[wrappedPacketList bytes];
 	status = MIDISend(_outPort, _MIDIDest, pktlist);
+	CHECK_OSSTATUS(status, "MIDIIO sendMIDIPacketList");
+
 
 	if (status == noErr) {
 		return kSendMIDISuccess;
@@ -652,20 +1102,22 @@ static void mySysexCompletionProc(MIDISysexSendRequest *request)
 
 	MIDISysexSendRequest *req = malloc(sizeof(MIDISysexSendRequest));
 
-	req->destination		= _MIDIDest;
-	req->data				= (Byte *)[data bytes];
-	req->bytesToSend		= [data length];
-	req->complete			= FALSE;
-	req->completionProc		= mySysexCompletionProc;
-	req->completionRefCon	= (void *)data;
+	req->destination	  = _MIDIDest;
+	req->data             = (Byte *)[data bytes];
+	req->bytesToSend      = (UInt32)[data length];
+	req->complete         = FALSE;
+	req->completionProc   = mySysexCompletionProc;
+	req->completionRefCon = (void *)data;
 
 	status = MIDISendSysex(req);
 
-	if (status == noErr) {
-		return kSendMIDISuccess;
-	} else {
+	if (status != noErr) {
+		free(req);
+		[data release];
 		return kSendMIDIFailure;
 	}
+	
+	return kSendMIDISuccess;
 
 	// !!! this would be the place to start a timer if we're concerned about tracking progress
 	// for present needs, messages are so short this is overkill

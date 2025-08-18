@@ -28,9 +28,12 @@
 	unsigned int		_numEvents;				// number of events stored in _eventTimes
 	double			_ITI_ms;				// instantaneous ITI
 	double			_smoothITI_ms;			// smoothed measure of ITI
+	NSInteger		_updatedBinIndex;		// for optimzed drawing of single updated bin; -1 -> draw all
 }
 
 - (void)setTargetStimulus:(RNStimulus *)stim;	// initializes histogram
+
+- (NSRect)barRectForIndex:(NSUInteger)iBin;
 
 - (void)addEventAtTime:(UInt64)eventTime_ns;	// update with a new event
 

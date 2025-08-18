@@ -6,22 +6,20 @@
 //  Copyright 2005 John Iversen. All rights reserved.
 //
 
-#import <Cocoa/Cocoa.h>
+#import <Foundation/Foundation.h>
 #import "MIOCProcessorProtocol.h"
-
-#define kMIOCInputVelocityProcessorOpcode	0x24
-#define kMIOCOutputVelocityProcessorOpcode	0x25
+#import "MIOCMessage.h"
 
 @interface MIOCVelocityProcessor : NSObject <MIOCProcessor, NSCopying>
 {
-	Byte		_port;
-	Byte		_channel;
-	Byte		_IOOpcode;
-	Byte		_position;
-	Byte		_threshold;
-	SInt8	_gradientBelowThreshold;
-	SInt8	_gradientAboveThreshold;
-	SInt8	_offset;
+	Byte  _port;
+	Byte  _channel;
+	Byte  _IOOpcode;
+	Byte  _position;
+	Byte  _threshold;
+	SInt8 _gradientBelowThreshold;
+	SInt8 _gradientAboveThreshold;
+	SInt8 _offset;
 }
 
 - (MIOCVelocityProcessor *)initWithPort:(Byte)port Channel:(Byte)channel OnInput:(BOOL)isInput;
@@ -50,6 +48,7 @@
 //processing parameters for a MIDI-input, an odd number specifies
 //a MIDI-output processor. Routing-parameters are always given as
 //input-processing (the connected output is given as parameter).
+
 ///Specific
 //24/25 Velocity proc.            length = 8       
 //Computes a new value for the second MIDI data byte of

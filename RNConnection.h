@@ -6,17 +6,17 @@
 //  Copyright 2004 John Iversen. All rights reserved.
 //
 
-#import <Cocoa/Cocoa.h>
+#import <Foundation/Foundation.h>
 
 #import "RNTapperNode.h"
 
 @interface RNConnection : NSObject
 {
-	RNNodeNum_t		_fromNode;
-	RNNodeNum_t		_toNode;
-	double			_weight;
-	double			_delay_ms;
-	unsigned int		_fromSubChannel;// node 0 can have several separately addressable outputs
+	RNNodeNum_t  _fromNode;
+	RNNodeNum_t  _toNode;
+	double       _weight;
+	double       _delay_ms;
+	unsigned int _fromSubChannel; // node 0 can have several separately addressable outputs
 }
 
 // *********************************************

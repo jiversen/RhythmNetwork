@@ -3,55 +3,33 @@
 // and higher level message composition and display for communication w/ MIDITEMP MIOC
 // Maintains a model of MIOC state
 
-#import <Cocoa/Cocoa.h>
-
+#import <Foundation/Foundation.h>
 #import "MIOCProcessorProtocol.h"
+#import "MIDIListenerProtocols.h"
+#import "MIOCMessage.h"
 
-#define kMIDITEMPID			0x00200d
 #define kSendSysexSuccess	TRUE
 #define kSendSysexFailure	FALSE
 
-#define kDevicePMM88E		0x20
-
-// MIOC message structure (per dump.txt)
-typedef struct _MIOCMessage {
-	Byte	sysexStart;	// junk
-	Byte	manuID[3];
-	Byte	deviceID;
-	Byte	deviceType;
-	Byte	mode;
-	Byte	opcode;
-	Byte	data[1];// open ended...
-} MIOCMessage;
-
-// bytes before start of data
-#define kPreambleLength			8
-
-#define kModeEncodedMask		(1 << 6)
-#define kModeHandshakeMask		(1 << 2)
-#define kModeMsgTypeMask		(0x03)
-#define kOpcodeDirectionMask	(1 << 6)
-
 @class MIDIIO, MIOCConnection, MIOCVelocityProcessor, MIDICore;
 
-@interface MIOCModel : NSObject
-{
-	Byte				_deviceID;					// Fornet address
-	Byte				_deviceType;				// Miditemp defined device types
-	NSString			*_deviceName;				// User-specified name of device
+@interface MIOCModel : NSObject <SysexDataReceiver> {
+	Byte      _deviceID;   // Fornet address
+	Byte      _deviceType; // Miditemp defined device types
+	NSString *_deviceName; // User-specified name of device
 
-	NSMutableArray	*_connectionList;			// set of MIOCConnection objects (our model of MIOC state)
-	NSMutableArray	*_velocityProcessorList;	// set of MIOCVelocityProcessor objects (model of MIOC state)
-	BOOL				_filtersInitialized;		// yes if filters have been initialized
-	BOOL				_isOnline;					// yes if MIOC is online
-	BOOL				_correctPort;				// connected to port 8?
-	BOOL				_awaitingReply;				// yes if we've sent a sysex and expecting a reply
-												// assuming mioc responds fifo to requests!
-	NSTimer 			*_replyTimer;					// timer to check for MIOC reply timeout
+	NSMutableArray *_connectionList;        // set of MIOCConnection objects (our model of MIOC state)
+	NSMutableArray *_velocityProcessorList; // set of MIOCVelocityProcessor objects (model of MIOC state)
+	BOOL            _filtersInitialized;    // yes if filters have been initialized
+	BOOL            _isOnline;              // yes if MIOC is online
+	BOOL            _correctPort;           // connected to port 8?
+	BOOL            _awaitingReply;         // yes if we've sent a sysex and expecting a reply
+											// assuming mioc responds fifo to requests!
+	NSTimer *_replyTimer;                   // timer to check for MIOC reply timeout
 
-	MIDIIO			*_MIDILink;					// our bridge to MIDI
-	MIDICore			*_MIDICore;					// internal midi processor (stands in for MIOC)
-	BOOL				_useInternalMIDIProcessor;	// converse: use internal MIDICore
+	MIDIIO   *_MIDILink;                 // our bridge to MIDI
+	MIDICore *_MIDICore;                 // internal midi processor (stands in for MIOC)
+	BOOL      _useInternalMIDIProcessor; // converse: use internal MIDICore
 }
 
 - (MIOCModel *)init;
@@ -59,13 +37,14 @@ typedef struct _MIOCMessage {
 - (void)reset;
 - (void)initialize;
 - (void)checkOnline;
+- (BOOL)isOnline;
 
 - (BOOL)useInternalMIDIProcessor;
 - (void)setUseInternalMIDIProcessor:(BOOL)useInternal;
 
 - (BOOL)sendVerifiedMIOCQuery:(NSData *)data;
 - (BOOL)sendMIOCQuery:(NSData *)data;
-- (void)handleMIOCReply:(NSNotification *)notification;
+- (void)handleMIOCIsOnlineReply:(NSNotification *)notification;
 - (void)handleMIOCReplyTimeout:(NSTimer *)timer;
 
 - (BOOL)queryPortAddress;

@@ -539,7 +539,7 @@ Output Channel: 80=orig, 0N=channel N
                  bits 0..3 = channel number
                  If MSB is clear: omni (bits 0..3 =0)
 
-8/9   filter Note Off messages  length = 3
+8/9   filter Note Off messages  length = 3 **NOTE JRI: assuming uses same channel scheme as 2/3
 
 A/B   filter even/odd notes     length = 4       
         Removes events (8n/9n/An) if first MIDI-databyte has
