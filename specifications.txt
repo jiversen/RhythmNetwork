@@ -917,5 +917,7 @@ I found a second TMC so could scale to 12, though the single port input to the m
  
 All of this coding was done in pair programming mode with ChatGPT, which was an enormous time-saver in tracking down issues with drawing, updating my understanding of macos api updates (e.g. the threading model), learning totally new concepts like atomic variables and generally deepening my understanding of programming using an interactive, socratic mode rather than just reading about it. Love it.
 
-
-
+7/18/25
+Going well. For some reason the [1,1]-[8,128] connections from each channel on port 1 to record BB was suddenly causing multiple notes for each drum strike. So, replaced it with [1,128]->[8,128] and it's fixed
+Another oddity is that the NoteOff filters that seemed to always work, no longer work. Consider putting fiters into a permanent programNot so a) they are always there and b) I can verify through the GUI that they are set. Indeed, consider doing so for all the programming? Not clear how to _clear_ them (can send explicit remove, I suppose) but would be better to find a way to clear all memory through MIDI sysex...
+Finally, 7D/7E events and Bx events are suddenly popping up!?
