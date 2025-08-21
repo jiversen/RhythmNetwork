@@ -16,7 +16,9 @@ HEADER_OUT="$SRCROOT/${BASENAME}.h"
 SOURCE_OUT="$SRCROOT/${BASENAME}.m"
 
 # Metadata
-TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
+# TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
+# USE COMMIT TIME, fallback to date
+TIMESTAMP=$(git -C "$SRCROOT" log -1 --date=format:'%Y-%m-%d %H:%M:%S' --format='%ad' 2>/dev/null || date +"%Y-%m-%d %H:%M:%S")
 COMMIT=$(git -C "$SRCROOT" rev-parse --short HEAD 2>/dev/null || echo "unknown")
 BRANCH=$(git -C "$SRCROOT" rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
 COMMIT_MSG=$(git -C "$SRCROOT" log -1 --pretty=format:%s 2>/dev/null || echo "no commit message")

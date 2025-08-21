@@ -51,7 +51,7 @@
 {
 	Byte stimulusChannel;
 	
-	stimulusChannel = kBigBrotherChannel - midiChannel + 1; //both are 1 based
+	stimulusChannel = kBigBrotherChannel - midiChannel; //midi is 0 based, stimulusChannel is  1 based
 	return stimulusChannel;
 }
 - (Byte) MIDIChannelForStimulusNumber: (Byte) stimulusChannel

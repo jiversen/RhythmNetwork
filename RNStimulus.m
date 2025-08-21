@@ -23,13 +23,13 @@
 
 	_stimulusChannel		= stimChannel;
 	_MIDIChannel			= MIDIChannel;
-	_note				= note;
+	_note					= note;
 	_noteDuration_ms		= kNoteOffDelay_ms;
 	_relativeStartTime_ms	= startTime;
-	_IOI_ms				= IOI;
-	_startPhase_ms		= startPhase;
+	_IOI_ms					= IOI;
+	_startPhase_ms			= startPhase;
 	_nEvents				= nEvents;
-	_jitter_ms			= 0;
+	_jitter_ms				= 0;
 	
 	return self;
 }

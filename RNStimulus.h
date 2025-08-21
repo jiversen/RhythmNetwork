@@ -10,9 +10,9 @@
 
 @interface RNStimulus : NSObject
 {
-	Byte			_stimulusChannel;
-	Byte			_MIDIChannel;
-	Byte			_note;
+	Byte		_stimulusChannel;
+	Byte		_MIDIChannel;
+	Byte		_note;
 	double		_noteDuration_ms;
 	double		_relativeStartTime_ms;	// time relative to experiment start (in ms)
 	UInt64		_experimentStartTime_ns;

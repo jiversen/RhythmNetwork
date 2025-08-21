@@ -192,6 +192,9 @@
 			sourceChan = [_nodeList[[thisConn fromNode]] MIDIChannelForStimulusNumber:[thisConn fromSubChannel]];
 			destPort   = [_nodeList[[thisConn toNode]] destPort];
 			destChan   = [_nodeList[[thisConn toNode]] destChan]; // always kMIOCOutChannelSameAsInput
+			
+			newMIOCConn = [MIOCConnection connectionWithInPort:sourcePort InChannel:sourceChan OutPort:destPort OutChannel:destChan];
+			[_MIOCConnectionList addObject:newMIOCConn];
 
 		} else { // source is a tapper node
 

@@ -507,7 +507,7 @@
 		};
 		0B5DB2992E46D7110026C8D8 /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
+			buildActionMask = 8;
 			files = (
 			);
 			inputFileListPaths = (
@@ -518,7 +518,7 @@
 			);
 			outputPaths = (
 			);
-			runOnlyForDeploymentPostprocessing = 0;
+			runOnlyForDeploymentPostprocessing = 1;
 			shellPath = /bin/sh;
 			shellScript = "if [ \"$CONFIGURATION\" = \"Deployment\" ]; then\n  set -euo pipefail\n  APP=\"$TARGET_BUILD_DIR/$FULL_PRODUCT_NAME\"\n  FW=\"$APP/Contents/Frameworks\"\n  mkdir -p \"$FW\"\n\n  # Copy your vendored libs\n  cp -a \"${PROJECT_DIR}/ThirdParty/lib/\"*.dylib \"$FW/\"\n\n    echo \"Ad-hoc signing dylibs in $FW\"\n    shopt -s nullglob\n    for lib in \"$FW\"/*.dylib; do\n      echo \"  signing $(basename \"$lib\")\"\n      /usr/bin/codesign --force --sign - --timestamp=none \"$lib\"\n    done\n    shopt -u nullglob\n\n    echo \"Ad-hoc signing app bundle\"\n    # Use --deep so nested code (helpers, plugins) gets covered if present\n    /usr/bin/codesign --force --sign - --timestamp=none --deep \"$APP\"\nfi\n";
 		};

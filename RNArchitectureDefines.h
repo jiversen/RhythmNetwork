@@ -30,7 +30,7 @@
 
 // MIDI Constants
 #define kBaseNote 64		// Tappers each identified with a unique note number beginning with this
-#define kStimulusNoteVelocity	127 // Velocity for metronome events
+#define kStimulusNoteVelocity	90 // Velocity for metronome events new sound: woodblock is louder so reduced
 
 // CONFIGURATION
 #define kDoEmitNoteOff FALSE // whether to send out note-off events
