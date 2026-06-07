@@ -825,10 +825,9 @@ void logMIDIPacketList(const MIDIPacketList *packetList, long pktlistLength, MID
 				os_log(OS_LOG_DEFAULT, "emitDelayedNotes: adequate time :) delay time of earliest event (%lld ms) is %lld ms in future", HOSTTIME_TO_MS(earliestTimestamp), HOSTTIME_TO_MS(earliestTimestamp - now));
 			}
 		}
-		//advance to next packet list (enforce alignment)
+		//advance to next packet list (match the producer's padded stride)
 		nPacketList++;
-		size_t paddedLength = (pktlistLength + 3) & ~3;
-		bufferPtr += paddedLength;
+		bufferPtr += TPAlignedRecordLength((uint32_t)pktlistLength);
 		
 	}
 	if (nDelayPackets) {
@@ -960,10 +959,9 @@ void logMIDIPacketList(const MIDIPacketList *packetList, long pktlistLength, MID
 		}	// loop over packets
 		//os_log(OS_LOG_DEFAULT, "handleMIDIPktlist: Handled a MIDIPacketList (%d packets; %zu bytes).",pktlist->numPackets,pktlistLength);
 
-		//advance to next packet list (enforce alignment)
+		//advance to next packet list (match the producer's padded stride)
 		nPacketList++;
-		size_t paddedLength = (pktlistLength + 3) & ~3;
-		bufferPtr += paddedLength;
+		bufferPtr += TPAlignedRecordLength((uint32_t)pktlistLength);
 	}
 	
 	//os_log(OS_LOG_DEFAULT, "handleMIDIPktlist handled total %d MIDIPacketLists with %ld bytes left over.", nPacketList, bufferEnd-bufferPtr);
